@@ -2,15 +2,17 @@
 
 Frontend React — Sistema de Gestión Salón de Eventos
 
-## Stack
+## Stack y decisiones técnicas
 
-- React 18 + Vite
-- Tailwind CSS
-- React Router v6
-- Axios
-- react-hook-form
-- FullCalendar (módulo reservas)
-- date-fns
+| Tecnología | Por qué |
+|---|---|
+| **React 18 + Vite** | Requerido por la cátedra. Vite reemplaza a Create React App (deprecado desde 2023) — más rápido y con mejor soporte actual. |
+| **Tailwind CSS** | Permite prototipar rápido sin salir del JSX. Fácil de unificar colores y estilos entre módulos al integrar cambiando solo `tailwind.config.js`. |
+| **React Router v6** | Estándar para navegación entre páginas en React. Sin alternativa real. |
+| **Axios** | Manejo de errores HTTP más claro que `fetch` nativo y facilita agregar el token JWT en un solo lugar cuando se integre con el módulo de Auth. |
+| **react-hook-form** | El módulo de Reservas tiene formularios con múltiples campos y validaciones. Esta librería reduce el código necesario y evita re-renders innecesarios. |
+| **FullCalendar** | Nombrado explícitamente en el brief del cliente como solución para el calendario de disponibilidad. |
+| **date-fns** | Utilidades de formato y manipulación de fechas, liviana y tree-shakeable. |
 
 ## Instalación
 
