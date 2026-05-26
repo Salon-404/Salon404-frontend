@@ -1,5 +1,18 @@
 export const reservasMock = [
   {
+    id: 8,
+    fecha: '2026-05-30',
+    horario: 'tarde',
+    tipoEvento: 'cumpleanos',
+    nombreCliente: 'Juana Perez',
+    email: 'perez@email.com',
+    telefono: '+54 11 6666-0001',
+    cantidadInvitados: 40,
+    notas: '',
+    estado: 'pendiente',
+    creadoEn: '2026-05-01T08:00:00Z',
+  },
+  {
     id: 1,
     fecha: '2026-06-14',
     horario: 'tarde',
@@ -93,6 +106,6 @@ export const reservasMock = [
 ]
 
 export const disponibilidadMock = {
-  fechasOcupadas: ['2026-06-14', '2026-07-18', '2026-08-08'],
+  fechasOcupadas: ['2026-05-30', '2026-06-14', '2026-07-18', '2026-08-08'],
   fechasPendientes: ['2026-06-20', '2026-06-25', '2026-07-25'],
 }
