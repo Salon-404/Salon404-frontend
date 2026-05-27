@@ -8,27 +8,27 @@ export const layoutMock = {
     {
       id: 1, nombre: 'Mesa 1', forma: 'redonda',
       capacidad: 8, grupo: 'familia',
-      x: 80,  y: 60,  diametro: 100,
+      x: 80,  y: 60,  diametro: 100, rotacion: 0,
     },
     {
       id: 2, nombre: 'Mesa 2', forma: 'redonda',
       capacidad: 6, grupo: 'familia',
-      x: 260, y: 60,  diametro: 100,
+      x: 260, y: 60,  diametro: 100, rotacion: 0,
     },
     {
       id: 3, nombre: 'Mesa 3', forma: 'rectangular',
       capacidad: 10, grupo: 'sin_grupo',
-      x: 460, y: 180, ancho: 130, alto: 85,
+      x: 460, y: 180, ancho: 130, alto: 85, rotacion: 0,
     },
     {
       id: 4, nombre: 'Mesa 4', forma: 'redonda',
       capacidad: 8, grupo: 'amigos',
-      x: 680, y: 380, diametro: 100,
+      x: 680, y: 380, diametro: 100, rotacion: 0,
     },
     {
       id: 5, nombre: 'Mesa 5', forma: 'rectangular',
       capacidad: 12, grupo: 'ninos',
-      x: 90,  y: 350, ancho: 150, alto: 90,
+      x: 90,  y: 350, ancho: 150, alto: 90, rotacion: 0,
     },
   ],
 }

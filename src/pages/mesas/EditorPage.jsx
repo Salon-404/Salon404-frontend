@@ -7,7 +7,7 @@ import MesaConfigPanel from '../../components/mesas/MesaConfigPanel'
 import { FORMAS } from '../../constants/mesas'
 
 // Editor visual del plano del salón (solo admin).
-// El admin puede agregar, mover y configurar mesas sobre un canvas libre.
+// El admin puede agregar, mover, redimensionar y rotar mesas sobre un canvas libre.
 // Los cambios se guardan explícitamente con el botón "Guardar".
 export default function EditorPage() {
   const { layout, loading, error } = useMesas()
@@ -18,7 +18,6 @@ export default function EditorPage() {
   return <EditorCanvas layoutInicial={layout} />
 }
 
-// Componente interno que solo se monta cuando el layout ya está disponible
 function EditorCanvas({ layoutInicial }) {
   const canvasRef = useRef(null)
 
@@ -34,6 +33,8 @@ function EditorCanvas({ layoutInicial }) {
     errorEliminar,
     limpiarErrorEliminar,
     handleMouseDown,
+    handleResizeStart,
+    handleRotateStart,
     handleMouseMove,
     handleMouseUp,
     agregarMesa,
@@ -43,29 +44,30 @@ function EditorCanvas({ layoutInicial }) {
     guardarLayout,
   } = useFloorEditor(layoutInicial)
 
+  // Listeners globales: drag/resize/rotate siguen funcionando si el mouse sale del canvas
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup',   handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup',   handleMouseUp)
+    }
+  }, [handleMouseMove, handleMouseUp])
+
   // Avisa al usuario si intenta cerrar la pestaña con cambios sin guardar
   useEffect(() => {
     function handleBeforeUnload(e) {
-      if (isDirty) {
-        e.preventDefault()
-        e.returnValue = ''
-      }
+      if (isDirty) { e.preventDefault(); e.returnValue = '' }
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isDirty])
 
-  // Calcula el movimiento del mouse usando las coordenadas del canvas como referencia
-  const onMouseMove = useCallback((e) => {
+  // Inyecta el rect del canvas al handleRotateStart para calcular el centro en coordenadas de pantalla
+  const onRotateStart = useCallback((e, mesaId) => {
     if (!canvasRef.current) return
-    const rect = canvasRef.current.getBoundingClientRect()
-    // Ajusta las coordenadas al sistema de referencia del canvas
-    const fakeEvent = {
-      clientX: e.clientX - rect.left,
-      clientY: e.clientY - rect.top,
-    }
-    handleMouseMove(fakeEvent, canvasRef)
-  }, [handleMouseMove])
+    handleRotateStart(e, mesaId, canvasRef.current.getBoundingClientRect())
+  }, [handleRotateStart])
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -98,7 +100,6 @@ function EditorCanvas({ layoutInicial }) {
       <div className="flex flex-1 gap-0 overflow-hidden">
         {/* Panel lateral */}
         <aside className="w-72 bg-white border-r border-slate-200 flex flex-col gap-4 p-4 overflow-y-auto">
-          {/* Botones para agregar mesas */}
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
               Agregar mesa
@@ -121,7 +122,6 @@ function EditorCanvas({ layoutInicial }) {
             </div>
           </div>
 
-          {/* Panel de configuración de la mesa seleccionada */}
           {mesaSeleccionada && (
             <MesaConfigPanel
               mesa={mesaSeleccionada}
@@ -148,11 +148,7 @@ function EditorCanvas({ layoutInicial }) {
               ref={canvasRef}
               className="relative bg-white border-2 border-dashed border-slate-300 rounded-xl shadow-inner"
               style={{ width: canvasAncho, height: canvasAlto }}
-              onMouseMove={onMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
             >
-              {/* Estado vacío */}
               {mesas.length === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 pointer-events-none">
                   <span className="text-5xl mb-3">○ □</span>
@@ -168,20 +164,20 @@ function EditorCanvas({ layoutInicial }) {
                   seleccionada={mesaSeleccionada?.id === mesa.id}
                   onClick={(m) => seleccionarMesa(m.id)}
                   onMouseDown={handleMouseDown}
+                  onResizeStart={handleResizeStart}
+                  onRotateStart={onRotateStart}
                 />
               ))}
             </div>
 
-            {/* Leyenda debajo del canvas */}
             <p className="text-xs text-slate-400 mt-2 text-center">
               {mesas.length} {mesas.length === 1 ? 'mesa' : 'mesas'}
               {' · '}
-              Arrastrás para mover · Click para configurar
+              Arrastrás para mover · Seleccioná para redimensionar y rotar
             </p>
           </div>
         </main>
       </div>
-
     </div>
   )
 }

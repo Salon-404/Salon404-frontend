@@ -40,6 +40,12 @@ export const MESA_REDONDA_DIAMETRO_DEFAULT    = 100
 export const MESA_RECTANGULAR_ANCHO_DEFAULT   = 130
 export const MESA_RECTANGULAR_ALTO_DEFAULT    = 85
 export const CAPACIDAD_DEFAULT                = 8
+export const ROTACION_DEFAULT                 = 0
+
+// Tamaños mínimos al redimensionar (evitan que la mesa desaparezca)
+export const MESA_ANCHO_MIN    = 60
+export const MESA_ALTO_MIN     = 50
+export const MESA_DIAMETRO_MIN = 60
 
 // Umbrales de ocupación para el indicador de color
 export const OCUPACION_UMBRAL_MEDIA = 0.8  // 80% → amarillo

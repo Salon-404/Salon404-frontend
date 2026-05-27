@@ -8,13 +8,17 @@ import {
   MESA_RECTANGULAR_ANCHO_DEFAULT,
   MESA_RECTANGULAR_ALTO_DEFAULT,
   CAPACIDAD_DEFAULT,
+  ROTACION_DEFAULT,
+  MESA_ANCHO_MIN,
+  MESA_ALTO_MIN,
+  MESA_DIAMETRO_MIN,
 } from '../constants/mesas'
 import { putLayout, deleteMesa as deleteMesaService } from '../services/mesasService'
 import { nextMesaMockId } from '../mocks/mesasMock'
 
 // Administra el estado interactivo del editor del plano.
-// Usa mouse events nativos del DOM para el drag, sin librerías externas,
-// porque las mesas se posicionan con CSS absoluto y no necesitan DnD accesible.
+// Usa mouse events nativos del DOM para drag/resize/rotate sin librerías externas.
+// arrastrandoRef.current.modo distingue entre 'mover', 'redimensionar' y 'rotar'.
 export function useFloorEditor(layoutInicial) {
   const [mesas,             setMesas]             = useState(() =>
     layoutInicial?.mesas ? JSON.parse(JSON.stringify(layoutInicial.mesas)) : []
@@ -28,13 +32,10 @@ export function useFloorEditor(layoutInicial) {
   const canvasAncho = layoutInicial?.canvasAncho ?? CANVAS_ANCHO_DEFAULT
   const canvasAlto  = layoutInicial?.canvasAlto  ?? CANVAS_ALTO_DEFAULT
 
-  // Ref para rastrear qué mesa se está arrastrando sin provocar re-renders en cada píxel
-  const arrastrandoRef = useRef(null) // { mesaId, offsetX, offsetY }
+  const arrastrandoRef = useRef(null)
 
-  // Calcula si el estado actual difiere del layout original para habilitar el botón Guardar
   const isDirty = JSON.stringify(mesas) !== JSON.stringify(layoutInicial?.mesas ?? [])
 
-  // Devuelve las dimensiones de una mesa (necesario para el clamping)
   function dimensionMesa(mesa) {
     if (mesa.forma === FORMAS.REDONDA) {
       const d = mesa.diametro ?? MESA_REDONDA_DIAMETRO_DEFAULT
@@ -46,39 +47,96 @@ export function useFloorEditor(layoutInicial) {
     }
   }
 
-  // Inicia el arrastre al hacer mousedown sobre una mesa
+  // Drag: guarda posición inicial del cursor y de la mesa para calcular deltas
   const handleMouseDown = useCallback((e, mesaId) => {
     const mesa = mesas.find(m => m.id === mesaId)
     if (!mesa) return
     arrastrandoRef.current = {
+      modo:         'mover',
       mesaId,
-      offsetX: e.clientX - mesa.x,
-      offsetY: e.clientY - mesa.y,
+      cursorStartX: e.clientX,
+      cursorStartY: e.clientY,
+      mesaStartX:   mesa.x,
+      mesaStartY:   mesa.y,
     }
   }, [mesas])
 
-  // Mueve la mesa activa mientras se arrastra, con clamping dentro del canvas
-  const handleMouseMove = useCallback((e, canvasRef) => {
-    if (!arrastrandoRef.current) return
-    const { mesaId, offsetX, offsetY } = arrastrandoRef.current
+  // Resize: guarda el valor inicial de la dimensión a cambiar
+  const handleResizeStart = useCallback((e, mesaId, campo, signo) => {
+    const mesa = mesas.find(m => m.id === mesaId)
+    if (!mesa) return
+    const valorInicial = mesa[campo] ?? (
+      campo === 'diametro' ? MESA_REDONDA_DIAMETRO_DEFAULT :
+      campo === 'ancho'    ? MESA_RECTANGULAR_ANCHO_DEFAULT :
+                             MESA_RECTANGULAR_ALTO_DEFAULT
+    )
+    arrastrandoRef.current = {
+      modo:         'redimensionar',
+      mesaId,
+      campo,
+      signo,
+      valorInicial,
+      cursorStartX: e.clientX,
+      cursorStartY: e.clientY,
+    }
+  }, [mesas])
 
-    setMesas(prev => prev.map(mesa => {
-      if (mesa.id !== mesaId) return mesa
-      const { ancho, alto } = dimensionMesa(mesa)
-      return {
-        ...mesa,
-        x: Math.max(0, Math.min(e.clientX - offsetX, canvasAncho - ancho)),
-        y: Math.max(0, Math.min(e.clientY - offsetY, canvasAlto  - alto)),
-      }
-    }))
+  // Rotate: calcula el centro de la mesa en coordenadas de pantalla usando el rect del canvas
+  const handleRotateStart = useCallback((e, mesaId, canvasRect) => {
+    const mesa = mesas.find(m => m.id === mesaId)
+    if (!mesa) return
+    const { ancho, alto } = dimensionMesa(mesa)
+    arrastrandoRef.current = {
+      modo:    'rotar',
+      mesaId,
+      centerX: canvasRect.left + mesa.x + ancho / 2,
+      centerY: canvasRect.top  + mesa.y + alto  / 2,
+    }
+  }, [mesas])
+
+  // Mouse move unificado: delega según modo activo
+  // Usa delta en lugar de offset para ser agnóstico al sistema de coordenadas
+  const handleMouseMove = useCallback((e) => {
+    if (!arrastrandoRef.current) return
+    const { modo } = arrastrandoRef.current
+
+    if (modo === 'mover') {
+      const { mesaId, cursorStartX, cursorStartY, mesaStartX, mesaStartY } = arrastrandoRef.current
+      const deltaX = e.clientX - cursorStartX
+      const deltaY = e.clientY - cursorStartY
+      setMesas(prev => prev.map(mesa => {
+        if (mesa.id !== mesaId) return mesa
+        const { ancho, alto } = dimensionMesa(mesa)
+        return {
+          ...mesa,
+          x: Math.max(0, Math.min(mesaStartX + deltaX, canvasAncho - ancho)),
+          y: Math.max(0, Math.min(mesaStartY + deltaY, canvasAlto  - alto)),
+        }
+      }))
+
+    } else if (modo === 'redimensionar') {
+      const { mesaId, cursorStartX, cursorStartY, valorInicial, campo, signo } = arrastrandoRef.current
+      const delta = (campo === 'ancho' || campo === 'diametro')
+        ? e.clientX - cursorStartX
+        : e.clientY - cursorStartY
+      const minValor = campo === 'diametro' ? MESA_DIAMETRO_MIN
+                     : campo === 'ancho'    ? MESA_ANCHO_MIN
+                                            : MESA_ALTO_MIN
+      const nuevoValor = Math.max(minValor, Math.round(valorInicial + delta * signo))
+      setMesas(prev => prev.map(m => m.id === mesaId ? { ...m, [campo]: nuevoValor } : m))
+
+    } else if (modo === 'rotar') {
+      const { mesaId, centerX, centerY } = arrastrandoRef.current
+      // +90° para que apuntar hacia arriba sea 0°
+      const grados = Math.round(Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI + 90)
+      setMesas(prev => prev.map(m => m.id === mesaId ? { ...m, rotacion: grados } : m))
+    }
   }, [canvasAncho, canvasAlto])
 
-  // Finaliza el arrastre al soltar el mouse
   const handleMouseUp = useCallback(() => {
     arrastrandoRef.current = null
   }, [])
 
-  // Agrega una mesa nueva en una posición escalonada para que no queden superpuestas
   const agregarMesa = useCallback((forma) => {
     const offset    = mesas.length * 20
     const esRedonda = forma === FORMAS.REDONDA
@@ -88,6 +146,7 @@ export function useFloorEditor(layoutInicial) {
       forma,
       capacidad: CAPACIDAD_DEFAULT,
       grupo:     GRUPOS.SIN_GRUPO,
+      rotacion:  ROTACION_DEFAULT,
       x: Math.min(50 + offset, canvasAncho - 150),
       y: Math.min(50 + offset, canvasAlto  - 120),
       ...(esRedonda
@@ -99,12 +158,10 @@ export function useFloorEditor(layoutInicial) {
     setMesaSeleccionadaId(nueva.id)
   }, [mesas.length, canvasAncho, canvasAlto])
 
-  // Actualiza campos parciales de una mesa específica (desde el panel de configuración)
   const actualizarMesa = useCallback((id, campos) => {
     setMesas(prev => prev.map(m => m.id === id ? { ...m, ...campos } : m))
   }, [])
 
-  // Elimina una mesa. Si el backend devuelve 409, la mesa no se elimina (tiene invitados).
   const eliminarMesa = useCallback(async (id) => {
     setIsEliminating(true)
     setErrorEliminar(null)
@@ -123,7 +180,6 @@ export function useFloorEditor(layoutInicial) {
     }
   }, [])
 
-  // Guarda el layout completo en el backend
   const guardarLayout = useCallback(async () => {
     setIsSaving(true)
     setErrorGuardar(null)
@@ -150,6 +206,8 @@ export function useFloorEditor(layoutInicial) {
     errorEliminar,
     limpiarErrorEliminar: () => setErrorEliminar(null),
     handleMouseDown,
+    handleResizeStart,
+    handleRotateStart,
     handleMouseMove,
     handleMouseUp,
     agregarMesa,
