@@ -172,6 +172,22 @@ export default function ReservaDetailPage() {
             Editar
           </button>
 
+          {/* Acceso rápido al módulo de mesas para esta reserva */}
+          {IS_ADMIN && (
+            <Link
+              to={`/mesas/asignar/${id}`}
+              className="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-700 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition-colors"
+            >
+              Asignar mesas
+            </Link>
+          )}
+          <Link
+            to={`/mesas?reserva=${id}`}
+            className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors"
+          >
+            Ver plano
+          </Link>
+
           {IS_ADMIN && reserva.estado !== 'confirmada' && reserva.estado !== 'cancelada' && (
             <button
               onClick={handleConfirmar}
