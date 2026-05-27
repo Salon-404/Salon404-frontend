@@ -2,18 +2,23 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import MesaShape from '../../components/mesas/MesaShape'
 import { getPlano } from '../../services/mesasService'
+import { getReserva } from '../../services/reservasService'
 
 // Vista de solo lectura del plano del salón.
 // Los clientes ven la distribución de mesas con la ocupación de cada una.
 // Si se pasa ?reserva=ID en la URL, muestra también los invitados asignados.
+const IS_ADMIN = true // reemplazar con lectura del JWT cuando esté Auth
+
 export default function PlanoPage() {
   const [searchParams]           = useSearchParams()
-  const reservaId                = searchParams.get('reserva') ? Number(searchParams.get('reserva')) : 1
+  const reservaParam             = searchParams.get('reserva')
+  const reservaId                = reservaParam ? Number(reservaParam) : 1
 
   const [plano,    setPlano]     = useState(null)
   const [loading,  setLoading]   = useState(true)
   const [error,    setError]     = useState(null)
   const [mesaOpen, setMesaOpen]  = useState(null) // mesa seleccionada para ver invitados
+  const [reserva,  setReserva]   = useState(null)
 
   useEffect(() => {
     async function cargar() {
@@ -29,6 +34,11 @@ export default function PlanoPage() {
     }
     cargar()
   }, [reservaId])
+
+  useEffect(() => {
+    if (!reservaParam) return
+    getReserva(reservaId).then(setReserva).catch(() => {})
+  }, [reservaId, reservaParam])
 
   if (loading) {
     return (
@@ -67,14 +77,30 @@ export default function PlanoPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Distribución de mesas</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Hacé click en una mesa para ver los invitados</p>
+            {reserva ? (
+              <p className="text-sm text-slate-500 mt-0.5">
+                Reserva #{reserva.id} — {reserva.nombreCliente} · Hacé click en una mesa para ver los invitados
+              </p>
+            ) : (
+              <p className="text-sm text-slate-500 mt-0.5">Hacé click en una mesa para ver los invitados</p>
+            )}
           </div>
-          <Link
-            to="/reservas"
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            ← Volver a reservas
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to={reservaParam ? `/reservas/${reservaId}` : '/reservas'}
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              {reservaParam ? '← Volver a la reserva' : '← Volver a reservas'}
+            </Link>
+            {IS_ADMIN && (
+              <Link
+                to="/mesas/editor"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition-colors"
+              >
+                Editar plano
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Canvas del plano */}

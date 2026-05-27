@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import {
   DndContext,
   DragOverlay,
@@ -11,12 +13,24 @@ import { useAsignaciones } from '../../hooks/useAsignaciones'
 import InvitadoItem from '../../components/mesas/InvitadoItem'
 import MesaDropZone from '../../components/mesas/MesaDropZone'
 import CapacidadAlert from '../../components/mesas/CapacidadAlert'
+import { getReserva } from '../../services/reservasService'
+import { TIPOS_EVENTO } from '../../constants/reservas'
 
 // Vista de asignación de invitados a mesas (solo admin).
 // Panel izquierdo: lista de invitados sin asignar.
 // Panel derecho: tarjetas de mesas donde se sueltan los invitados.
+function getLabelFromValue(list, value) {
+  return list.find(item => item.value === value)?.label ?? value
+}
+
 export default function AsignarPage() {
   const { reservaId } = useParams()
+
+  const [reserva, setReserva] = useState(null)
+
+  useEffect(() => {
+    getReserva(reservaId).then(setReserva).catch(() => {})
+  }, [reservaId])
 
   const {
     mesasConInvitados,
@@ -105,7 +119,18 @@ export default function AsignarPage() {
               ← Volver a la reserva
             </Link>
             <span className="text-slate-500">|</span>
-            <h1 className="font-semibold text-base">Asignar invitados a mesas</h1>
+            <div>
+              <h1 className="font-semibold text-base">Asignar invitados a mesas</h1>
+              {reserva && (
+                <p className="text-slate-400 text-xs mt-0.5">
+                  Reserva #{reserva.id} — {reserva.nombreCliente}
+                  {' · '}
+                  {format(new Date(reserva.fecha + 'T12:00:00'), "d 'de' MMMM yyyy", { locale: es })}
+                  {' · '}
+                  {getLabelFromValue(TIPOS_EVENTO, reserva.tipoEvento)}
+                </p>
+              )}
+            </div>
           </div>
           <span className="text-slate-300 text-sm">
             {totalAsignados} asignados · {sinAsignar.length} sin asignar
