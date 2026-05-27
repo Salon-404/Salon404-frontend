@@ -7,9 +7,9 @@ import ReservaDetailPage from './pages/reservas/ReservaDetailPage'
 import PlanoPage from './pages/mesas/PlanoPage'
 import EditorPage from './pages/mesas/EditorPage'
 import AsignarPage from './pages/mesas/AsignarPage'
-
-// Módulo Auth — Federico Oviedo (por hacer)
-// import { AuthRoutes } from './pages/auth/AuthRoutes'
+import LoginPage from './pages/auth/LoginPage'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import { ROLES } from './constants/auth'
 
 // Módulo Invitados — Victor Balbuena (por hacer)
 // import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
@@ -20,6 +20,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/reservas" replace />} />
 
+        {/* Módulo Auth — Federico Oviedo */}
+        <Route path="/login" element={<LoginPage />} />
+
         {/* Módulo Reservas — Federico Oviedo */}
         <Route path="/reservas" element={<ReservasPage />} />
         <Route path="/reservas/calendario" element={<CalendarioPage />} />
@@ -29,10 +32,13 @@ export default function App() {
 
         {/* Módulo Mesas — Federico Oviedo */}
         <Route path="/mesas" element={<PlanoPage />} />
-        <Route path="/mesas/editor" element={<EditorPage />} />
-        <Route path="/mesas/asignar/:reservaId" element={<AsignarPage />} />
+        <Route path="/mesas/editor" element={
+          <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
+        } />
+        <Route path="/mesas/asignar/:reservaId" element={
+          <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
+        } />
 
-        {/* <Route path="/login" element={<AuthRoutes />} /> */}
         {/* <Route path="/invitados/*" element={<InvitadosRoutes />} /> */}
       </Routes>
     </BrowserRouter>
