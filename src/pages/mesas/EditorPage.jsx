@@ -1,5 +1,5 @@
-import { useRef, useCallback } from 'react'
-import { Link, useBlocker } from 'react-router-dom'
+import { useRef, useCallback, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useMesas } from '../../hooks/useMesas'
 import { useFloorEditor } from '../../hooks/useFloorEditor'
 import MesaShape from '../../components/mesas/MesaShape'
@@ -21,6 +21,18 @@ export default function EditorPage() {
 // Componente interno que solo se monta cuando el layout ya está disponible
 function EditorCanvas({ layoutInicial }) {
   const canvasRef = useRef(null)
+
+  // Avisa al usuario si intenta cerrar la pestaña con cambios sin guardar
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      if (isDirty) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isDirty])
 
   const {
     mesas,
