@@ -4,6 +4,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import StatusBadge from '../../components/reservas/StatusBadge'
 import { getReserva, updateEstado } from '../../services/reservasService'
+import { getPlano } from '../../services/mesasService'
 import { TIPOS_EVENTO, HORARIOS } from '../../constants/reservas'
 
 const IS_ADMIN = true // reemplazar con lectura del JWT cuando esté Auth
@@ -21,6 +22,7 @@ export default function ReservaDetailPage() {
   const [error, setError] = useState(null)
   const [accionando, setAccionando] = useState(false)
   const [modalCancelar, setModalCancelar] = useState(false)
+  const [resumenMesas, setResumenMesas] = useState(null)
 
   useEffect(() => {
     getReserva(id)
@@ -33,6 +35,16 @@ export default function ReservaDetailPage() {
         }
       })
       .finally(() => setLoading(false))
+  }, [id])
+
+  useEffect(() => {
+    getPlano(id)
+      .then(plano => {
+        const totalAsignados = plano.ocupacion.reduce((acc, o) => acc + o.asignados, 0)
+        const mesasEnUso = plano.ocupacion.filter(o => o.asignados > 0).length
+        setResumenMesas({ totalAsignados, mesasEnUso, totalInvitados: plano.totalInvitados })
+      })
+      .catch(() => {})
   }, [id])
 
   async function handleConfirmar() {
@@ -171,6 +183,31 @@ export default function ReservaDetailPage() {
           >
             Editar
           </button>
+
+          {/* Acceso rápido al módulo de mesas para esta reserva */}
+          {IS_ADMIN && (
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/mesas/asignar/${id}`}
+                className="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-700 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition-colors"
+              >
+                Asignar mesas
+              </Link>
+              {resumenMesas && (
+                <span className={`text-xs font-medium ${resumenMesas.totalAsignados > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                  {resumenMesas.totalAsignados > 0
+                    ? `${resumenMesas.totalAsignados}/${resumenMesas.totalInvitados} invitados · ${resumenMesas.mesasEnUso} ${resumenMesas.mesasEnUso === 1 ? 'mesa' : 'mesas'}`
+                    : 'Sin invitados asignados'}
+                </span>
+              )}
+            </div>
+          )}
+          <Link
+            to={`/mesas?reserva=${id}`}
+            className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors"
+          >
+            Ver plano
+          </Link>
 
           {IS_ADMIN && reserva.estado !== 'confirmada' && reserva.estado !== 'cancelada' && (
             <button
