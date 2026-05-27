@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import LoginPage from './pages/auth/LoginPage'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import { ROLES } from './constants/auth'
 
 // Rutas de cada módulo se descomentan a medida que se desarrollan
-
-// Módulo Auth — Juan Cruz Merino
-// import { AuthRoutes } from './pages/auth/AuthRoutes'
 
 // Módulo Reservas — Federico Oviedo
 // import { ReservasRoutes } from './pages/reservas/ReservasRoutes'
@@ -17,9 +17,21 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/reservas" replace />} />
 
-        {/* <Route path="/login" element={<AuthRoutes />} /> */}
+        {/* Módulo Auth — Federico Oviedo */}
+        <Route path="/login" element={<LoginPage />} />
+
         {/* <Route path="/reservas/*" element={<ReservasRoutes />} /> */}
         {/* <Route path="/invitados/*" element={<InvitadosRoutes />} /> */}
+
+        {/*
+          Al integrar feature/mesas, wrappear las rutas admin así:
+          <Route path="/mesas/editor" element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
+          } />
+          <Route path="/mesas/asignar/:reservaId" element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
+          } />
+        */}
       </Routes>
     </BrowserRouter>
   )
