@@ -5,6 +5,7 @@ import { useFloorEditor } from '../../hooks/useFloorEditor'
 import MesaShape from '../../components/mesas/MesaShape'
 import MesaConfigPanel from '../../components/mesas/MesaConfigPanel'
 import { FORMAS } from '../../constants/mesas'
+import UserMenu from '../../components/auth/UserMenu'
 
 // Editor visual del plano del salón (solo admin).
 // El admin puede agregar, mover, redimensionar y rotar mesas sobre un canvas libre.
@@ -94,6 +95,7 @@ function EditorCanvas({ layoutInicial }) {
           >
             {isSaving ? 'Guardando…' : 'Guardar layout'}
           </button>
+          <UserMenu />
         </div>
       </header>
 

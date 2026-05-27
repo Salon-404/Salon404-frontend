@@ -3,13 +3,13 @@ import { useSearchParams, Link } from 'react-router-dom'
 import MesaShape from '../../components/mesas/MesaShape'
 import { getPlano } from '../../services/mesasService'
 import { getReserva } from '../../services/reservasService'
-
-// Vista de solo lectura del plano del salón.
-// Los clientes ven la distribución de mesas con la ocupación de cada una.
-// Si se pasa ?reserva=ID en la URL, muestra también los invitados asignados.
-const IS_ADMIN = true // reemplazar con lectura del JWT cuando esté Auth
+import { useAuth } from '../../context/AuthContext'
+import { ROLES } from '../../constants/auth'
+import UserMenu from '../../components/auth/UserMenu'
 
 export default function PlanoPage() {
+  const { user } = useAuth()
+  const isAdmin = user?.rol === ROLES.ADMIN
   const [searchParams]           = useSearchParams()
   const reservaParam             = searchParams.get('reserva')
   const reservaId                = reservaParam ? Number(reservaParam) : 1
@@ -92,7 +92,7 @@ export default function PlanoPage() {
             >
               {reservaParam ? '← Volver a la reserva' : '← Volver a reservas'}
             </Link>
-            {IS_ADMIN && (
+            {isAdmin && (
               <Link
                 to="/mesas/editor"
                 className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition-colors"
@@ -100,6 +100,7 @@ export default function PlanoPage() {
                 Editar plano
               </Link>
             )}
+            <UserMenu />
           </div>
         </div>
 
