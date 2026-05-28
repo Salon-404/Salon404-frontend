@@ -3,7 +3,6 @@ import {
   layoutMock,
   invitadosMock,
   asignacionesMock,
-  MESAS_CON_ASIGNACIONES,
   nextMesaMockId,
   nextAsignMockId,
 } from '../mocks/mesasMock'
@@ -50,7 +49,10 @@ export async function putLayout(layout) {
 export async function deleteMesa(mesaId) {
   if (USE_MOCK) {
     await delay()
-    if (MESAS_CON_ASIGNACIONES.includes(mesaId)) {
+    const tieneAsignaciones = Object.values(asignacionesState).some(asigs =>
+      asigs.some(a => a.mesaId === mesaId)
+    )
+    if (tieneAsignaciones) {
       const error = new Error('La mesa tiene invitados asignados')
       error.response = { status: 409 }
       throw error
@@ -73,7 +75,10 @@ export async function getAsignaciones(reservaId) {
     const mesasConInvitados = layoutState.mesas.map(mesa => {
       const invitadosDeMesa = asigs
         .filter(a => a.mesaId === mesa.id)
-        .map(a => invitados.find(i => i.id === a.invitadoId))
+        .map(a => {
+          const inv = invitados.find(i => i.id === a.invitadoId)
+          return inv ? { ...inv, _asignacionId: a.id } : null
+        })
         .filter(Boolean)
       return { mesaId: mesa.id, invitados: invitadosDeMesa }
     })

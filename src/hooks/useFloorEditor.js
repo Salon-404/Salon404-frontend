@@ -33,8 +33,9 @@ export function useFloorEditor(layoutInicial) {
   const canvasAlto  = layoutInicial?.canvasAlto  ?? CANVAS_ALTO_DEFAULT
 
   const arrastrandoRef = useRef(null)
+  const layoutSnapshotRef = useRef(JSON.parse(JSON.stringify(layoutInicial?.mesas ?? [])))
 
-  const isDirty = JSON.stringify(mesas) !== JSON.stringify(layoutInicial?.mesas ?? [])
+  const isDirty = JSON.stringify(mesas) !== JSON.stringify(layoutSnapshotRef.current)
 
   function dimensionMesa(mesa) {
     if (mesa.forma === FORMAS.REDONDA) {
@@ -185,6 +186,7 @@ export function useFloorEditor(layoutInicial) {
     setErrorGuardar(null)
     try {
       await putLayout({ mesas, canvasAncho, canvasAlto })
+      layoutSnapshotRef.current = JSON.parse(JSON.stringify(mesas))
     } catch {
       setErrorGuardar('No se pudo guardar el plano. Intentá de nuevo.')
     } finally {

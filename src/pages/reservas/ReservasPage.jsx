@@ -14,7 +14,7 @@ export default function ReservasPage() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [filtroEstado, setFiltroEstado] = useState('')
-  const [filtroMes, setFiltroMes] = useState(MES_ACTUAL)
+  const [filtroMes, setFiltroMes] = useState('')
   const [filtroAnio] = useState(ANIO_ACTUAL)
 
   useEffect(() => {
