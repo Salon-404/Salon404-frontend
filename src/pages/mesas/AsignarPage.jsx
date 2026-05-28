@@ -15,6 +15,7 @@ import MesaDropZone from '../../components/mesas/MesaDropZone'
 import CapacidadAlert from '../../components/mesas/CapacidadAlert'
 import { getReserva } from '../../services/reservasService'
 import { TIPOS_EVENTO } from '../../constants/reservas'
+import UserMenu from '../../components/auth/UserMenu'
 
 // Vista de asignación de invitados a mesas (solo admin).
 // Panel izquierdo: lista de invitados sin asignar.
@@ -132,9 +133,12 @@ export default function AsignarPage() {
               )}
             </div>
           </div>
-          <span className="text-slate-300 text-sm">
-            {totalAsignados} asignados · {sinAsignar.length} sin asignar
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-slate-300 text-sm">
+              {totalAsignados} asignados · {sinAsignar.length} sin asignar
+            </span>
+            <UserMenu />
+          </div>
         </header>
 
         {/* Alerta de capacidad excedida */}
