@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getDisponibilidad } from '../../services/reservasService'
 import CalendarView from '../../components/reservas/CalendarView'
+import UserMenu from '../../components/auth/UserMenu'
 
 export default function CalendarioPage() {
   const [searchParams] = useSearchParams()
@@ -38,9 +39,12 @@ export default function CalendarioPage() {
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
         <span className="font-bold text-lg tracking-wide">SALON 404</span>
-        <Link to="/reservas" className="text-slate-300 hover:text-white text-sm">
-          ← Volver a Reservas
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to="/reservas" className="text-slate-300 hover:text-white text-sm">
+            ← Volver a Reservas
+          </Link>
+          <UserMenu />
+        </div>
       </nav>
 
       <main className="max-w-4xl mx-auto px-4 py-8">

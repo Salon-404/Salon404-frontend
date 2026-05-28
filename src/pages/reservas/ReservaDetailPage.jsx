@@ -6,14 +6,17 @@ import StatusBadge from '../../components/reservas/StatusBadge'
 import { getReserva, updateEstado } from '../../services/reservasService'
 import { getPlano } from '../../services/mesasService'
 import { TIPOS_EVENTO, HORARIOS } from '../../constants/reservas'
-
-const IS_ADMIN = true // reemplazar con lectura del JWT cuando esté Auth
+import { useAuth } from '../../context/AuthContext'
+import { ROLES } from '../../constants/auth'
+import UserMenu from '../../components/auth/UserMenu'
 
 function getLabelFromValue(list, value) {
   return list.find((item) => item.value === value)?.label ?? value
 }
 
 export default function ReservaDetailPage() {
+  const { user } = useAuth()
+  const isAdmin = user?.rol === ROLES.ADMIN
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -105,7 +108,10 @@ export default function ReservaDetailPage() {
           >
             ← Volver
           </Link>
-          <StatusBadge estado={reserva.estado} />
+          <div className="flex items-center gap-3">
+            <UserMenu />
+            <StatusBadge estado={reserva.estado} />
+          </div>
         </div>
 
         <h1 className="text-2xl font-bold text-slate-800 mb-6">
@@ -185,7 +191,7 @@ export default function ReservaDetailPage() {
           </button>
 
           {/* Acceso rápido al módulo de mesas para esta reserva */}
-          {IS_ADMIN && (
+          {isAdmin && (
             <div className="flex items-center gap-2">
               <Link
                 to={`/mesas/asignar/${id}`}
@@ -209,7 +215,7 @@ export default function ReservaDetailPage() {
             Ver plano
           </Link>
 
-          {IS_ADMIN && reserva.estado !== 'confirmada' && reserva.estado !== 'cancelada' && (
+          {isAdmin && reserva.estado !== 'confirmada' && reserva.estado !== 'cancelada' && (
             <button
               onClick={handleConfirmar}
               disabled={accionando}
@@ -219,7 +225,7 @@ export default function ReservaDetailPage() {
             </button>
           )}
 
-          {IS_ADMIN && reserva.estado !== 'cancelada' && (
+          {isAdmin && reserva.estado !== 'cancelada' && (
             <button
               onClick={() => setModalCancelar(true)}
               disabled={accionando}

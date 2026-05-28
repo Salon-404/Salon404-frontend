@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getReservas } from '../../services/reservasService'
 import { ESTADOS_OPCIONES, MESES } from '../../constants/reservas'
 import ReservaCard from '../../components/reservas/ReservaCard'
+import UserMenu from '../../components/auth/UserMenu'
 
 const ANIO_ACTUAL = new Date().getFullYear()
 const MES_ACTUAL = new Date().getMonth() + 1
@@ -31,12 +32,15 @@ export default function ReservasPage() {
         {/* Encabezado */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Reservas</h1>
-          <button
-            onClick={() => navigate('/reservas/nueva')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            + Nueva Reserva
-          </button>
+          <div className="flex items-center gap-3">
+            <UserMenu />
+            <button
+              onClick={() => navigate('/reservas/nueva')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              + Nueva Reserva
+            </button>
+          </div>
         </div>
 
         {/* Filtros */}
