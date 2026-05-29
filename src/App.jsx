@@ -18,7 +18,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/reservas" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Módulo Auth — Federico Oviedo */}
         <Route path="/login" element={<LoginPage />} />

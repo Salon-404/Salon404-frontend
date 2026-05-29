@@ -1,19 +1,17 @@
 import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 
 // Chip arrastrable que representa un invitado.
 // 'origen' indica si viene de la lista sin asignar o de una mesa específica,
 // lo que permite al handler de drop decidir qué acción realizar.
 export default function InvitadoItem({ invitado, origen, asignacionId }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id:   `invitado-${invitado.id}`,
     data: { invitadoId: invitado.id, origen, asignacionId },
   })
 
   const estilo = {
-    transform: CSS.Translate.toString(transform),
-    opacity:   isDragging ? 0.5 : 1,
-    cursor:    isDragging ? 'grabbing' : 'grab',
+    opacity: isDragging ? 0 : 1,
+    cursor:  isDragging ? 'grabbing' : 'grab',
   }
 
   return (

@@ -94,6 +94,57 @@ export function useAsignaciones(reservaId) {
     }
   }, [reservaId, sinAsignar, mesasConInvitados])
 
+  // Mueve un invitado directamente de una mesa a otra en una sola operación optimista,
+  // sin pasar por la lista de sin asignar.
+  const moverInvitado = useCallback(async (invitadoId, origenMesaId, destinoMesaId, asignacionId) => {
+    const invitado = mesasConInvitados
+      .flatMap(m => m.invitados)
+      .find(i => i.id === invitadoId)
+
+    if (!invitado) return
+
+    const snapMesas = mesasConInvitados.map(m => ({ ...m, invitados: [...m.invitados] }))
+    const snapSin   = [...sinAsignar]
+
+    // Única actualización optimista: saca de origen, mete en destino (sin tocar sinAsignar)
+    setMesasConInvitados(prev => prev.map(m => {
+      if (m.id === destinoMesaId) {
+        return {
+          ...m,
+          invitados: [...m.invitados.filter(i => i.id !== invitadoId), invitado],
+        }
+      }
+      return {
+        ...m,
+        invitados: m.invitados.filter(i => i.id !== invitadoId),
+      }
+    }))
+
+    try {
+      await deleteAsignacion(asignacionId)
+      const nuevaAsignacion = await createAsignacion({ reservaId, mesaId: destinoMesaId, invitadoId })
+
+      setMesasConInvitados(prev => prev.map(m => ({
+        ...m,
+        invitados: m.invitados.map(i =>
+          i.id === invitadoId ? { ...i, _asignacionId: nuevaAsignacion.id } : i
+        ),
+      })))
+    } catch (err) {
+      setMesasConInvitados(snapMesas)
+      setSinAsignar(snapSin)
+
+      if (err.response?.data?.code === 'CAPACIDAD_EXCEDIDA') {
+        const mesa = mesasConInvitados.find(m => m.id === destinoMesaId)
+        setErrorCapacidad({
+          mesaNombre: mesa?.nombre ?? 'La mesa',
+          capacidad:  err.response.data.capacidad,
+          asignados:  err.response.data.asignados,
+        })
+      }
+    }
+  }, [reservaId, mesasConInvitados, sinAsignar])
+
   // Quita un invitado de su mesa y lo devuelve a la lista sin asignar
   const desasignarInvitado = useCallback(async (asignacionId) => {
     // Busca el invitado que tiene este asignacionId
@@ -132,5 +183,6 @@ export function useAsignaciones(reservaId) {
     limpiarErrorCapacidad: () => setErrorCapacidad(null),
     asignarInvitado,
     desasignarInvitado,
+    moverInvitado,
   }
 }

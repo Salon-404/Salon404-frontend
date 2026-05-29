@@ -13,6 +13,7 @@ import { useAsignaciones } from '../../hooks/useAsignaciones'
 import InvitadoItem from '../../components/mesas/InvitadoItem'
 import MesaDropZone from '../../components/mesas/MesaDropZone'
 import CapacidadAlert from '../../components/mesas/CapacidadAlert'
+import UnassignedDropZone from '../../components/mesas/UnassignedDropZone'
 import { getReserva } from '../../services/reservasService'
 import { TIPOS_EVENTO } from '../../constants/reservas'
 import UserMenu from '../../components/auth/UserMenu'
@@ -42,6 +43,7 @@ export default function AsignarPage() {
     limpiarErrorCapacidad,
     asignarInvitado,
     desasignarInvitado,
+    moverInvitado,
   } = useAsignaciones(Number(reservaId))
 
   const [busqueda,        setBusqueda]        = useState('')
@@ -71,6 +73,11 @@ export default function AsignarPage() {
 
     const { invitadoId, origen, asignacionId } = active.data.current
 
+    if (over.id === 'lista-sin-asignar') {
+      if (origen?.mesaId) desasignarInvitado(asignacionId)
+      return
+    }
+
     // Determina el ID de la mesa de destino desde el ID del droppable
     if (!over.id.toString().startsWith('mesa-')) return
     const mesaDestinoId = Number(over.id.toString().replace('mesa-', ''))
@@ -79,10 +86,7 @@ export default function AsignarPage() {
     if (origen?.mesaId === mesaDestinoId) return
 
     if (origen?.mesaId) {
-      // El invitado viene de otra mesa: primero desasignar, luego reasignar
-      desasignarInvitado(asignacionId).then(() => {
-        asignarInvitado(invitadoId, mesaDestinoId)
-      })
+      moverInvitado(invitadoId, origen.mesaId, mesaDestinoId, asignacionId)
     } else {
       // El invitado viene de la lista sin asignar
       asignarInvitado(invitadoId, mesaDestinoId)
@@ -155,7 +159,7 @@ export default function AsignarPage() {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Panel izquierdo: invitados sin asignar */}
-          <aside className="w-64 bg-white border-r border-slate-200 flex flex-col p-4 overflow-y-auto">
+          <aside className="w-64 bg-white border-r border-slate-200 flex flex-col p-4 overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: 'stable' }}>
             <div className="mb-3">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 Sin asignar ({sinAsignar.length})
@@ -169,16 +173,18 @@ export default function AsignarPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-1.5 flex-1">
-              {invitadosFiltrados.length === 0 && (
-                <p className="text-xs text-slate-400 italic text-center mt-4">
-                  {busqueda ? 'Sin resultados' : 'Todos los invitados ya tienen mesa'}
-                </p>
-              )}
-              {invitadosFiltrados.map(inv => (
-                <InvitadoItem key={inv.id} invitado={inv} origen="sinAsignar" />
-              ))}
-            </div>
+            <UnassignedDropZone>
+              <div className="flex flex-col gap-1.5">
+                {invitadosFiltrados.length === 0 && (
+                  <p className="text-xs text-slate-400 italic text-center mt-4">
+                    {busqueda ? 'Sin resultados' : 'Todos los invitados ya tienen mesa'}
+                  </p>
+                )}
+                {invitadosFiltrados.map(inv => (
+                  <InvitadoItem key={inv.id} invitado={inv} origen="sinAsignar" />
+                ))}
+              </div>
+            </UnassignedDropZone>
 
             <p className="text-xs text-slate-400 mt-3 text-center leading-snug">
               Arrastrá un invitado hacia una mesa
@@ -186,7 +192,7 @@ export default function AsignarPage() {
           </aside>
 
           {/* Panel derecho: grid de mesas */}
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-6" style={{ scrollbarGutter: 'stable' }}>
             {mesasConInvitados.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <p className="text-sm">El salón no tiene mesas configuradas.</p>
@@ -204,7 +210,6 @@ export default function AsignarPage() {
                     key={mesa.id}
                     mesa={mesa}
                     invitados={mesa.invitados}
-                    onDesasignar={desasignarInvitado}
                   />
                 ))}
               </div>

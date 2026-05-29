@@ -5,7 +5,7 @@ import InvitadoItem from './InvitadoItem'
 
 // Tarjeta de mesa que actúa como área de drop para asignar invitados.
 // Resalta visualmente cuando un invitado se arrastra encima.
-export default function MesaDropZone({ mesa, invitados, onDesasignar }) {
+export default function MesaDropZone({ mesa, invitados }) {
   const { setNodeRef, isOver } = useDroppable({ id: `mesa-${mesa.id}` })
 
   const colorClases = GRUPO_COLORES[mesa.grupo] || GRUPO_COLORES[GRUPOS.SIN_GRUPO]
@@ -46,22 +46,12 @@ export default function MesaDropZone({ mesa, invitados, onDesasignar }) {
         {invitados.map(inv => {
           // Los invitados dentro de una mesa también son arrastrables (para moverlos a otra mesa)
           return (
-            <div key={inv.id} className="flex items-center gap-0.5">
-              <InvitadoItem
-                invitado={inv}
-                origen={{ mesaId: mesa.id }}
-                asignacionId={inv._asignacionId}
-              />
-              {/* Botón para desasignar sin drag */}
-              <button
-                onClick={() => onDesasignar(inv._asignacionId)}
-                className="text-slate-300 hover:text-red-500 text-xs ml-0.5 transition-colors"
-                title="Quitar de esta mesa"
-                aria-label={`Quitar a ${inv.nombre} de la mesa`}
-              >
-                ×
-              </button>
-            </div>
+            <InvitadoItem
+              key={inv.id}
+              invitado={inv}
+              origen={{ mesaId: mesa.id }}
+              asignacionId={inv._asignacionId}
+            />
           )
         })}
 
