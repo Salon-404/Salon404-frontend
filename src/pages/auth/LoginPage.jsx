@@ -27,7 +27,7 @@ export default function LoginPage() {
   async function onSubmit({ email, password }) {
     setErrorGeneral(null)
     try {
-      await login({ email, password })
+      await login( {email, password} )
       navigate(destino, { replace: true })
     } catch (err) {
       if (err?.response?.status === 401) {

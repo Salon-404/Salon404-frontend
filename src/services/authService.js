@@ -1,13 +1,9 @@
 import axios from 'axios'
 import { usuariosMock } from '../mocks/authMock'
 import { TOKEN_KEY } from '../constants/auth'
-
+import { services } from './enpointsUrl';
 // Poner en false cuando el backend de Juan Cruz (Dupla 1) esté listo
-const USE_MOCK = true
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_AUTH_URL,
-})
+const USE_MOCK = false
 
 function delay(ms = 250) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -17,23 +13,18 @@ function generarTokenMock(usuario) {
   return `mock_token_${usuario.id}_${Date.now()}`
 }
 
-export async function login({ email, password }) {
-  if (USE_MOCK) {
-    await delay()
-    const usuario = usuariosMock.find(
-      u => u.email === email && u.password === password
-    )
-    if (!usuario) {
-      const error = new Error('Credenciales incorrectas')
-      error.response = { status: 401 }
-      throw error
-    }
-    const { password: _, ...usuarioSinPassword } = usuario
-    const token = generarTokenMock(usuarioSinPassword)
-    return { token, user: usuarioSinPassword }
+export async function login({email,password}) {
+  try
+  {
+    const response = await axios.post( `${services.auth}login`,{email,password});
+    return response.data;
   }
-  const { data } = await api.post('/api/auth/login', { email, password })
-  return data
+  catch(error)
+  {
+     throw new Error(error.message || "No se pudo conectar con el servidor");
+  }
+
+ 
 }
 
 export async function logout() {
