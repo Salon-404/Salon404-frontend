@@ -33,7 +33,7 @@ export default function App() {
         {/* Módulo Reservas — Federico Oviedo */}
         <Route path="/reservas" element={<ReservasPage />} />
         <Route path="/reservas/calendario" element={<CalendarioPage />} />
-        <Route path="/reservas/nueva" element={<NuevaReservaPage />} />
+        <Route path="/reservas/nueva" element={<ProtectedRoute rolRequerido={ROLES.CLIENTE}><NuevaReservaPage /></ProtectedRoute>} />
         <Route path="/reservas/:id" element={<ReservaDetailPage />} />
         <Route path="/reservas/:id/editar" element={<EditarReservaPage />} />
 

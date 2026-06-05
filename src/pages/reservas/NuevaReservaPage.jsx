@@ -16,7 +16,7 @@ export default function NuevaReservaPage() {
     setErrorGeneral(null)
     try {
       const nueva = await createReserva(data)
-      navigate(`/reservas/${nueva.id}`)
+      
     } catch (err) {
       if (err?.response?.status === 409) {
         setErrorGeneral('Esa fecha ya está ocupada. Elegí otra fecha.')

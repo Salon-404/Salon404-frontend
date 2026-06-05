@@ -26,6 +26,7 @@ export default function DisponibilityPage() {
       setLoading(false);
     }
   }
+
   load();
 }, []);
 
