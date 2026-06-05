@@ -21,17 +21,27 @@ export async function login({email,password}) {
   }
   catch(error)
   {
-     throw new Error(error.message || "No se pudo conectar con el servidor");
+     throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
   }
-
- 
 }
 
-export async function logout() {
-  if (USE_MOCK) {
-    await delay(100)
-    return null
+export async function register({name,lastName,email,password,phone})
+{
+  try
+  {
+    const response = await axios.post(`${services.auth}register`,{name,lastName,email,password,phone});
+    return response.data;
+
   }
+  catch(error)
+  {
+    throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+  }
+
+}
+
+
+export async function logout() {
   await api.post('/api/auth/logout', null, {
     headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
   })
