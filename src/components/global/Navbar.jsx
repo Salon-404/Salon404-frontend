@@ -19,7 +19,7 @@ export default function Navbar() {
             to="/"
             className="text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
           >
-            Salon 404
+            EventosPro
           </Link>
         </div>
 

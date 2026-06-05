@@ -21,7 +21,7 @@ export default function HomePage() {
           en un espacio moderno y adaptable.
         </p>
 
-        <button className="rounded-lg bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700">
+        <button onClick={()=> navigate("/disponibilidad")} className="rounded-lg bg-indigo-600 px-6 py-3 text-white hover:bg-indigo-700">
           Ver disponibilidad
         </button>
       </section>
