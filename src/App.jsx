@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import HomePage from './pages/home/HomePage'
 import ReservasPage from './pages/reservas/ReservasPage'
 import NuevaReservaPage from './pages/reservas/NuevaReservaPage'
 import EditarReservaPage from './pages/reservas/EditarReservaPage'
@@ -8,6 +9,7 @@ import PlanoPage from './pages/mesas/PlanoPage'
 import EditorPage from './pages/mesas/EditorPage'
 import AsignarPage from './pages/mesas/AsignarPage'
 import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ROLES } from './constants/auth'
 
@@ -18,10 +20,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
 
         {/* Módulo Auth — Federico Oviedo */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        
+        <Route path="/home" element={<HomePage />} />
+        
 
         {/* Módulo Reservas — Federico Oviedo */}
         <Route path="/reservas" element={<ReservasPage />} />
