@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ReservaForm from '../../components/reservas/ReservaForm'
 import { createReserva } from '../../services/reservasService'
+import { useAuth } from '../../context/AuthContext'
 
 export default function NuevaReservaPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorGeneral, setErrorGeneral] = useState(null)
@@ -15,7 +17,7 @@ export default function NuevaReservaPage() {
     setIsSubmitting(true)
     setErrorGeneral(null)
     try {
-      const nueva = await createReserva(data)
+      const nueva = await createReserva({ ...data, userId: user?.id })
       navigate(`/reservas/${nueva.id}`)
     } catch (err) {
       if (err?.response?.status === 409) {
