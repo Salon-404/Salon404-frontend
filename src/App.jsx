@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/home/HomePage'
+import DisponibilityPage from './pages/Disponibility/DisponibilityPage'
 import ReservasPage from './pages/reservas/ReservasPage'
 import NuevaReservaPage from './pages/reservas/NuevaReservaPage'
 import EditarReservaPage from './pages/reservas/EditarReservaPage'
@@ -27,12 +28,12 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         
         <Route path="/home" element={<HomePage />} />
-        
+        <Route path="/disponibilidad" element={<DisponibilityPage />} />
 
         {/* Módulo Reservas — Federico Oviedo */}
         <Route path="/reservas" element={<ReservasPage />} />
         <Route path="/reservas/calendario" element={<CalendarioPage />} />
-        <Route path="/reservas/nueva" element={<NuevaReservaPage />} />
+        <Route path="/reservas/nueva" element={<ProtectedRoute rolRequerido={ROLES.CLIENTE}><NuevaReservaPage /></ProtectedRoute>} />
         <Route path="/reservas/:id" element={<ReservaDetailPage />} />
         <Route path="/reservas/:id/editar" element={<EditarReservaPage />} />
 

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { usuariosMock } from '../mocks/authMock'
 import { TOKEN_KEY } from '../constants/auth'
-import { services } from './enpointsUrl';
+import { services } from './endpointsUrl';
 // Poner en false cuando el backend de Juan Cruz (Dupla 1) esté listo
 const USE_MOCK = false
 

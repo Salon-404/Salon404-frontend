@@ -1,6 +1,6 @@
 export const ROLES = {
-  ADMIN:   'admin',
-  CLIENTE: 'cliente',
+  ADMIN:   'Admin',
+  CLIENTE: 'User',
 }
 
 export const TOKEN_KEY    = 'authToken' //Nombre que tiene en el local storage.
