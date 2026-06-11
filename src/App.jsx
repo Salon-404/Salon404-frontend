@@ -14,6 +14,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import { ROLES } from "./constants/auth";
+import CalendarioEventosPage from "./pages/eventos/CalendarioEventosPage";
 
 // Módulo Invitados — Victor Balbuena (por hacer)
 // import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
@@ -63,6 +64,9 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Módulo Eventos (agenda unificada) — Federico Oviedo */}
+        <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
 
         {/* <Route path="/invitados/*" element={<InvitadosRoutes />} /> */}
 
