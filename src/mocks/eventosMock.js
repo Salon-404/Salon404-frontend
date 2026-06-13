@@ -4,6 +4,148 @@
 
 /** @type {Array<import('../constants/eventos').Evento>} */
 export const eventosMock = [
+  // --- JUNIO 2026 ---
+  // 07/06: Cumpleaños (franja tarde)
+  {
+    id: 'evt-jun-001',
+    nombre: 'Cumpleaños de Sofía Martínez',
+    descripcion: 'Festejo de 30 años con cena y baile.',
+    tipoEventoId: 3,
+    fecha: '2026-06-07',
+    horaInicio: '16:00',
+    horaFin: '20:00',
+    franja: 'tarde',
+    estado: 'finalizado',
+    cantidadInvitados: 60,
+    cliente: {
+      nombre: 'Sofía Martínez',
+      email: 'smartinez@email.com',
+      telefono: '+54 11 4455-6677',
+    },
+    reserva: {
+      id: 'res-jun-001',
+      estado: 'confirmada',
+      montoTotal: 240000,
+      creadoEn: '2026-04-15T10:00:00Z',
+      expiraEn: '2026-04-22T10:00:00Z',
+      fechaPago: '2026-04-16T14:00:00Z',
+    },
+    proveedoresIds: ['prov-a1b2c3'],
+  },
+
+  // --- 14/06: DOS eventos en distintas franjas (ejemplo del usuario) ---
+  // Bautismo 09:00-12:00 (franja mañana)
+  {
+    id: 'evt-jun-002',
+    nombre: 'Bautismo Benjamín López',
+    descripcion: 'Ceremonia religiosa y almuerzo familiar.',
+    tipoEventoId: 5,
+    fecha: '2026-06-14',
+    horaInicio: '09:00',
+    horaFin: '12:00',
+    franja: 'manana',
+    estado: 'pendiente',
+    cantidadInvitados: 45,
+    cliente: {
+      nombre: 'Carolina López',
+      email: 'clopez@email.com',
+      telefono: '+54 11 3344-5566',
+    },
+    reserva: {
+      id: 'res-jun-002',
+      estado: 'confirmada',
+      montoTotal: 160000,
+      creadoEn: '2026-05-01T09:00:00Z',
+      expiraEn: '2026-05-08T09:00:00Z',
+      fechaPago: '2026-05-02T11:00:00Z',
+    },
+    proveedoresIds: [],
+  },
+  // Casamiento 21:00-03:00 (franja noche)
+  {
+    id: 'evt-jun-003',
+    nombre: 'Casamiento Rodríguez-Pérez',
+    descripcion: 'Ceremonia civil y fiesta con DJ.',
+    tipoEventoId: 2,
+    fecha: '2026-06-14',
+    horaInicio: '21:00',
+    horaFin: '03:00',
+    franja: 'noche',
+    estado: 'pendiente',
+    cantidadInvitados: 180,
+    cliente: {
+      nombre: 'Lucía Rodríguez',
+      email: 'lrodriguez@email.com',
+      telefono: '+54 11 7788-9900',
+    },
+    reserva: {
+      id: 'res-jun-003',
+      estado: 'confirmada',
+      montoTotal: 720000,
+      creadoEn: '2026-04-20T15:00:00Z',
+      expiraEn: '2026-04-27T15:00:00Z',
+      fechaPago: '2026-04-21T10:00:00Z',
+    },
+    proveedoresIds: ['prov-a1b2c3', 'prov-d4e5f6'],
+  },
+
+  // 21/06: XV años (franja tarde-noche)
+  {
+    id: 'evt-jun-004',
+    nombre: 'XV de Valentina Gómez',
+    descripcion: 'Fiesta de 15 años temática Hollywood.',
+    tipoEventoId: 1,
+    fecha: '2026-06-21',
+    horaInicio: '19:00',
+    horaFin: '01:00',
+    franja: 'tarde',
+    estado: 'pendiente',
+    cantidadInvitados: 120,
+    cliente: {
+      nombre: 'María Gómez',
+      email: 'mgomez@email.com',
+      telefono: '+54 11 5566-7788',
+    },
+    reserva: {
+      id: 'res-jun-004',
+      estado: 'pendiente',
+      montoTotal: 380000,
+      creadoEn: '2026-05-10T14:00:00Z',
+      expiraEn: '2026-05-17T14:00:00Z',
+      fechaPago: null,
+    },
+    proveedoresIds: ['prov-a1b2c3'],
+  },
+
+  // 28/06: Evento corporativo (franja noche)
+  {
+    id: 'evt-jun-005',
+    nombre: 'Cena de Fin de Año — Empresa TechCorp',
+    descripcion: 'Cena corporativa con show en vivo.',
+    tipoEventoId: 4,
+    fecha: '2026-06-28',
+    horaInicio: '20:00',
+    horaFin: '02:00',
+    franja: 'noche',
+    estado: 'pendiente',
+    cantidadInvitados: 95,
+    cliente: {
+      nombre: 'Diego Fernández',
+      email: 'dfernandez@techcorp.com',
+      telefono: '+54 11 6677-8899',
+    },
+    reserva: {
+      id: 'res-jun-005',
+      estado: 'confirmada',
+      montoTotal: 450000,
+      creadoEn: '2026-05-15T11:00:00Z',
+      expiraEn: '2026-05-22T11:00:00Z',
+      fechaPago: '2026-05-16T09:00:00Z',
+    },
+    proveedoresIds: ['prov-d4e5f6'],
+  },
+
+  // --- JULIO-AGOSTO 2026 (datos originales) ---
   // --- 2026-07-05: dos eventos en distintas franjas, sin superposición (incl. limpieza) ---
   // Bautismo 09:00-12:00 + limpieza hasta 13:00 → franja mañana
   {
