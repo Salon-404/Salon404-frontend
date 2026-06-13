@@ -9,17 +9,17 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 // import { ReservasRoutes } from './pages/reservas/ReservasRoutes'
 
 // Módulo Invitados — Victor Balbuena
-// import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
+import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/reservas" replace />} />
+        <Route path="/" element={<Navigate to="/invitados" replace />} />
 
         {/* <Route path="/login" element={<AuthRoutes />} /> */}
         {/* <Route path="/reservas/*" element={<ReservasRoutes />} /> */}
-        {/* <Route path="/invitados/*" element={<InvitadosRoutes />} /> */}
+        { <Route path="/invitados/*" element={<InvitadosRoutes />} />}
       </Routes>
     </BrowserRouter>
   )
