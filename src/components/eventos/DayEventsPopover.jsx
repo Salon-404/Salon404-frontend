@@ -1,48 +1,40 @@
 import { useEffect, useState, useRef } from 'react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { FRANJAS } from '../../constants/eventos'
-import EstadoEventoBadge from './EstadoEventoBadge'
+import PopoverContent from './PopoverContent'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 
-// Orden fijo de franjas en el popover.
-const FRANJA_ORDER = ['manana', 'tarde', 'noche']
+const POPOVER_WIDTH = 320
+const POPOVER_DEFAULT_HEIGHT = 420
+const VIEWPORT_MARGIN = 8
 
-// Agrupa eventos por franja y ordena por horaInicio dentro de cada grupo.
-function agruparPorFranja(eventos) {
-  const grupos = {}
-  for (const e of eventos) {
-    if (!grupos[e.franja]) grupos[e.franja] = []
-    grupos[e.franja].push(e)
-  }
-  for (const key of Object.keys(grupos)) {
-    grupos[key].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
-  }
-  return grupos
-}
-
-// Calcula posición fixed del popover a partir del rect de la celda.
-function calcPosition(anchorRect, popoverWidth = 320, popoverHeight = 420) {
-  const margin = 8
+function calcPosition(anchorRect, popoverWidth, popoverHeight) {
   const vw = window.innerWidth
   const vh = window.innerHeight
 
-  let left = anchorRect.right + margin
+  let left = anchorRect.right + VIEWPORT_MARGIN
   let top = anchorRect.top
 
-  // Flip a la izquierda si desborda a la derecha
-  if (left + popoverWidth > vw - margin) {
-    left = anchorRect.left - popoverWidth - margin
+  if (left + popoverWidth > vw - VIEWPORT_MARGIN) {
+    left = anchorRect.left - popoverWidth - VIEWPORT_MARGIN
   }
-  // Clamp horizontalmente
-  left = Math.max(margin, Math.min(left, vw - popoverWidth - margin))
+  left = Math.max(VIEWPORT_MARGIN, Math.min(left, vw - popoverWidth - VIEWPORT_MARGIN))
 
-  // Ajustar verticalmente si desborda abajo
-  if (top + popoverHeight > vh - margin) {
-    top = vh - popoverHeight - margin
+  if (top + popoverHeight > vh - VIEWPORT_MARGIN) {
+    top = vh - popoverHeight - VIEWPORT_MARGIN
   }
-  top = Math.max(margin, top)
+  top = Math.max(VIEWPORT_MARGIN, top)
 
   return { left, top }
+}
+
+function formatFechaLabel(fecha) {
+  try {
+    const raw = format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })
+    return raw.charAt(0).toUpperCase() + raw.slice(1)
+  } catch {
+    return fecha
+  }
 }
 
 export default function DayEventsPopover({
@@ -53,31 +45,29 @@ export default function DayEventsPopover({
   onClose,
   onMouseEnter,
   onMouseLeave,
+  isAdmin = false,
 }) {
   const [mounted, setMounted] = useState(false)
   const [pos, setPos] = useState({ left: 0, top: 0 })
   const popoverRef = useRef(null)
+  const reducedMotion = useReducedMotion()
 
-  // Transición de entrada
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Recalcular posición cuando cambia anchorRect
   useEffect(() => {
     if (!anchorRect) return
-    const popH = popoverRef.current ? popoverRef.current.offsetHeight : 420
-    setPos(calcPosition(anchorRect, 320, popH))
+    const popH = popoverRef.current?.offsetHeight ?? POPOVER_DEFAULT_HEIGHT
+    setPos(calcPosition(anchorRect, POPOVER_WIDTH, popH))
   }, [anchorRect])
 
-  // Recalcular después de montaje para tener altura real
   useEffect(() => {
     if (mounted && popoverRef.current && anchorRect) {
-      setPos(calcPosition(anchorRect, 320, popoverRef.current.offsetHeight))
+      setPos(calcPosition(anchorRect, POPOVER_WIDTH, popoverRef.current.offsetHeight))
     }
   }, [mounted, anchorRect])
 
-  // Cerrar con Escape
   useEffect(() => {
     function onKeyDown(e) {
       if (e.key === 'Escape') onClose()
@@ -86,20 +76,29 @@ export default function DayEventsPopover({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
+  // Click outside to close
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+        onClose()
+      }
+    }
+    // Delay to avoid triggering on the same click that opened it
+    const timerId = setTimeout(() => {
+      document.addEventListener('mousedown', onClickOutside)
+    }, 50)
+    return () => {
+      clearTimeout(timerId)
+      document.removeEventListener('mousedown', onClickOutside)
+    }
+  }, [onClose])
+
   if (!eventos || eventos.length === 0) return null
 
-  const grupos = agruparPorFranja(eventos)
-
-  const fechaFormateada = (() => {
-    try {
-      return format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })
-    } catch {
-      return fecha
-    }
-  })()
-
-  // Capitalizar primera letra
-  const fechaLabel = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)
+  const fechaLabel = formatFechaLabel(fecha)
+  const transitionClass = reducedMotion
+    ? ''
+    : `transition-all duration-200 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`
 
   return (
     <div
@@ -107,10 +106,14 @@ export default function DayEventsPopover({
       role="dialog"
       aria-modal="false"
       aria-label={`Eventos del ${fechaLabel}`}
-      className={`day-popover fixed z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-xl transition-all duration-150 ${
-        mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-      }`}
-      style={{ left: pos.left, top: pos.top, maxHeight: '70vh', display: 'flex', flexDirection: 'column' }}
+      className={`day-popover fixed z-50 w-80 rounded-xl border border-slate-200/80 bg-white/95 backdrop-blur-sm shadow-xl ${transitionClass}`}
+      style={{
+        left: pos.left,
+        top: pos.top,
+        maxHeight: '70vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -133,65 +136,9 @@ export default function DayEventsPopover({
         </button>
       </div>
 
-      {/* Body con scroll */}
+      {/* Body */}
       <div className="day-popover-scroll overflow-y-auto flex-1 px-3 py-2">
-        {FRANJA_ORDER.filter((f) => grupos[f]?.length).map((franjaKey) => {
-          const franjaDef = Object.values(FRANJAS).find((f) => f.value === franjaKey)
-          return (
-            <div key={franjaKey} className="mb-3 last:mb-0">
-              {/* Header de franja */}
-              <div className={`flex items-center gap-1.5 px-1 py-1 rounded-md mb-1 ${franjaDef.color}`}>
-                <span className="text-sm" aria-hidden="true">{franjaDef.icono}</span>
-                <span className="text-xs font-semibold uppercase tracking-wider">
-                  {franjaDef.label}
-                </span>
-              </div>
-
-              {/* Eventos de la franja */}
-              <div className="space-y-1">
-                {grupos[franjaKey].map((evento) => {
-                  const tipo = tiposById[evento.tipoEventoId]
-                  const cancelado = evento.estado === 'cancelado'
-                  return (
-                    <div
-                      key={evento.id}
-                      className="flex items-stretch gap-2 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors cursor-pointer"
-                    >
-                      {/* Barra de color del tipo */}
-                      <div
-                        className="w-0.5 rounded-full shrink-0"
-                        style={{ background: tipo?.color ?? '#94a3b8' }}
-                        aria-hidden="true"
-                      />
-                      {/* Contenido */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-medium text-slate-600">
-                            {evento.horaInicio}–{evento.horaFin}
-                          </span>
-                          <EstadoEventoBadge estado={evento.estado} />
-                        </div>
-                        <p
-                          className={`text-sm font-semibold text-slate-800 truncate ${
-                            cancelado ? 'line-through opacity-60' : ''
-                          }`}
-                        >
-                          {evento.nombre}
-                        </p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {evento.cliente.nombre}
-                          {' · '}
-                          {evento.cantidadInvitados} invitados
-                          {tipo ? ` · ${tipo.nombre}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
+        <PopoverContent eventos={eventos} tiposById={tiposById} isAdmin={isAdmin} />
       </div>
     </div>
   )
