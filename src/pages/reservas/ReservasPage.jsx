@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { getReservas } from '../../services/reservasService'
 import { ESTADOS_OPCIONES, MESES } from '../../constants/reservas'
 import ReservaCard from '../../components/reservas/ReservaCard'
@@ -78,6 +78,12 @@ export default function ReservasPage() {
           >
             Ver Calendario
           </button>
+          <Link
+            to="/eventos/calendario"
+            className="text-slate-600 hover:text-slate-800 text-sm font-medium border border-slate-300 hover:border-slate-400 px-4 py-2 rounded-lg transition-colors"
+          >
+            Agenda de Eventos
+          </Link>
         </div>
 
         {/* Tabla */}

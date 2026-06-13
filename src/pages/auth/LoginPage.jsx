@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, replace } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
-import { RUTA_DEFAULT } from '../../constants/auth'
+import { TOKEN_KEY,RUTA_ADMIN,RUTA_USER } from '../../constants/auth'
+import { decodeToken } from '../../globals/decodeToken'
 
 const INPUT_CLASS =
   'w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 shadow-sm ' +
@@ -14,7 +15,6 @@ export default function LoginPage() {
   const { login }  = useAuth()
   const navigate   = useNavigate()
   const location   = useLocation()
-  const destino    = location.state?.from?.pathname ?? RUTA_DEFAULT
 
   const [errorGeneral, setErrorGeneral] = useState(null)
 
@@ -27,8 +27,18 @@ export default function LoginPage() {
   async function onSubmit({ email, password }) {
     setErrorGeneral(null)
     try {
-      await login({ email, password })
-      navigate(destino, { replace: true })
+      await login( {email, password} )
+      const token = localStorage.getItem(TOKEN_KEY);
+      const payload = decodeToken(token);
+      if(payload.role=="Admin")
+      {
+          navigate(RUTA_ADMIN, { replace: true })
+      }
+      else
+        {
+          navigate(RUTA_USER,{replace:true})
+        }
+      
     } catch (err) {
       if (err?.response?.status === 401) {
         setErrorGeneral('Email o contraseña incorrectos.')
@@ -77,14 +87,24 @@ export default function LoginPage() {
             {errors.password && <p className={ERROR_CLASS}>{errors.password.message}</p>}
           </div>
 
-          <button
+            <button
             type="submit"
             disabled={isSubmitting}
             className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white
-                       hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-          >
+                      hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+            >
             {isSubmitting ? 'Ingresando…' : 'Ingresar'}
-          </button>
+            </button>
+
+            <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700
+                      hover:bg-slate-100 transition-colors"
+            >
+            Registrarse
+            </button>
+          
         </form>
       </div>
     </div>
