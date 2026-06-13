@@ -11,13 +11,22 @@ import LoginPage from './pages/auth/LoginPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ROLES } from './constants/auth'
 
-// Módulo Invitados — Victor Balbuena (por hacer)
-// import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
+// Rutas de cada módulo se descomentan a medida que se desarrollan
+
+// Módulo Auth — Juan Cruz Merino / Federico Oviedo
+// import { AuthRoutes } from './pages/auth/AuthRoutes'
+
+// Módulo Reservas — Federico Oviedo
+// import { ReservasRoutes } from './pages/reservas/ReservasRoutes'
+
+// Módulo Invitados — Victor Balbuena
+import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* La app arranca por el login de Fede */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Módulo Auth — Federico Oviedo */}
@@ -39,7 +48,8 @@ export default function App() {
           <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
         } />
 
-        {/* <Route path="/invitados/*" element={<InvitadosRoutes />} /> */}
+        {/* Módulo Invitados — Victor Balbuena */}
+        <Route path="/invitados/*" element={<InvitadosRoutes />} />
       </Routes>
     </BrowserRouter>
   )
