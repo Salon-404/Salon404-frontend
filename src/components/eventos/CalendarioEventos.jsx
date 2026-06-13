@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import { createRoot } from 'react-dom/client'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import EventoPill from './EventoPill'
 import DayEventsPopover from './DayEventsPopover'
+import DayEventsBottomSheet from './DayEventsBottomSheet'
 import CalendarioLegend from './CalendarioLegend'
+import FranjaDots from './FranjaDots'
 
-// Formatea Date local como 'YYYY-MM-DD' sin conversión UTC (evita shift por timezone).
+const MOBILE_BREAKPOINT = 768
+
 function localDateStr(date) {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -21,14 +25,26 @@ export default function CalendarioEventos({
   tipos,
   initialDate,
   onMonthChange,
+  isAdmin = false,
 }) {
-  const [activeDay, setActiveDay] = useState(null) // { fecha, rect }
+  const [activeDay, setActiveDay] = useState(null)
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
+  )
   const hoverTimerRef = useRef(null)
   const closeTimerRef = useRef(null)
-  // Mapa de cleanup por celda: fecha → función cleanup
   const cellCleanupRef = useRef({})
+  const dotsRootsRef = useRef({})
 
-  // Mapa fecha → Evento[] para lookup rápido
+  // Detect mobile resize
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const eventosByDate = useMemo(() => {
     const map = {}
     for (const e of eventos) {
@@ -38,7 +54,6 @@ export default function CalendarioEventos({
     return map
   }, [eventos])
 
-  // Mapeo a eventos de FullCalendar (single-day allDay para evitar spans nocturnos)
   const fcEvents = useMemo(
     () =>
       eventos.map((e) => ({
@@ -51,9 +66,7 @@ export default function CalendarioEventos({
   )
 
   function scheduleClose() {
-    closeTimerRef.current = setTimeout(() => {
-      setActiveDay(null)
-    }, 220)
+    closeTimerRef.current = setTimeout(() => setActiveDay(null), 220)
   }
 
   function cancelClose() {
@@ -70,7 +83,6 @@ export default function CalendarioEventos({
     }
   }
 
-  // Cleanup de timers al desmontar
   useEffect(() => {
     return () => {
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
@@ -78,16 +90,25 @@ export default function CalendarioEventos({
     }
   }, [])
 
-  // Attach hover + focus listeners a cada celda
   const dayCellDidMount = useCallback(
     (arg) => {
       const fecha = localDateStr(arg.date)
       const el = arg.el
+      const dayEventos = eventosByDate[fecha]
 
-      // Accesibilidad: celda focusable si tiene eventos
-      if (eventosByDate[fecha]?.length) {
+      // Make cell position relative for FranjaDots absolute positioning
+      el.style.position = 'relative'
+
+      // Render FranjaDots into the cell
+      if (dayEventos?.length) {
         el.setAttribute('tabindex', '0')
         el.style.cursor = 'pointer'
+
+        const dotsContainer = document.createElement('div')
+        el.appendChild(dotsContainer)
+        const root = createRoot(dotsContainer)
+        root.render(<FranjaDots eventos={dayEventos} />)
+        dotsRootsRef.current[fecha] = { root, container: dotsContainer }
       }
 
       function onMouseEnter() {
@@ -117,19 +138,27 @@ export default function CalendarioEventos({
         }
       }
 
+      // Mobile: tap to open
+      function onClick() {
+        if (window.innerWidth < MOBILE_BREAKPOINT) {
+          openDay(fecha, el.getBoundingClientRect())
+        }
+      }
+
       el.addEventListener('mouseenter', onMouseEnter)
       el.addEventListener('mouseleave', onMouseLeave)
       el.addEventListener('focus', onFocus)
       el.addEventListener('blur', onBlur)
       el.addEventListener('keydown', onKeyDown)
+      el.addEventListener('click', onClick)
 
-      // Guardar cleanup por fecha para el dayCellWillUnmount
       cellCleanupRef.current[fecha] = () => {
         el.removeEventListener('mouseenter', onMouseEnter)
         el.removeEventListener('mouseleave', onMouseLeave)
         el.removeEventListener('focus', onFocus)
         el.removeEventListener('blur', onBlur)
         el.removeEventListener('keydown', onKeyDown)
+        el.removeEventListener('click', onClick)
       }
     },
     [eventosByDate], // eslint-disable-line react-hooks/exhaustive-deps
@@ -137,6 +166,15 @@ export default function CalendarioEventos({
 
   const dayCellWillUnmount = useCallback((arg) => {
     const fecha = localDateStr(arg.date)
+
+    // Cleanup FranjaDots React root
+    const dotsEntry = dotsRootsRef.current[fecha]
+    if (dotsEntry) {
+      dotsEntry.root.unmount()
+      dotsEntry.container.remove()
+      delete dotsRootsRef.current[fecha]
+    }
+
     if (cellCleanupRef.current[fecha]) {
       cellCleanupRef.current[fecha]()
       delete cellCleanupRef.current[fecha]
@@ -145,9 +183,12 @@ export default function CalendarioEventos({
 
   function handleEventClick(info) {
     info.jsEvent.preventDefault()
+    info.jsEvent.stopPropagation()
     const evento = info.event.extendedProps.evento
     const cellEl = info.el.closest('.fc-daygrid-day')
-    const rect = cellEl ? cellEl.getBoundingClientRect() : info.el.getBoundingClientRect()
+    const rect = cellEl
+      ? cellEl.getBoundingClientRect()
+      : info.el.getBoundingClientRect()
     openDay(evento.fecha, rect)
   }
 
@@ -166,10 +207,14 @@ export default function CalendarioEventos({
     }
   }
 
-  const activeDayEventos = activeDay ? (eventosByDate[activeDay.fecha] ?? []) : []
+  const activeDayEventos = activeDay
+    ? (eventosByDate[activeDay.fecha] ?? [])
+    : []
+
+  const showPopover = activeDay && activeDayEventos.length > 0
 
   return (
-    <div className="fc-eventos-wrapper">
+    <div className="fc-eventos-wrapper salon404-fc-premium">
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
@@ -193,7 +238,7 @@ export default function CalendarioEventos({
         eventContent={(arg) => {
           const evento = arg.event.extendedProps.evento
           const tipo = tiposById[evento.tipoEventoId]
-          return <EventoPill evento={evento} tipo={tipo} />
+          return <EventoPill evento={evento} tipo={tipo} isAdmin={isAdmin} />
         }}
         dayCellDidMount={dayCellDidMount}
         dayCellWillUnmount={dayCellWillUnmount}
@@ -201,8 +246,8 @@ export default function CalendarioEventos({
         datesSet={handleDatesSet}
       />
 
-      {/* Popover flotante */}
-      {activeDay && activeDayEventos.length > 0 && (
+      {/* Desktop: Popover flotante */}
+      {showPopover && !isMobile && (
         <DayEventsPopover
           fecha={activeDay.fecha}
           eventos={activeDayEventos}
@@ -211,6 +256,18 @@ export default function CalendarioEventos({
           onClose={() => setActiveDay(null)}
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
+          isAdmin={isAdmin}
+        />
+      )}
+
+      {/* Mobile: Bottom sheet */}
+      {showPopover && isMobile && (
+        <DayEventsBottomSheet
+          fecha={activeDay.fecha}
+          eventos={activeDayEventos}
+          tiposById={tiposById}
+          onClose={() => setActiveDay(null)}
+          isAdmin={isAdmin}
         />
       )}
 
