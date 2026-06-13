@@ -4,6 +4,7 @@ import { useTiposEvento } from '../../hooks/useTiposEvento'
 import { useEventos } from '../../hooks/useEventos'
 import CalendarioEventos from '../../components/eventos/CalendarioEventos'
 import UserMenu from '../../components/auth/UserMenu'
+import '../../styles/calendario.css'
 
 export default function CalendarioEventosPage() {
   const [searchParams, setSearchParams] = useSearchParams()
