@@ -206,4 +206,26 @@ describe('FormularioReserva', () => {
     expect(screen.getByTestId('formulario-reserva-confirmacion')).toBeInTheDocument()
     expect(screen.getByText(/Reserva confirmada/i)).toBeInTheDocument()
   })
+
+  it('doble click rápido en "Confirmar" solo llama onConfirmar una vez', () => {
+    const onConfirmar = vi.fn()
+    render(
+      <FormularioReserva
+        tiposEvento={tiposEvento}
+        tipoEventoSeleccionado={1}
+        onSeleccionarTipo={vi.fn()}
+        datosReserva={{ nombreEvento: 'Test', cantidadInvitados: 50, notas: '' }}
+        onCambiarDatos={vi.fn()}
+        onConfirmar={onConfirmar}
+      />
+    )
+    fireEvent.click(screen.getByTestId('btn-siguiente'))
+    const btnConfirmar = screen.getByTestId('btn-confirmar')
+    fireEvent.click(btnConfirmar)
+    fireEvent.click(btnConfirmar)
+    fireEvent.click(btnConfirmar)
+    // Después del primer click, el componente muestra "Reserva confirmada" y el botón
+    // ya no existe, así que los clicks adicionales no hacen nada.
+    expect(onConfirmar).toHaveBeenCalledTimes(1)
+  })
 })

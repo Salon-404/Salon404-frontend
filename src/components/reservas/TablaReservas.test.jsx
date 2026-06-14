@@ -75,4 +75,26 @@ describe('TablaReservas', () => {
     expect(screen.getByText('14/06/2026')).toBeInTheDocument()
     expect(screen.getByText('20/06/2026')).toBeInTheDocument()
   })
+
+  it('renderiza 100 reservas sin colgarse (performance)', () => {
+    const muchasReservas = Array.from({ length: 100 }, (_, i) => ({
+      id: i + 1,
+      fecha: '2026-06-14',
+      horaInicio: '14:00',
+      horaFin: '18:00',
+      nombreCliente: `Cliente ${i + 1}`,
+      tipoEvento: 'cumpleanos',
+      cantidadInvitados: 50,
+      estado: 'confirmada',
+    }))
+
+    const start = performance.now()
+    render(<TablaReservas reservas={muchasReservas} onSeleccionarReserva={vi.fn()} />)
+    const duration = performance.now() - start
+
+    const rows = screen.getAllByRole('row')
+    expect(rows).toHaveLength(101) // header + 100 data rows
+    // 100 reservas en menos de 1 segundo es OK
+    expect(duration).toBeLessThan(1000)
+  })
 })
