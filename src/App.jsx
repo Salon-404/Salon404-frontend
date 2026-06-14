@@ -3,6 +3,7 @@ import PlanoPage from './pages/mesas/PlanoPage'
 import EditorPage from './pages/mesas/EditorPage'
 import AsignarPage from './pages/mesas/AsignarPage'
 import LoginPage from './pages/auth/LoginPage'
+import EventoNuevoPage from './pages/eventos/EventoNuevoPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ROLES } from './constants/auth'
 
@@ -26,6 +27,9 @@ export default function App() {
 
         {/* Módulo Auth — Federico Oviedo */}
         <Route path="/login" element={<LoginPage />} />
+
+        {/* Módulo Eventos — Federico Oviedo */}
+        <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
 
         {/* Módulo Mesas — Federico Oviedo */}
         <Route path="/mesas" element={<PlanoPage />} />
