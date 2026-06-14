@@ -761,4 +761,28 @@ Al final del ciclo, agregar sección al spec:
 
 ## Autocrítica — Iteración 2
 
-_Pendiente (se completa al final del ciclo)_
+### Qué salió bien
+
+- **Planificación por día funcionó.** Tener los 6 días mapeados en el spec (Día 1-6 con tareas específicas) evitó la parálisis de "¿qué hago ahora?". Cada día sabía qué entregar.
+- **Capa de datos primero (Día 1).** Arrancar con utils puras + service + mocks sin tocar UI forzó a pensar las firmas de las funciones antes de los componentes. Cuando llegué a los hooks (Día 2) y componentes (Día 3), la lógica ya estaba testeada.
+- **Composición de hooks.** `useHorariosDisponibles` compone `useDisponibilidad` internamente. No duplica la lógica de fetch de reservas ni el manejo de loading/error. Una sola fuente de verdad.
+- **`useMemo` en `useHorariosDisponibles`.** Calcular slots disponibles es función pura. `useMemo` evita re-renders innecesarios cuando cambian props irrelevantes.
+- **Ref pattern en `useBloqueoHorario`.** El `onExpire` y el `reservaTemporal` se guardan en refs para que el `setInterval` callback siempre vea el valor más reciente, sin re-suscribirse en cada cambio.
+- **131 tests passing, 0 skip.** Cobertura de utils puras (100%), hooks (100% de los escenarios), componentes (rendering + interacción + edge cases).
+- **PR único con 5 commits.** Cada commit representa un día completo del spec. Trazabilidad clara para QA.
+
+### Qué mejoraría en la próxima iteración
+
+- **Tests de integración del flujo completo.** Los tests actuales cubren unidades y componentes, pero el flujo end-to-end (NuevaReservaPage → seleccionar fecha → tipo → horario → bloquear → formulario → confirmar) se valida solo manualmente. Vale la pena agregar Playwright o Cypress para evitar regresiones.
+- **Sub-agent reliability.** Las primeras delegaciones a `general` para Día 4 retornaron vacías sin hacer el trabajo. Tuve que hacer Día 4 inline. Para Día 5 el sub-agent sí funcionó pero generó 5 tests que fallaron por queries no específicas. Moraleja: las delegaciones multi-archivo con prompt largo son frágiles.
+- **Mocks más realistas para tests de admin.** Los tests de `ReservasPage` y `TablaReservas` usan datos en línea. Extraer `mockReservas` y `mockTiposEvento` a `src/mocks/__fixtures__/` ayudaría a evitar drift entre tests.
+- **El servicio `getReservas` no soporta los filtros nuevos** (fechaDesde, fechaHasta, nombreCliente, tipoEventoId). En Día 5 los apliqué client-side con `filtrarReservas`, pero cuando se integre el backend real (issue #16), el contrato tiene que incluir esos filtros.
+
+### Deuda técnica identificada
+
+1. **`reservasMock` quedó con el formato viejo (`horario: 'tarde'`) Y el nuevo (`horaInicio`, `horaFin`, `tipoEventoId`)**. El viejo `getDisponibilidad` del `reservasService` (que recibe `year, month` y devuelve `fechasOcupadas/fechasPendientes`) sigue funcionando, pero el formato está duplicado. Hay que migrar completamente al formato nuevo en la iteración 3.
+2. **`CalendarioDisponibilidad` no recibe `configSalon`** por ahora, así que el cálculo de "día completo" es 50% de 24h. El prop está disponible en la firma del componente pero no se usa. Esto es un atajo que hay que revertir cuando la integración esté más pulida.
+3. **El `ReservaForm` viejo** (con react-hook-form) sigue existiendo porque `EditarReservaPage` lo usa. Se va a quedar hasta que se migre la pantalla de edición. No es bloqueante.
+4. **El modal de expiración** de `NuevaReservaPage` no tiene un `data-testid` ni `aria-modal`. La accesibilidad quedó como smoke test (focus al primer elemento) pero no hay `focus-trap` real.
+5. **No hay tests E2E.** El flujo completo se valida manualmente. Si QA encuentra un bug de integración, no hay red de seguridad automatizada.
+6. **El countdown del `useBloqueoHorario` no pausa cuando la pestaña está en background.** En navegadores modernos esto se mitiga con throttling del setInterval, pero no hay verificación explícita.
