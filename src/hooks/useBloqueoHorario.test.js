@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useBloqueoHorario } from './useBloqueoHorario'
-import * as disponibilidadService from '../services/disponibilidadService'
+import * as eventosService from '../services/eventosService'
 
-vi.mock('../services/disponibilidadService')
+vi.mock('../services/eventosService')
 
 describe('useBloqueoHorario', () => {
   const mockReservaTemporal = {
@@ -26,8 +26,8 @@ describe('useBloqueoHorario', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
-    vi.mocked(disponibilidadService.bloquearHorario).mockResolvedValue(mockReservaTemporal)
-    vi.mocked(disponibilidadService.liberarHorario).mockResolvedValue({ success: true })
+    vi.mocked(eventosService.bloquearHorario).mockResolvedValue(mockReservaTemporal)
+    vi.mocked(eventosService.liberarHorario).mockResolvedValue({ success: true })
   })
 
   afterEach(() => {
@@ -50,13 +50,13 @@ describe('useBloqueoHorario', () => {
       await result.current.bloquear(datosBloqueo)
     })
 
-    expect(disponibilidadService.bloquearHorario).toHaveBeenCalledWith(datosBloqueo)
+    expect(eventosService.bloquearHorario).toHaveBeenCalledWith(datosBloqueo)
     expect(result.current.reservaTemporal).toEqual(mockReservaTemporal)
   })
 
   it('bloquear() setea bloqueando=true durante la petición', async () => {
-    vi.mocked(disponibilidadService.bloquearHorario).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve(mockReservaTemporal), 100))
+    vi.mocked(eventosService.bloquearHorario).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve(mockReservaTemporal), 100))
     )
 
     const { result } = renderHook(() => useBloqueoHorario())
@@ -77,7 +77,7 @@ describe('useBloqueoHorario', () => {
   })
 
   it('bloquear() maneja error del service', async () => {
-    vi.mocked(disponibilidadService.bloquearHorario).mockRejectedValue(
+    vi.mocked(eventosService.bloquearHorario).mockRejectedValue(
       new Error('Horario no disponible')
     )
 
@@ -105,7 +105,7 @@ describe('useBloqueoHorario', () => {
       await result.current.liberar()
     })
 
-    expect(disponibilidadService.liberarHorario).toHaveBeenCalledWith(mockReservaTemporal.id)
+    expect(eventosService.liberarHorario).toHaveBeenCalledWith(mockReservaTemporal.id)
     expect(result.current.reservaTemporal).toBeNull()
     expect(result.current.segundosRestantes).toBe(0)
   })
@@ -130,7 +130,7 @@ describe('useBloqueoHorario', () => {
   it('auto-libera cuando el countdown llega a 0', async () => {
     const expiracionCorta = new Date(Date.now() + 2000).toISOString()
     const mockExpiracionCorta = { ...mockReservaTemporal, expirationAt: expiracionCorta }
-    vi.mocked(disponibilidadService.bloquearHorario).mockResolvedValue(mockExpiracionCorta)
+    vi.mocked(eventosService.bloquearHorario).mockResolvedValue(mockExpiracionCorta)
 
     const onExpire = vi.fn()
     const { result } = renderHook(() => useBloqueoHorario())
@@ -145,7 +145,7 @@ describe('useBloqueoHorario', () => {
       vi.advanceTimersByTime(3000)
     })
 
-    expect(disponibilidadService.liberarHorario).toHaveBeenCalledWith(mockExpiracionCorta.id)
+    expect(eventosService.liberarHorario).toHaveBeenCalledWith(mockExpiracionCorta.id)
     expect(result.current.reservaTemporal).toBeNull()
     expect(result.current.segundosRestantes).toBe(0)
     expect(onExpire).toHaveBeenCalled()
@@ -165,7 +165,7 @@ describe('useBloqueoHorario', () => {
     })
 
     expect(segundoResultado).toBeNull()
-    expect(disponibilidadService.bloquearHorario).toHaveBeenCalledTimes(1)
+    expect(eventosService.bloquearHorario).toHaveBeenCalledTimes(1)
   })
 
   it('limpia el intervalo al desmontar', async () => {

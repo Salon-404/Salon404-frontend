@@ -15,9 +15,9 @@ export function useHorariosDisponibles(fecha, tipoEventoId) {
   const [loadingConfig, setLoadingConfig] = useState(false)
   const [error, setError] = useState(null)
 
-  const { reservas, loading: loadingReservas } = useDisponibilidad(fecha)
+  const { eventos, loading: loadingEventos } = useDisponibilidad(fecha)
 
-  const loading = loadingConfig || loadingReservas
+  const loading = loadingConfig || loadingEventos
 
   const fetchConfig = async () => {
     setLoadingConfig(true)
@@ -44,11 +44,11 @@ export function useHorariosDisponibles(fecha, tipoEventoId) {
   const horarios = useMemo(() => {
     if (!fecha || !tipoEventoId || !configSalon) return []
 
-    const tipoEvento = tiposEvento.find(t => t.id === tipoEventoId)
+    const tipoEvento = tiposEvento.find((t) => t.id === tipoEventoId)
     if (!tipoEvento) return []
 
-    return calcularHorariosDisponibles(fecha, tipoEvento, reservas, configSalon)
-  }, [fecha, tipoEventoId, configSalon, tiposEvento, reservas])
+    return calcularHorariosDisponibles(fecha, tipoEvento, eventos, configSalon)
+  }, [fecha, tipoEventoId, configSalon, tiposEvento, eventos])
 
   return {
     horarios,

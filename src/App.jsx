@@ -1,9 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import ReservasPage from './pages/reservas/ReservasPage'
-import NuevaReservaPage from './pages/reservas/NuevaReservaPage'
-import EditarReservaPage from './pages/reservas/EditarReservaPage'
-import CalendarioPage from './pages/reservas/CalendarioPage'
-import ReservaDetailPage from './pages/reservas/ReservaDetailPage'
 import PlanoPage from './pages/mesas/PlanoPage'
 import EditorPage from './pages/mesas/EditorPage'
 import AsignarPage from './pages/mesas/AsignarPage'
@@ -31,13 +26,6 @@ export default function App() {
 
         {/* Módulo Auth — Federico Oviedo */}
         <Route path="/login" element={<LoginPage />} />
-
-        {/* Módulo Reservas — Federico Oviedo */}
-        <Route path="/reservas" element={<ReservasPage />} />
-        <Route path="/reservas/calendario" element={<CalendarioPage />} />
-        <Route path="/reservas/nueva" element={<NuevaReservaPage />} />
-        <Route path="/reservas/:id" element={<ReservaDetailPage />} />
-        <Route path="/reservas/:id/editar" element={<EditarReservaPage />} />
 
         {/* Módulo Mesas — Federico Oviedo */}
         <Route path="/mesas" element={<PlanoPage />} />
