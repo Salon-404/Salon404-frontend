@@ -138,3 +138,52 @@ export function formatearMonto(monto) {
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
 }
+
+/**
+ * Agrupa eventos por franja horaria usando el campo `franja`.
+ * @param {Array} eventos - Eventos con campo franja
+ * @returns {{ manana: Array, tarde: Array, noche: Array }}
+ */
+export function agruparPorFranja(eventos) {
+  if (!Array.isArray(eventos)) return { manana: [], tarde: [], noche: [] }
+
+  const grupos = { manana: [], tarde: [], noche: [] }
+  for (const evento of eventos) {
+    const franja = evento?.franja
+    if (grupos[franja]) grupos[franja].push(evento)
+  }
+  return grupos
+}
+
+/**
+ * Devuelve las franjas ocupadas por eventos activos, sin duplicados.
+ * Ignora eventos cancelados.
+ * @param {Array} eventos - Eventos con campo franja y estado
+ * @returns {Array<'manana'|'tarde'|'noche'>}
+ */
+export function obtenerFranjasOcupadas(eventos) {
+  if (!Array.isArray(eventos)) return []
+
+  const orden = ['manana', 'tarde', 'noche']
+  const ocupadas = new Set()
+
+  for (const evento of eventos) {
+    if (evento?.estado === 'cancelado') continue
+    if (orden.includes(evento?.franja)) ocupadas.add(evento.franja)
+  }
+
+  return orden.filter((franja) => ocupadas.has(franja))
+}
+
+/**
+ * Filtra los eventos según la vista del calendario.
+ * La vista pública oculta eventos cancelados.
+ * @param {Array} eventos - Listado de eventos
+ * @param {'admin' | 'public'} vista - Vista actual
+ * @returns {Array} Eventos filtrados
+ */
+export function filtrarEventosParaVista(eventos, vista) {
+  if (!Array.isArray(eventos)) return []
+  if (vista === 'admin') return eventos
+  return eventos.filter((evento) => evento?.estado !== 'cancelado')
+}

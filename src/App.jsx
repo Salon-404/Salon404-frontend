@@ -7,6 +7,7 @@ import EventoNuevoPage from './pages/eventos/EventoNuevoPage'
 import EventosPage from './pages/eventos/EventosPage'
 import EventoDetailPage from './pages/eventos/EventoDetailPage'
 import EventoEditarPage from './pages/eventos/EventoEditarPage'
+import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ROLES } from './constants/auth'
 
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/eventos/:id" element={<EventoDetailPage />} />
         <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
         <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
+        <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
 
         {/* Módulo Mesas — Federico Oviedo */}
         <Route path="/mesas" element={<PlanoPage />} />
