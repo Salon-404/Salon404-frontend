@@ -14,24 +14,24 @@ import InvitadoItem from '../../components/mesas/InvitadoItem'
 import MesaDropZone from '../../components/mesas/MesaDropZone'
 import CapacidadAlert from '../../components/mesas/CapacidadAlert'
 import UnassignedDropZone from '../../components/mesas/UnassignedDropZone'
-import { getReserva } from '../../services/reservasService'
-import { TIPOS_EVENTO } from '../../constants/reservas'
+import { getEventoPorReservaId } from '../../services/eventosService'
+import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 import UserMenu from '../../components/auth/UserMenu'
 
 // Vista de asignación de invitados a mesas (solo admin).
 // Panel izquierdo: lista de invitados sin asignar.
 // Panel derecho: tarjetas de mesas donde se sueltan los invitados.
-function getLabelFromValue(list, value) {
-  return list.find(item => item.value === value)?.label ?? value
+function getTipoNombre(tipoEventoId) {
+  return tiposEventoMock.find(t => t.id === tipoEventoId)?.nombre ?? `Tipo ${tipoEventoId}`
 }
 
 export default function AsignarPage() {
   const { reservaId } = useParams()
 
-  const [reserva, setReserva] = useState(null)
+  const [evento, setEvento] = useState(null)
 
   useEffect(() => {
-    getReserva(reservaId).then(setReserva).catch(() => {})
+    getEventoPorReservaId(reservaId).then(setEvento).catch(() => {})
   }, [reservaId])
 
   const {
@@ -44,7 +44,7 @@ export default function AsignarPage() {
     asignarInvitado,
     desasignarInvitado,
     moverInvitado,
-  } = useAsignaciones(Number(reservaId))
+  } = useAsignaciones(reservaId)
 
   const [busqueda,        setBusqueda]        = useState('')
   const [invitadoActivo,  setInvitadoActivo]  = useState(null) // para DragOverlay
@@ -118,21 +118,21 @@ export default function AsignarPage() {
         <header className="bg-slate-800 text-white px-6 py-3 flex items-center justify-between shadow">
           <div className="flex items-center gap-4">
             <Link
-              to={`/reservas/${reservaId}`}
+              to={evento ? `/eventos/${evento.id}` : '/eventos'}
               className="text-slate-300 hover:text-white text-sm"
             >
-              ← Volver a la reserva
+              ← Volver al evento
             </Link>
             <span className="text-slate-500">|</span>
             <div>
               <h1 className="font-semibold text-base">Asignar invitados a mesas</h1>
-              {reserva && (
+              {evento && (
                 <p className="text-slate-400 text-xs mt-0.5">
-                  Reserva #{reserva.id} — {reserva.nombreCliente}
+                  Evento #{evento.reserva?.id ?? evento.id} — {evento.cliente?.nombre}
                   {' · '}
-                  {format(new Date(reserva.fecha + 'T12:00:00'), "d 'de' MMMM yyyy", { locale: es })}
+                  {format(new Date(evento.fecha + 'T12:00:00'), "d 'de' MMMM yyyy", { locale: es })}
                   {' · '}
-                  {getLabelFromValue(TIPOS_EVENTO, reserva.tipoEvento)}
+                  {getTipoNombre(evento.tipoEventoId)}
                 </p>
               )}
             </div>

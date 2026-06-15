@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useDisponibilidad } from './useDisponibilidad'
-import * as disponibilidadService from '../services/disponibilidadService'
+import * as eventosService from '../services/eventosService'
 
-vi.mock('../services/disponibilidadService')
+vi.mock('../services/eventosService')
 
 describe('useDisponibilidad', () => {
   beforeEach(() => {
@@ -12,103 +12,108 @@ describe('useDisponibilidad', () => {
 
   it('devuelve array vacío si no hay fecha', () => {
     const { result } = renderHook(() => useDisponibilidad(null))
-    
-    expect(result.current.reservas).toEqual([])
+
+    expect(result.current.eventos).toEqual([])
     expect(result.current.loading).toBe(false)
     expect(result.current.error).toBe(null)
   })
 
   it('llama al service con la fecha correcta', async () => {
     const mockData = {
-      reservas: [
-        { id: '1', horaInicio: '10:00', horaFin: '14:00' },
+      eventos: [
+        {
+          id: 'evt-001',
+          horaInicio: '10:00',
+          horaFin: '14:00',
+          reserva: { id: 'res-001', estado: 'confirmada' },
+        },
       ],
     }
-    
-    vi.mocked(disponibilidadService.getDisponibilidad).mockResolvedValue(mockData)
-    
+
+    vi.mocked(eventosService.getDisponibilidad).mockResolvedValue(mockData)
+
     const { result } = renderHook(() => useDisponibilidad('2026-06-15'))
-    
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
-    
-    expect(disponibilidadService.getDisponibilidad).toHaveBeenCalledWith('2026-06-15')
-    expect(result.current.reservas).toEqual(mockData.reservas)
+
+    expect(eventosService.getDisponibilidad).toHaveBeenCalledWith('2026-06-15')
+    expect(result.current.eventos).toEqual(mockData.eventos)
   })
 
   it('maneja loading correctamente', async () => {
-    vi.mocked(disponibilidadService.getDisponibilidad).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve({ reservas: [] }), 100))
+    vi.mocked(eventosService.getDisponibilidad).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ eventos: [] }), 100))
     )
-    
+
     const { result } = renderHook(() => useDisponibilidad('2026-06-15'))
-    
+
     expect(result.current.loading).toBe(true)
-    
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
   })
 
   it('maneja errores correctamente', async () => {
-    vi.mocked(disponibilidadService.getDisponibilidad).mockRejectedValue(
+    vi.mocked(eventosService.getDisponibilidad).mockRejectedValue(
       new Error('Error de red')
     )
-    
+
     const { result } = renderHook(() => useDisponibilidad('2026-06-15'))
-    
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
-    
+
     expect(result.current.error).toBe('Error de red')
-    expect(result.current.reservas).toEqual([])
+    expect(result.current.eventos).toEqual([])
   })
 
   it('refetch vuelve a llamar al service', async () => {
-    const mockData = { reservas: [] }
-    vi.mocked(disponibilidadService.getDisponibilidad).mockResolvedValue(mockData)
-    
+    const mockData = { eventos: [] }
+    vi.mocked(eventosService.getDisponibilidad).mockResolvedValue(mockData)
+
     const { result } = renderHook(() => useDisponibilidad('2026-06-15'))
-    
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
     })
-    
-    expect(disponibilidadService.getDisponibilidad).toHaveBeenCalledTimes(1)
-    
+
+    expect(eventosService.getDisponibilidad).toHaveBeenCalledTimes(1)
+
     result.current.refetch()
-    
+
     await waitFor(() => {
-      expect(disponibilidadService.getDisponibilidad).toHaveBeenCalledTimes(2)
+      expect(eventosService.getDisponibilidad).toHaveBeenCalledTimes(2)
     })
   })
 
   it('se actualiza cuando cambia la fecha', async () => {
-    const mockData1 = { reservas: [{ id: '1' }] }
-    const mockData2 = { reservas: [{ id: '2' }] }
-    
-    vi.mocked(disponibilidadService.getDisponibilidad)
+    const mockData1 = { eventos: [{ id: 'evt-001' }] }
+    const mockData2 = { eventos: [{ id: 'evt-002' }] }
+
+    vi.mocked(eventosService.getDisponibilidad)
       .mockResolvedValueOnce(mockData1)
       .mockResolvedValueOnce(mockData2)
-    
+
     const { result, rerender } = renderHook(
       ({ fecha }) => useDisponibilidad(fecha),
       { initialProps: { fecha: '2026-06-15' } }
     )
-    
+
     await waitFor(() => {
-      expect(result.current.reservas).toEqual(mockData1.reservas)
+      expect(result.current.eventos).toEqual(mockData1.eventos)
     })
-    
+
     rerender({ fecha: '2026-06-20' })
-    
+
     await waitFor(() => {
-      expect(result.current.reservas).toEqual(mockData2.reservas)
+      expect(result.current.eventos).toEqual(mockData2.eventos)
     })
-    
-    expect(disponibilidadService.getDisponibilidad).toHaveBeenCalledWith('2026-06-15')
-    expect(disponibilidadService.getDisponibilidad).toHaveBeenCalledWith('2026-06-20')
+
+    expect(eventosService.getDisponibilidad).toHaveBeenCalledWith('2026-06-15')
+    expect(eventosService.getDisponibilidad).toHaveBeenCalledWith('2026-06-20')
   })
 })
