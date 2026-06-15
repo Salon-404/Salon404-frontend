@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 const MAX_NOMBRE = 100
+const MAX_DESCRIPCION = 500
 const MAX_INVITADOS = 500
 const MAX_NOTAS = 500
 const PASOS = ['Datos', 'Resumen', 'Confirmación']
@@ -30,6 +31,9 @@ function datosValidados(datos, tipoEventoId) {
     errores.cantidadInvitados = 'Debe ser un número positivo'
   } else if (Number(datos.cantidadInvitados) > MAX_INVITADOS) {
     errores.cantidadInvitados = `Máximo ${MAX_INVITADOS} invitados`
+  }
+  if (datos.descripcion && datos.descripcion.length > MAX_DESCRIPCION) {
+    errores.descripcion = `Máximo ${MAX_DESCRIPCION} caracteres`
   }
   if (datos.notas && datos.notas.length > MAX_NOTAS) {
     errores.notas = `Máximo ${MAX_NOTAS} caracteres`
@@ -89,7 +93,7 @@ function getTipoLabel(tiposEvento, id) {
  * @param {Array} props.tiposEvento - Tipos de evento disponibles
  * @param {number|null} props.tipoEventoSeleccionado - ID del tipo de evento seleccionado
  * @param {Function} props.onSeleccionarTipo - Callback al cambiar tipo de evento
- * @param {{nombreEvento: string, cantidadInvitados: number|string, notas: string}} props.datosReserva
+ * @param {{nombreEvento: string, descripcion: string, cantidadInvitados: number|string, notas: string}} props.datosReserva
  * @param {Function} props.onCambiarDatos - Callback al modificar datos del formulario
  * @param {Function} props.onConfirmar - Callback al confirmar la reserva
  * @param {string|null} [props.error] - Mensaje de error global
@@ -100,7 +104,7 @@ export default function FormularioReserva({
   tiposEvento = [],
   tipoEventoSeleccionado = null,
   onSeleccionarTipo,
-  datosReserva = { nombreEvento: '', cantidadInvitados: '', notas: '' },
+  datosReserva = { nombreEvento: '', descripcion: '', cantidadInvitados: '', notas: '' },
   onCambiarDatos,
   onConfirmar,
   error = null,
@@ -125,7 +129,7 @@ export default function FormularioReserva({
   }
 
   function handleConfirmar() {
-    if (!onConfirmar) return
+    if (cargando || !onConfirmar) return
     onConfirmar({
       tipoEventoId: tipoEventoSeleccionado,
       ...datosReserva,
@@ -208,6 +212,25 @@ export default function FormularioReserva({
           </div>
 
           <div>
+            <label htmlFor="descripcion" className={LABEL_CLASS}>
+              Descripción del evento
+            </label>
+            <textarea
+              id="descripcion"
+              data-testid="input-descripcion"
+              rows={3}
+              maxLength={MAX_DESCRIPCION}
+              className={`${INPUT_CLASS} resize-none`}
+              value={datosReserva.descripcion || ''}
+              onChange={(e) => onCambiarDatos && onCambiarDatos({ ...datosReserva, descripcion: e.target.value })}
+            />
+            <p className={CHAR_COUNT_CLASS} data-testid="char-count-descripcion">
+              {(datosReserva.descripcion || '').length}/{MAX_DESCRIPCION}
+            </p>
+            {errores.descripcion && <p className={ERROR_TEXT_CLASS}>{errores.descripcion}</p>}
+          </div>
+
+          <div>
             <label htmlFor="cantidad-invitados" className={LABEL_CLASS}>
               Cantidad de invitados <span className="text-red-600">*</span>
             </label>
@@ -261,6 +284,7 @@ export default function FormularioReserva({
         <div className="space-y-4" data-testid="paso-resumen">
           <ResumenBloque titulo="Tipo de evento" valor={getTipoLabel(tiposEvento, tipoEventoSeleccionado)} />
           <ResumenBloque titulo="Nombre del evento" valor={datosReserva.nombreEvento} />
+          <ResumenBloque titulo="Descripción" valor={datosReserva.descripcion} />
           <ResumenBloque titulo="Cantidad de invitados" valor={String(datosReserva.cantidadInvitados || '')} />
           <ResumenBloque titulo="Notas" valor={datosReserva.notas} />
 

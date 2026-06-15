@@ -5,6 +5,11 @@ import * as disponibilidadService from '../services/disponibilidadService'
 import * as disponibilidadUtils from '../utils/disponibilidad'
 
 vi.mock('../services/disponibilidadService')
+vi.mock('../services/eventosService', () => ({
+  getDisponibilidad: vi.fn(),
+}))
+
+import { getDisponibilidad } from '../services/eventosService'
 
 describe('useHorariosDisponibles', () => {
   const mockConfigSalon = {
@@ -30,7 +35,7 @@ describe('useHorariosDisponibles', () => {
     vi.clearAllMocks()
     vi.mocked(disponibilidadService.getConfigSalon).mockResolvedValue(mockConfigSalon)
     vi.mocked(disponibilidadService.getTiposEvento).mockResolvedValue(mockTiposEvento)
-    vi.mocked(disponibilidadService.getDisponibilidad).mockResolvedValue({ reservas: [] })
+    vi.mocked(getDisponibilidad).mockResolvedValue({ eventos: [] })
   })
 
   it('devuelve array vacío si no hay fecha', async () => {
@@ -79,7 +84,7 @@ describe('useHorariosDisponibles', () => {
 
   it('loading es true inicialmente', () => {
     vi.mocked(disponibilidadService.getConfigSalon).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve(mockConfigSalon), 100))
+      () => new Promise((resolve) => setTimeout(() => resolve(mockConfigSalon), 100))
     )
 
     const { result } = renderHook(() => useHorariosDisponibles('2026-06-15', 1))

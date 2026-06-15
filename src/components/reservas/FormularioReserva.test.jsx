@@ -8,7 +8,7 @@ const tiposEvento = [
   { id: 3, nombre: 'Cumpleaños', duracionMaximaMinutos: 240 },
 ]
 
-const datosBase = { nombreEvento: '', cantidadInvitados: '', notas: '' }
+const datosBase = { nombreEvento: '', descripcion: '', cantidadInvitados: '', notas: '' }
 
 describe('FormularioReserva', () => {
   it('renderiza el paso 1 por defecto', () => {
@@ -42,7 +42,7 @@ describe('FormularioReserva', () => {
     expect(select.querySelectorAll('option')).toHaveLength(4)
   })
 
-  it('muestra los inputs de nombre, invitados y notas', () => {
+  it('muestra los inputs de nombre, descripcion, invitados y notas', () => {
     render(
       <FormularioReserva
         tiposEvento={tiposEvento}
@@ -54,23 +54,53 @@ describe('FormularioReserva', () => {
       />
     )
     expect(screen.getByTestId('input-nombre')).toBeInTheDocument()
+    expect(screen.getByTestId('input-descripcion')).toBeInTheDocument()
     expect(screen.getByTestId('input-invitados')).toBeInTheDocument()
     expect(screen.getByTestId('input-notas')).toBeInTheDocument()
   })
 
-  it('muestra el contador de caracteres para nombre y notas', () => {
+  it('muestra el contador de caracteres para nombre, descripcion y notas', () => {
     render(
       <FormularioReserva
         tiposEvento={tiposEvento}
         tipoEventoSeleccionado={null}
         onSeleccionarTipo={vi.fn()}
-        datosReserva={{ nombreEvento: 'Mi evento', notas: 'Hola' }}
+        datosReserva={{ nombreEvento: 'Mi evento', descripcion: 'Descripción corta', notas: 'Hola' }}
         onCambiarDatos={vi.fn()}
         onConfirmar={vi.fn()}
       />
     )
     expect(screen.getByTestId('char-count-nombre').textContent).toContain('9/100')
+    expect(screen.getByTestId('char-count-descripcion').textContent).toContain('17/500')
     expect(screen.getByTestId('char-count-notas').textContent).toContain('4/500')
+  })
+
+  it('la descripción es opcional', () => {
+    render(
+      <FormularioReserva
+        tiposEvento={tiposEvento}
+        tipoEventoSeleccionado={1}
+        onSeleccionarTipo={vi.fn()}
+        datosReserva={{ nombreEvento: 'Evento', descripcion: '', cantidadInvitados: 50, notas: '' }}
+        onCambiarDatos={vi.fn()}
+        onConfirmar={vi.fn()}
+      />
+    )
+    expect(screen.getByTestId('btn-siguiente')).not.toBeDisabled()
+  })
+
+  it('rechaza descripción mayor a 500 caracteres (botón Siguiente deshabilitado)', () => {
+    render(
+      <FormularioReserva
+        tiposEvento={tiposEvento}
+        tipoEventoSeleccionado={1}
+        onSeleccionarTipo={vi.fn()}
+        datosReserva={{ nombreEvento: 'Evento', descripcion: 'a'.repeat(501), cantidadInvitados: 50, notas: '' }}
+        onCambiarDatos={vi.fn()}
+        onConfirmar={vi.fn()}
+      />
+    )
+    expect(screen.getByTestId('btn-siguiente')).toBeDisabled()
   })
 
   it('el botón "Siguiente" está deshabilitado cuando los campos requeridos están vacíos', () => {
@@ -110,7 +140,7 @@ describe('FormularioReserva', () => {
         tiposEvento={tiposEvento}
         tipoEventoSeleccionado={1}
         onSeleccionarTipo={vi.fn()}
-        datosReserva={{ nombreEvento: 'Cumple de Juan', cantidadInvitados: 80, notas: 'Decoración rosa' }}
+        datosReserva={{ nombreEvento: 'Cumple de Juan', descripcion: 'Fiesta sorpresa', cantidadInvitados: 80, notas: 'Decoración rosa' }}
         onCambiarDatos={vi.fn()}
         onConfirmar={vi.fn()}
       />
@@ -118,6 +148,7 @@ describe('FormularioReserva', () => {
     fireEvent.click(screen.getByTestId('btn-siguiente'))
     expect(screen.getByTestId('paso-resumen').textContent).toContain('XV')
     expect(screen.getByTestId('paso-resumen').textContent).toContain('Cumple de Juan')
+    expect(screen.getByTestId('paso-resumen').textContent).toContain('Fiesta sorpresa')
     expect(screen.getByTestId('paso-resumen').textContent).toContain('80')
     expect(screen.getByTestId('paso-resumen').textContent).toContain('Decoración rosa')
   })
@@ -147,7 +178,7 @@ describe('FormularioReserva', () => {
         tiposEvento={tiposEvento}
         tipoEventoSeleccionado={2}
         onSeleccionarTipo={vi.fn()}
-        datosReserva={{ nombreEvento: 'Boda', cantidadInvitados: 150, notas: '' }}
+        datosReserva={{ nombreEvento: 'Boda', descripcion: 'Ceremonia civil', cantidadInvitados: 150, notas: '' }}
         onCambiarDatos={vi.fn()}
         onConfirmar={onConfirmar}
       />
@@ -157,6 +188,7 @@ describe('FormularioReserva', () => {
     expect(onConfirmar).toHaveBeenCalledWith({
       tipoEventoId: 2,
       nombreEvento: 'Boda',
+      descripcion: 'Ceremonia civil',
       cantidadInvitados: 150,
       notas: '',
     })

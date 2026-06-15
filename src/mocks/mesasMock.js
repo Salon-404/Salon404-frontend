@@ -33,27 +33,27 @@ export const layoutMock = {
   ],
 }
 
-// Invitados de ejemplo para la reserva con id=1
+// Invitados de ejemplo para la reserva con id=res-001
 export const invitadosMock = {
-  1: [
-    { id: 10, nombre: 'Ana García',       reservaId: 1 },
-    { id: 11, nombre: 'Luis García',      reservaId: 1 },
-    { id: 12, nombre: 'Marta López',      reservaId: 1 },
-    { id: 13, nombre: 'Carlos Ruiz',      reservaId: 1 },
-    { id: 14, nombre: 'Valeria Díaz',     reservaId: 1 },
-    { id: 15, nombre: 'Tomás Sánchez',    reservaId: 1 },
-    { id: 16, nombre: 'Lucía Fernández',  reservaId: 1 },
-    { id: 17, nombre: 'Marcos Torres',    reservaId: 1 },
+  'res-001': [
+    { id: 10, nombre: 'Ana García',       reservaId: 'res-001' },
+    { id: 11, nombre: 'Luis García',      reservaId: 'res-001' },
+    { id: 12, nombre: 'Marta López',      reservaId: 'res-001' },
+    { id: 13, nombre: 'Carlos Ruiz',      reservaId: 'res-001' },
+    { id: 14, nombre: 'Valeria Díaz',     reservaId: 'res-001' },
+    { id: 15, nombre: 'Tomás Sánchez',    reservaId: 'res-001' },
+    { id: 16, nombre: 'Lucía Fernández',  reservaId: 'res-001' },
+    { id: 17, nombre: 'Marcos Torres',    reservaId: 'res-001' },
   ],
 }
 
-// Asignaciones de invitados a mesas para la reserva con id=1
+// Asignaciones de invitados a mesas para la reserva con id=res-001
 // Algunas mesas están parcialmente ocupadas, otras vacías
 export const asignacionesMock = {
-  1: [
-    { id: 101, reservaId: 1, mesaId: 1, invitadoId: 10 },
-    { id: 102, reservaId: 1, mesaId: 1, invitadoId: 11 },
-    { id: 103, reservaId: 1, mesaId: 2, invitadoId: 12 },
+  'res-001': [
+    { id: 101, reservaId: 'res-001', mesaId: 1, invitadoId: 10 },
+    { id: 102, reservaId: 'res-001', mesaId: 1, invitadoId: 11 },
+    { id: 103, reservaId: 'res-001', mesaId: 2, invitadoId: 12 },
   ],
 }
 

@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
-import { getDisponibilidad } from '../services/disponibilidadService'
+import { getDisponibilidad } from '../services/eventosService'
 
 /**
  * Hook para obtener la disponibilidad de un día específico
  * @param {string} fecha - Fecha en formato YYYY-MM-DD
- * @returns {Object} { reservas, loading, error, refetch }
+ * @returns {Object} { eventos, loading, error, refetch }
  */
 export function useDisponibilidad(fecha) {
-  const [reservas, setReservas] = useState([])
+  const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const fetchDisponibilidad = async () => {
     if (!fecha) {
-      setReservas([])
+      setEventos([])
       return
     }
 
@@ -22,10 +22,10 @@ export function useDisponibilidad(fecha) {
 
     try {
       const data = await getDisponibilidad(fecha)
-      setReservas(data.reservas || [])
+      setEventos(data.eventos || [])
     } catch (err) {
       setError(err.message || 'Error al obtener disponibilidad')
-      setReservas([])
+      setEventos([])
     } finally {
       setLoading(false)
     }
@@ -36,7 +36,7 @@ export function useDisponibilidad(fecha) {
   }, [fecha])
 
   return {
-    reservas,
+    eventos,
     loading,
     error,
     refetch: fetchDisponibilidad,

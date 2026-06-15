@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { bloquearHorario, liberarHorario } from '../services/disponibilidadService'
+import { bloquearHorario, liberarHorario } from '../services/eventosService'
 
 const DURACION_BLOQUEO_SEGUNDOS = 600
 const TICK_INTERVAL_MS = 1000
