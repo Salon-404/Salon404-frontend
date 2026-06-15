@@ -96,6 +96,24 @@ export async function getEvento(id) {
 }
 
 /**
+ * Devuelve el evento asociado a una reserva por su id de reserva.
+ * Útil para módulos que aún operan con el identificador legacy de reserva (mesas).
+ * @param {string} reservaId
+ * @returns {Promise<Object>} evento
+ */
+export async function getEventoPorReservaId(reservaId) {
+  if (USE_MOCK) {
+    await delay()
+    const evento = eventosState.find((e) => e.reserva?.id === reservaId)
+    if (!evento) throw createNotFoundError()
+    return clone(evento)
+  }
+
+  const { data } = await api.get(`/api/v1/events/by-reservation/${reservaId}`)
+  return data
+}
+
+/**
  * Crea un nuevo evento con reserva embebida.
  * @param {Object} data
  * @returns {Promise<Object>} evento creado

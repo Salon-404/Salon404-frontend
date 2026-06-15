@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import PlanoPage from './pages/mesas/PlanoPage'
 import EditorPage from './pages/mesas/EditorPage'
 import AsignarPage from './pages/mesas/AsignarPage'
@@ -9,18 +9,21 @@ import EventoDetailPage from './pages/eventos/EventoDetailPage'
 import EventoEditarPage from './pages/eventos/EventoEditarPage'
 import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import RedirectConBanner from './components/common/RedirectConBanner'
 import { ROLES } from './constants/auth'
-
-// Rutas de cada módulo se descomentan a medida que se desarrollan
-
-// Módulo Auth — Juan Cruz Merino / Federico Oviedo
-// import { AuthRoutes } from './pages/auth/AuthRoutes'
-
-// Módulo Reservas — Federico Oviedo
-// import { ReservasRoutes } from './pages/reservas/ReservasRoutes'
 
 // Módulo Invitados — Victor Balbuena
 import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
+
+function ReservaRedirect() {
+  const { id } = useParams()
+  return <RedirectConBanner to={`/eventos/${id}`} />
+}
+
+function ReservaEditarRedirect() {
+  const { id } = useParams()
+  return <RedirectConBanner to={`/eventos/${id}/editar`} />
+}
 
 export default function App() {
   return (
@@ -31,6 +34,13 @@ export default function App() {
 
         {/* Módulo Auth — Federico Oviedo */}
         <Route path="/login" element={<LoginPage />} />
+
+        {/* Redirects — rutas legacy /reservas → /eventos */}
+        <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
+        <Route path="/reservas/calendario" element={<RedirectConBanner to="/eventos/calendario" />} />
+        <Route path="/reservas/nueva" element={<RedirectConBanner to="/eventos/nuevo" />} />
+        <Route path="/reservas/:id" element={<ReservaRedirect />} />
+        <Route path="/reservas/:id/editar" element={<ReservaEditarRedirect />} />
 
         {/* Módulo Eventos — Federico Oviedo */}
         <Route path="/eventos" element={<EventosPage />} />
