@@ -11,16 +11,16 @@ import LoginPage from './pages/auth/LoginPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ROLES } from './constants/auth'
 import PagosPage from './pages/pagos/PagosPage'
- 
+
+// Módulo Invitados — Victor Balbuena
+import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
 
 // Módulo Pagos — Mariano Figueroa
-// Módulo Invitados — Victor Balbuena (por hacer)
-// import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
-
 export default function App() {
     return (
         <BrowserRouter>
             <Routes>
+                {/* Inicio de la aplicación */}
                 <Route path="/" element={<Navigate to="/login" replace />} />
 
                 {/* Módulo Auth — Federico Oviedo */}
@@ -45,7 +45,8 @@ export default function App() {
                 {/* Módulo Pagos — Mariano Figueroa */}
                 <Route path="/pagos" element={<PagosPage />} />
 
-                {/* <Route path="/invitados/*" element={<InvitadosRoutes />} /> */}
+                {/* Módulo Invitados — Victor Balbuena */}
+                <Route path="/invitados/*" element={<InvitadosRoutes />} />
             </Routes>
         </BrowserRouter>
     )
