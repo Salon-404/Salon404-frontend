@@ -1,6 +1,9 @@
 import { FRANJAS } from '../../constants/eventos'
 import EstadoEventoBadge from './EstadoEventoBadge'
+<<<<<<< HEAD
 import EstadoReservaBadge from './EstadoReservaBadge'
+=======
+>>>>>>> origin/develop
 
 const FRANJA_ORDER = ['manana', 'tarde', 'noche']
 const RESERVED_LABEL = 'Horario reservado'
@@ -32,12 +35,16 @@ function EventoCardAdmin({ evento, tipo }) {
           <span className="text-xs font-medium text-slate-600">
             {evento.horaInicio}–{evento.horaFin}
           </span>
+<<<<<<< HEAD
           <div className="flex items-center gap-1.5">
             <EstadoEventoBadge estado={evento.estado} />
             {evento.reserva?.estado && (
               <EstadoReservaBadge estado={evento.reserva.estado} />
             )}
           </div>
+=======
+          <EstadoEventoBadge estado={evento.estado} />
+>>>>>>> origin/develop
         </div>
         <p className={`text-sm font-semibold text-slate-800 truncate ${cancelado ? 'line-through opacity-60' : ''}`}>
           {evento.nombre}

@@ -11,10 +11,15 @@ import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import RedirectConBanner from './components/common/RedirectConBanner'
 import { ROLES } from './constants/auth'
+<<<<<<< HEAD
+=======
+import PagosPage from './pages/pagos/PagosPage'
+>>>>>>> origin/develop
 
 // Módulo Invitados — Victor Balbuena
 import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
 
+<<<<<<< HEAD
 function ReservaRedirect() {
   const { id } = useParams()
   return <RedirectConBanner to={`/eventos/${id}`} />
@@ -25,16 +30,20 @@ function ReservaEditarRedirect() {
   return <RedirectConBanner to={`/eventos/${id}/editar`} />
 }
 
+=======
+// Módulo Pagos — Mariano Figueroa
+>>>>>>> origin/develop
 export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* La app arranca por el login de Fede */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* Inicio de la aplicación */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Módulo Auth — Federico Oviedo */}
-        <Route path="/login" element={<LoginPage />} />
+                {/* Módulo Auth — Federico Oviedo */}
+                <Route path="/login" element={<LoginPage />} />
 
+<<<<<<< HEAD
         {/* Redirects — rutas legacy /reservas → /eventos */}
         <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
         <Route path="/reservas/calendario" element={<RedirectConBanner to="/eventos/calendario" />} />
@@ -48,19 +57,30 @@ export default function App() {
         <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
         <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
         <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
+=======
+                {/* Módulo Reservas — Federico Oviedo */}
+                <Route path="/reservas" element={<ReservasPage />} />
+                <Route path="/reservas/calendario" element={<CalendarioPage />} />
+                <Route path="/reservas/nueva" element={<NuevaReservaPage />} />
+                <Route path="/reservas/:id" element={<ReservaDetailPage />} />
+                <Route path="/reservas/:id/editar" element={<EditarReservaPage />} />
+>>>>>>> origin/develop
 
-        {/* Módulo Mesas — Federico Oviedo */}
-        <Route path="/mesas" element={<PlanoPage />} />
-        <Route path="/mesas/editor" element={
-          <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
-        } />
-        <Route path="/mesas/asignar/:reservaId" element={
-          <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
-        } />
+                {/* Módulo Mesas — Federico Oviedo */}
+                <Route path="/mesas" element={<PlanoPage />} />
+                <Route path="/mesas/editor" element={
+                    <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
+                } />
+                <Route path="/mesas/asignar/:reservaId" element={
+                    <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
+                } />
 
-        {/* Módulo Invitados — Victor Balbuena */}
-        <Route path="/invitados/*" element={<InvitadosRoutes />} />
-      </Routes>
-    </BrowserRouter>
-  )
+                {/* Módulo Pagos — Mariano Figueroa */}
+                <Route path="/pagos" element={<PagosPage />} />
+
+                {/* Módulo Invitados — Victor Balbuena */}
+                <Route path="/invitados/*" element={<InvitadosRoutes />} />
+            </Routes>
+        </BrowserRouter>
+    )
 }

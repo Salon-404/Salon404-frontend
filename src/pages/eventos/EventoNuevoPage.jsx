@@ -239,10 +239,17 @@ export default function EventoNuevoPage() {
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-6">
           <button
+<<<<<<< HEAD:src/pages/eventos/EventoNuevoPage.jsx
             onClick={() => navigate('/eventos')}
             className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
           >
             ← Volver a Eventos
+=======
+            onClick={() => navigate('/disponibilidad')}
+            className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+          >
+            ← Volver a disponibilidad
+>>>>>>> origin/develop:src/pages/reservas/NuevaReservaPage.jsx
           </button>
           <h1 className="mt-3 text-2xl font-semibold text-slate-800">Nuevo Evento</h1>
         </div>
