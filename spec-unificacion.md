@@ -735,4 +735,53 @@ Ya alineado con el contrato `docs/contrato-backend-eventos.md`. Gaps específico
 
 ## Autocrítica — Iteración 3
 
-_Pendiente (se completa al final del ciclo)_
+### Qué salió bien
+
+- **Los 7 días se completaron en menos tiempo del estimado.** El spec detallado y las decisiones de arquitectura tomadas upfront (opción B: derribar `/reservas`, reutilizar componentes existentes, optimistic locking desde el frontend) eliminaron ambigüedad y retrabajo. Cada día fue un commit atómico con tests verdes.
+
+- **Reutilización real, no teórica.** `CalendarioDisponibilidad`, `SelectorHorarios`, `CountdownReserva`, `FormularioReserva` y los hooks de disponibilidad se mantuvieron intactos. Solo se les agregó el campo `descripcion` al `FormularioReserva` (cambio aditivo). El `useEventos` hook unificó el acceso a datos sin romper el calendario.
+
+- **Los tests crecieron orgánicamente.** De 165 tests pre-iteración a 218. Cada componente nuevo y cada edge case tiene cobertura. Los tests legacy se eliminaron junto con el código que probaban, sin dejar zombies.
+
+- **El optimistic locking se implementó correctamente desde el frontend.** El campo `version` en el modelo de Evento + manejo de 409 en `EventoEditarPage` + el adapter mock que simula el conflicto. Cuando David exponga el endpoint real, el frontend ya está listo.
+
+- **La migración de datos fue transparente.** Las 8 reservas del mock viejo se migraron a `eventosMock` con `reserva` embebida respetando la semántica del backend. El admin ve los mismos datos en `/eventos` que antes en `/reservas`.
+
+### Qué se podría haber hecho mejor
+
+- **`feature/calendario-mejoras` nunca se mergeó a `develop`.** El spec asumía que PR #15 estaba mergeada, pero no fue así. Tuvimos que hacer checkout selectivo de los archivos del calendario (`git checkout feature/calendario-mejoras -- <files>`) en el Día 5. Esto es una falla de coordinación con QA. La PR debió mergearse antes de empezar esta iteración.
+
+- **El `FormularioReserva` wizard de 3 pasos se reutilizó para creación, pero no para edición.** `EventoEditarPage` terminó con un formulario directo en vez de reusar el wizard. La decisión fue pragmática (editar con wizard de 3 pasos es mala UX), pero el spec no lo anticipó y tuvimos que divergir.
+
+- **El módulo de mesas quedó con deuda técnica de naming.** Sigue usando `reservaId` en URLs y props cuando el modelo unificado ya es `Evento`. Renombrar a `eventoId` toca demasiados archivos del módulo de mesas y excede el scope de esta iteración. Queda como tarea para una iteración futura.
+
+- **El `useEventos` hook no tiene filtro server-side real para clientes.** El filtro por `eventOwner` existe en el mock pero el backend aún no lo implementa. Mientras tanto, el frontend filtra client-side lo que el backend debería filtrar. Esto es correcto para el MVP con mocks, pero es un gap de seguridad que hay que cerrar antes de producción.
+
+- **El debounce de 300ms y AbortController en `useEventos` se agregaron en el Día 7.** Debieron estar desde el Día 3 cuando se creó el hook. Fue una omisión del diseño inicial que los edge cases expusieron.
+
+### Qué aprendí
+
+- **El spec detallado paga.** Tener el plan de ejecución día por día, con pasos numerados y commits sugeridos, eliminó la fricción de "qué hago ahora". El sub-agente de implementación recibió prompts autocontenidos y produjo resultados correctos en la primera pasada casi siempre.
+
+- **Los edge cases no son opcionales.** El doble click en Confirmar sin guarda habría creado eventos duplicados en producción. La race condition de filtros rápidos sin AbortController habría mostrado datos inconsistentes. Son bugs reales que el spec anticipó correctamente.
+
+- **El adapter temporal (`reservasService` como wrapper de `eventosService`) fue la decisión correcta.** Nos permitió eliminar `reservasMock.js` y migrar servicios en el Día 1 sin romper build ni tests de otros módulos (mesas). En el Día 6 se eliminó limpiamente cuando todos los consumers ya estaban migrados.
+
+- **El checkout selectivo de archivos de otra rama es una herramienta válida cuando un merge completo generaría demasiados conflictos.** No es ideal, pero fue la solución más limpia para el Día 5 dado que `feature/calendario-mejoras` tenía 12 conflictos con esta rama.
+
+### Métricas
+
+| Métrica | Valor |
+|---------|-------|
+| Días planificados | 8 |
+| Días reales | 7 (Día 1-7 completados) |
+| Commits | 7 features + 1 merge |
+| Archivos cambiados | 93 |
+| Líneas agregadas | 11,380 |
+| Líneas eliminadas | 1,254 |
+| Tests totales | 218 |
+| Archivos de test | 26 |
+| Build | ✅ |
+| Rutas legacy eliminadas | 5 pages + 8 components + 1 service |
+| Nuevas rutas | `/eventos`, `/eventos/:id`, `/eventos/:id/editar`, `/eventos/nuevo`, `/eventos/calendario` |
+| Rutas con redirect | `/reservas`, `/reservas/nueva`, `/reservas/calendario`, `/reservas/:id`, `/reservas/:id/editar` |
