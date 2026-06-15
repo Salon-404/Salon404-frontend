@@ -36,6 +36,12 @@ export default function ReservasPage() {
           <button onClick={() => navigate('/reservas/calendario')} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium border border-indigo-300 hover:border-indigo-500 px-4 py-2 rounded-lg">
             Ver Calendario
           </button>
+          <Link
+            to="/eventos/calendario"
+            className="text-slate-600 hover:text-slate-800 text-sm font-medium border border-slate-300 hover:border-slate-400 px-4 py-2 rounded-lg transition-colors"
+          >
+            Agenda de Eventos
+          </Link>
         </div>
 
         {error && <div className="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">{error}</div>}

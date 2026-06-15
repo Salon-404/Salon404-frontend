@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, replace } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
-import { RUTA_DEFAULT } from '../../constants/auth'
+import { TOKEN_KEY,RUTA_ADMIN,RUTA_USER } from '../../constants/auth'
+import { decodeToken } from '../../globals/decodeToken'
 
 const INPUT_CLASS =
     'w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 shadow-sm ' +

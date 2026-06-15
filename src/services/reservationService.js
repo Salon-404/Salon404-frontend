@@ -1,0 +1,37 @@
+import axios from "axios";
+import { services } from "./endpointsUrl";
+
+export async function createReservation({userId,totalAmount,dateReserved}) {
+
+    try{
+        const response = axios.post(`${services.reservation}`,{userId,totalAmount,dateReserved});
+        return response.data;
+    }
+    catch(error)
+    {
+        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+    }
+    
+}
+
+export async function getAllReservations() {
+    try{
+        const response = await axios.get(`${services.reservation}`);
+        return response.data;
+    }
+    catch(error)
+    {
+        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+    }
+}
+
+export async function getAvailability() {
+    try{
+        const response = await axios.get(`${services.reservation}/disponibility`);
+        return response.data;
+    }
+    catch(error)
+    {
+        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+    }
+}
