@@ -5,6 +5,8 @@ import AsignarPage from './pages/mesas/AsignarPage'
 import LoginPage from './pages/auth/LoginPage'
 import EventoNuevoPage from './pages/eventos/EventoNuevoPage'
 import EventosPage from './pages/eventos/EventosPage'
+import EventoDetailPage from './pages/eventos/EventoDetailPage'
+import EventoEditarPage from './pages/eventos/EventoEditarPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ROLES } from './constants/auth'
 
@@ -31,6 +33,8 @@ export default function App() {
 
         {/* Módulo Eventos — Federico Oviedo */}
         <Route path="/eventos" element={<EventosPage />} />
+        <Route path="/eventos/:id" element={<EventoDetailPage />} />
+        <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
         <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
 
         {/* Módulo Mesas — Federico Oviedo */}
