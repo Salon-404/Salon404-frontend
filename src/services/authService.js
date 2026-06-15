@@ -3,7 +3,7 @@ import { usuariosMock } from '../mocks/authMock'
 import { TOKEN_KEY } from '../constants/auth'
 import { services } from './endpointsUrl';
 // Poner en false cuando el backend de Juan Cruz (Dupla 1) esté listo
-const USE_MOCK = false
+const USE_MOCK = true
 
 function delay(ms = 250) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -14,6 +14,19 @@ function generarTokenMock(usuario) {
 }
 
 export async function login({email,password}) {
+  if (USE_MOCK) {
+    await delay()
+    const usuario = usuariosMock.find(u => u.email === email && u.password === password)
+    if (!usuario) {
+      const error = new Error('Email o contraseña incorrectos')
+      error.response = { status: 401 }
+      throw error
+    }
+    const token = generarTokenMock(usuario)
+    const { password: _, ...usuarioSinPassword } = usuario
+    return { token, user: { ...usuarioSinPassword, role: usuario.rol } }
+  }
+  
   try
   {
     const response = await axios.post( `${services.auth}login`,{email,password});
