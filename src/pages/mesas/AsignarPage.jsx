@@ -44,7 +44,7 @@ export default function AsignarPage() {
     asignarInvitado,
     desasignarInvitado,
     moverInvitado,
-  } = useAsignaciones(Number(reservaId))
+  } = useAsignaciones(reservaId)
 
   const [busqueda,        setBusqueda]        = useState('')
   const [invitadoActivo,  setInvitadoActivo]  = useState(null) // para DragOverlay

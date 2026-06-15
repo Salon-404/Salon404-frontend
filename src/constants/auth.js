@@ -5,4 +5,4 @@ export const ROLES = {
 
 export const TOKEN_KEY    = 'salon404_token'
 export const RUTA_LOGIN   = '/login'
-export const RUTA_DEFAULT = '/reservas'
+export const RUTA_DEFAULT = '/eventos'

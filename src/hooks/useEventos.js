@@ -1,8 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { getEventos } from '../services/eventosService'
+import { filtrarEventos } from '../utils/eventos'
 
 /**
  * Hook para obtener la lista unificada de eventos con filtros.
+ *
+ * División de filtros:
+ * - Service-side (se envían al backend): estado, tipoEventoId, fechaDesde,
+ *   fechaHasta, eventOwner.
+ * - Client-side (se aplican sobre la respuesta): estadoEvento, estadoReserva,
+ *   busqueda. Estos campos no forman parte del contrato del servicio porque
+ *   operan sobre el evento y su reserva embebida de forma separada.
+ *
  * @param {Object} filtrosIniciales - Filtros iniciales aplicados al listado.
  * @param {number} debounceMs - Tiempo de debounce para cambios de filtros.
  * @returns {Object} { eventos, loading, error, filtros, setFiltros, refetch }
@@ -23,8 +32,28 @@ export function useEventos(filtrosIniciales = {}, debounceMs = 300) {
     setError(null)
 
     try {
-      const data = await getEventos(filtros, abortControllerRef.current.signal)
-      setEventos(data)
+      // Filtros que entiende el servicio (backend).
+      const serviceFiltros = {
+        estado: filtros.estado,
+        tipoEventoId: filtros.tipoEventoId,
+        fechaDesde: filtros.fechaDesde,
+        fechaHasta: filtros.fechaHasta,
+        eventOwner: filtros.eventOwner,
+      }
+
+      const data = await getEventos(
+        serviceFiltros,
+        abortControllerRef.current.signal
+      )
+
+      // Filtros aplicados localmente sobre el resultado del servicio.
+      const filtered = filtrarEventos(data, {
+        estadoEvento: filtros.estadoEvento,
+        estadoReserva: filtros.estadoReserva,
+        busqueda: filtros.busqueda,
+      })
+
+      setEventos(filtered)
     } catch (err) {
       if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
       setError(err.message || 'Error al obtener eventos')
@@ -50,6 +79,8 @@ export function useEventos(filtrosIniciales = {}, debounceMs = 300) {
     }
   }, [
     filtros.estado,
+    filtros.estadoEvento,
+    filtros.estadoReserva,
     filtros.tipoEventoId,
     filtros.fechaDesde,
     filtros.fechaHasta,

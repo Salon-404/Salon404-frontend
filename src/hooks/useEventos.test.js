@@ -118,4 +118,42 @@ describe('useEventos', () => {
       expect.any(AbortSignal)
     )
   })
+
+  it('filters eventos client-side by estadoEvento', async () => {
+    const mockEventos = [
+      { id: 'evt-001', nombre: 'Evento 1', estado: 'pendiente', reserva: { estado: 'pendiente' } },
+      { id: 'evt-002', nombre: 'Evento 2', estado: 'finalizado', reserva: { estado: 'confirmada' } },
+    ]
+    vi.mocked(eventosService.getEventos).mockResolvedValue(mockEventos)
+
+    const { result } = renderHook(() => useEventos({ estadoEvento: 'pendiente' }))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(result.current.eventos).toHaveLength(1)
+    expect(result.current.eventos[0].id).toBe('evt-001')
+    expect(eventosService.getEventos).toHaveBeenCalledWith(
+      {},
+      expect.any(AbortSignal)
+    )
+  })
+
+  it('filters eventos client-side by estadoReserva', async () => {
+    const mockEventos = [
+      { id: 'evt-001', nombre: 'Evento 1', estado: 'pendiente', reserva: { estado: 'pendiente' } },
+      { id: 'evt-002', nombre: 'Evento 2', estado: 'finalizado', reserva: { estado: 'confirmada' } },
+    ]
+    vi.mocked(eventosService.getEventos).mockResolvedValue(mockEventos)
+
+    const { result } = renderHook(() => useEventos({ estadoReserva: 'confirmada' }))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(result.current.eventos).toHaveLength(1)
+    expect(result.current.eventos[0].id).toBe('evt-002')
+  })
 })

@@ -107,8 +107,8 @@ export default function CalendarioEventosPage() {
       <nav className="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
         <span className="font-bold text-lg tracking-wide">SALON 404</span>
         <div className="flex items-center gap-4">
-          <Link to="/reservas" className="text-slate-300 hover:text-white text-sm transition-colors">
-            ← Reservas
+          <Link to="/eventos" className="text-slate-300 hover:text-white text-sm transition-colors">
+            ← Eventos
           </Link>
           <UserMenu />
         </div>
