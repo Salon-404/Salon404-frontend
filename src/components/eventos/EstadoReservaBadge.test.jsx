@@ -22,4 +22,16 @@ describe('EstadoReservaBadge', () => {
       'desconocido'
     )
   })
+
+  it('renders fallback "Sin reserva" when estado is null or undefined', () => {
+    const { rerender } = render(<EstadoReservaBadge estado={null} />)
+    expect(screen.getByTestId('estado-reserva-badge')).toHaveTextContent(
+      'Sin reserva'
+    )
+
+    rerender(<EstadoReservaBadge estado={undefined} />)
+    expect(screen.getByTestId('estado-reserva-badge')).toHaveTextContent(
+      'Sin reserva'
+    )
+  })
 })

@@ -58,14 +58,20 @@ describe('useEventos', () => {
       expect(result.current.loading).toBe(false)
     })
 
-    expect(eventosService.getEventos).toHaveBeenCalledWith({})
+    expect(eventosService.getEventos).toHaveBeenCalledWith(
+      {},
+      expect.any(AbortSignal)
+    )
 
     result.current.setFiltros({ estado: 'pendiente' })
 
     await waitFor(() => {
-      expect(eventosService.getEventos).toHaveBeenCalledWith({
-        estado: 'pendiente',
-      })
+      expect(eventosService.getEventos).toHaveBeenCalledWith(
+        {
+          estado: 'pendiente',
+        },
+        expect.any(AbortSignal)
+      )
     })
   })
 
@@ -86,5 +92,30 @@ describe('useEventos', () => {
     await waitFor(() => {
       expect(eventosService.getEventos).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it('debounces rapid filter changes and passes AbortSignal', async () => {
+    vi.mocked(eventosService.getEventos).mockResolvedValue([])
+
+    const { result } = renderHook(() => useEventos({}, 50))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(eventosService.getEventos).toHaveBeenCalledTimes(1)
+
+    result.current.setFiltros({ estado: 'pendiente' })
+    result.current.setFiltros({ estado: 'en_curso' })
+    result.current.setFiltros({ estado: 'finalizado' })
+
+    await waitFor(() => {
+      expect(eventosService.getEventos).toHaveBeenCalledTimes(2)
+    })
+
+    expect(eventosService.getEventos).toHaveBeenLastCalledWith(
+      { estado: 'finalizado' },
+      expect.any(AbortSignal)
+    )
   })
 })

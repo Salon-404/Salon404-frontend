@@ -27,6 +27,7 @@ export default function EventoDetailPage() {
   const navigate = useNavigate()
 
   const [evento, setEvento] = useState(null)
+  const hayInconsistencia = evento?.estado === 'en_curso' && evento?.reserva?.estado === 'expirada'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [updating, setUpdating] = useState(false)
@@ -126,6 +127,17 @@ export default function EventoDetailPage() {
         >
           ← Volver a Eventos
         </button>
+
+        {hayInconsistencia && (
+          <div
+            className="mb-5 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
+            role="alert"
+            data-testid="inconsistencia-alert"
+          >
+            <strong className="font-semibold">Inconsistencia detectada:</strong> el evento está en
+            curso pero la reserva se encuentra expirada. Revisá el estado de la reserva.
+          </div>
+        )}
 
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">

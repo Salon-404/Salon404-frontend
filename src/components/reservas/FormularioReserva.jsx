@@ -129,7 +129,7 @@ export default function FormularioReserva({
   }
 
   function handleConfirmar() {
-    if (!onConfirmar) return
+    if (cargando || !onConfirmar) return
     onConfirmar({
       tipoEventoId: tipoEventoSeleccionado,
       ...datosReserva,

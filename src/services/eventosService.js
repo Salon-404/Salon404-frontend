@@ -41,9 +41,10 @@ function clone(data) {
  * @param {{ estado?: string, tipoEventoId?: number, fechaDesde?: string, fechaHasta?: string, eventOwner?: string, busqueda?: string }} filtros
  * @returns {Promise<Array>} eventos
  */
-export async function getEventos(filtros = {}) {
+export async function getEventos(filtros = {}, signal) {
   if (USE_MOCK) {
     await delay()
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     let data = [...eventosState]
 
     if (filtros.estado) {
@@ -74,7 +75,7 @@ export async function getEventos(filtros = {}) {
     return clone(data)
   }
 
-  const { data } = await api.get('/api/v1/events', { params: filtros })
+  const { data } = await api.get('/api/v1/events', { params: filtros, signal })
   return data
 }
 

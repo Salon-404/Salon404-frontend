@@ -186,4 +186,29 @@ describe('EventoNuevoPage', () => {
       { timeout: 4000 }
     )
   })
+
+  it('prevents double submit when clicking Confirmar rapidly', async () => {
+    createEvento.mockImplementation(() => new Promise(() => {}))
+    renderConRutas()
+
+    await avanzarAlFormulario()
+
+    fireEvent.change(screen.getByTestId('input-nombre'), {
+      target: { value: 'Bautismo Valentino' },
+    })
+    fireEvent.change(screen.getByTestId('input-descripcion'), {
+      target: { value: 'Celebración de bautismo con almuerzo.' },
+    })
+    fireEvent.change(screen.getByTestId('input-invitados'), { target: { value: '150' } })
+
+    fireEvent.click(screen.getByTestId('btn-siguiente'))
+
+    const btnConfirmar = screen.getByTestId('btn-confirmar')
+    fireEvent.click(btnConfirmar)
+    fireEvent.click(btnConfirmar)
+
+    await waitFor(() => {
+      expect(createEvento).toHaveBeenCalledTimes(1)
+    })
+  })
 })

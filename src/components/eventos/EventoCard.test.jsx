@@ -42,4 +42,25 @@ describe('EventoCard', () => {
 
     expect(handleSelect).toHaveBeenCalledWith(mockEvento)
   })
+
+  it('renders gracefully when evento has no reserva', () => {
+    const eventoSinReserva = { ...mockEvento, reserva: null }
+    render(<EventoCard evento={eventoSinReserva} onSeleccionar={vi.fn()} />)
+
+    expect(screen.getByTestId('evento-card')).toBeInTheDocument()
+    expect(screen.getByTestId('estado-reserva-badge')).toHaveTextContent(
+      'Sin reserva'
+    )
+  })
+
+  it('shows inconsistency warning when evento is en_curso and reserva is expirada', () => {
+    const eventoInconsistente = {
+      ...mockEvento,
+      estado: 'en_curso',
+      reserva: { estado: 'expirada', montoTotal: 0 },
+    }
+    render(<EventoCard evento={eventoInconsistente} onSeleccionar={vi.fn()} />)
+
+    expect(screen.getByTestId('inconsistencia-warning')).toBeInTheDocument()
+  })
 })

@@ -154,6 +154,7 @@ describe('EventoEditarPage', () => {
     expect(screen.getByTestId('conflict-error')).toHaveTextContent(
       'Este evento fue modificado por otro usuario. Recargá la página.'
     )
+    expect(navigateMock).not.toHaveBeenCalled()
   })
 
   it('navigates back when cancel is clicked', async () => {

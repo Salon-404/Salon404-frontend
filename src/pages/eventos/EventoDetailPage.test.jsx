@@ -183,4 +183,22 @@ describe('EventoDetailPage', () => {
       expect(updateEstadoReservaMock).toHaveBeenCalledWith('evt-002', 'cancelada', 1)
     })
   })
+
+  it('shows inconsistency warning when evento is en_curso and reserva is expirada', async () => {
+    getEventoMock.mockResolvedValue({
+      ...mockEvento,
+      estado: 'en_curso',
+      reserva: { ...mockEvento.reserva, estado: 'expirada' },
+    })
+
+    renderConRuta()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('inconsistencia-alert')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('inconsistencia-alert')).toHaveTextContent(
+      'Inconsistencia detectada'
+    )
+  })
 })

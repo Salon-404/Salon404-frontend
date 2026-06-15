@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useHorariosDisponibles } from '../../hooks/useHorariosDisponibles'
@@ -105,6 +105,7 @@ export default function EventoNuevoPage() {
   const [error, setError] = useState(null)
   const [modalExpirada, setModalExpirada] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const enviandoRef = useRef(false)
   const [exito, setExito] = useState(false)
 
   const { horarios, loading: loadingHorarios, tiposEvento, refetch } =
@@ -147,8 +148,9 @@ export default function EventoNuevoPage() {
   }
 
   async function handleConfirmarEvento(datosFormulario) {
-    if (!user || !tipoEvento || !horarioSeleccionado || !fechaSeleccionada) return
+    if (enviandoRef.current || !user || !tipoEvento || !horarioSeleccionado || !fechaSeleccionada) return
 
+    enviandoRef.current = true
     setEnviando(true)
     setError(null)
 
@@ -191,6 +193,7 @@ export default function EventoNuevoPage() {
         setError('Ocurrió un error al crear el evento. Intentá de nuevo.')
       }
     } finally {
+      enviandoRef.current = false
       setEnviando(false)
     }
   }
