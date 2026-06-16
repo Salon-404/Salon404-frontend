@@ -33,14 +33,11 @@ function ReservaEditarRedirect() {
 
 // Módulo Pagos — Mariano Figueroa
 export default function App() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                {/* Inicio de la aplicación */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-
-                {/* Módulo Auth — Federico Oviedo */}
-                <Route path="/login" element={<LoginPage />} />
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
 
         {/* Redirects — rutas legacy /reservas → /eventos */}
         <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
@@ -55,48 +52,61 @@ export default function App() {
         <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
         <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
         <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
+        {/* Redirects reservas → eventos */}
+        <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
+        <Route path="/reservas/calendario" element={<RedirectConBanner to="/eventos/calendario" />} />
+        <Route path="/reservas/nueva" element={<RedirectConBanner to="/eventos/nuevo" />} />
+        <Route path="/reservas/:id" element={<ReservaRedirect />} />
+        <Route path="/reservas/:id/editar" element={<ReservaEditarRedirect />} />
 
-                {/* Módulo Mesas — Federico Oviedo */}
-                <Route path="/mesas" element={<PlanoPage />} />
-                <Route path="/mesas/editor" element={
-                    <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
-                } />
-                <Route path="/mesas/asignar/:reservaId" element={
-                    <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
-                } />
+        {/* Módulo Eventos — Federico Oviedo */}
+        <Route path="/eventos" element={<EventosPage />} />
+        <Route path="/eventos/:id" element={<EventoDetailPage />} />
+        <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
+        <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
+        <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
 
-                {/* Módulo Pagos — Mariano Figueroa */}
-                <Route path="/pagos" element={<PagosPage />} />
+        {/* Módulo Mesas — Federico Oviedo */}
+        <Route path="/mesas" element={<PlanoPage />} />
+        <Route path="/mesas/editor" element={
+          <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
+        } />
+        <Route path="/mesas/asignar/:reservaId" element={
+          <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
+        } />
 
-                {/* Módulo Invitados — Victor Balbuena */}
-                <Route path="/invitados/*" element={<InvitadosRoutes />} />
+        {/* Módulo Pagos — Mariano Figueroa */}
+        <Route path="/pagos" element={<PagosPage />} />
 
-                {/* Módulo Proveedores */}
-                <Route
-                  path="/proveedores"
-                  element={
-                    <ProtectedRoute rolRequerido={ROLES.ADMIN}>
-                      <ProveedoresList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/evento/:id/catering"
-                  element={
-                    <ProtectedRoute>
-                      <SugerenciaCatering />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/evento/:id/cronograma"
-                  element={
-                    <ProtectedRoute>
-                      <CronogramaEvento />
-                    </ProtectedRoute>
-                  }
-                />
-            </Routes>
-        </BrowserRouter>
-    )
+        {/* Módulo Invitados — Victor Balbuena */}
+        <Route path="/invitados/*" element={<InvitadosRoutes />} />
+
+        {/* Módulo Proveedores */}
+        <Route
+          path="/proveedores"
+          element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}>
+              <ProveedoresList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/evento/:id/catering"
+          element={
+            <ProtectedRoute>
+              <SugerenciaCatering />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/evento/:id/cronograma"
+          element={
+            <ProtectedRoute>
+              <CronogramaEvento />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  )
 }
