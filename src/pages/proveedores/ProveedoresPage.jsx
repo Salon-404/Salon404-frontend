@@ -1,185 +1,75 @@
-import { useState, useEffect } from 'react';
-import { getProveedores, createProveedor, updateProveedor, deleteProveedor } from '../../services/proveedoresService';
-import ProveedorFormModal from '../../components/proveedores/ProveedorFormModal';
+import React, { useEffect, useState } from "react";
+import { getProveedores, asignarProveedor } from "../../services/proveedoresService";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ProveedoresPage() {
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Estado para modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProveedor, setEditingProveedor] = useState(null);
-
-  // Estado para feedback (toast simple)
-  const [toast, setToast] = useState(null);
-
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const loadProveedores = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getProveedores();
-      setProveedores(data);
-    } catch (err) {
-      setError(err.message || 'Error al cargar los proveedores');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // SIMULACIÓN DE DATOS COMO EN PagosPage e InvitadosPage
+  const [eventoId] = useState(1); // MOCK: hardcodeado como en las otras páginas cliente por ahora
 
   useEffect(() => {
-    loadProveedores();
+    const fetchProveedores = async () => {
+      try {
+        const data = await getProveedores();
+        setProveedores(data);
+      } catch (err) {
+        setError("Error al cargar los proveedores.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProveedores();
   }, []);
 
-  const handleOpenNew = () => {
-    setEditingProveedor(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (proveedor) => {
-    setEditingProveedor(proveedor);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id, nombre) => {
-    if (!window.confirm(`¿Estás seguro de que deseas eliminar el proveedor "${nombre}"?`)) {
-      return;
-    }
-    
+  const handleSeleccionar = async (provId) => {
     try {
-      await deleteProveedor(id);
-      showToast('Proveedor eliminado correctamente');
-      setProveedores(prev => prev.filter(p => p.id !== id));
+      await asignarProveedor(eventoId, provId);
+      alert("Proveedor asignado correctamente al evento.");
     } catch (err) {
-      showToast(err.message || 'Error al eliminar', 'error');
-    }
-  };
-
-  const handleSave = async (data) => {
-    try {
-      if (editingProveedor) {
-        const updated = await updateProveedor(editingProveedor.id, data);
-        setProveedores(prev => prev.map(p => p.id === updated.id ? updated : p));
-        showToast('Proveedor actualizado correctamente');
-      } else {
-        const newProv = await createProveedor(data);
-        setProveedores(prev => [...prev, newProv]);
-        showToast('Proveedor creado correctamente');
-      }
-    } catch (err) {
-      showToast(err.message || 'Error al guardar', 'error');
-      throw err; // Para que el modal no se cierre
+      console.error(err);
+      alert("Error al asignar el proveedor.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Gestión de Proveedores</h1>
-            <p className="text-sm text-slate-500">Administra los proveedores vinculados al sistema.</p>
-          </div>
-          <button
-            onClick={handleOpenNew}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            + Nuevo Proveedor
-          </button>
-        </div>
-
-        {/* Toast Notification */}
-        {toast && (
-          <div className={`fixed bottom-4 right-4 z-50 rounded-md px-4 py-3 text-sm text-white shadow-lg transition-all ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-            {toast.message}
-          </div>
-        )}
-
-        {/* Contenido principal */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center text-slate-500">Cargando proveedores...</div>
-          ) : error ? (
-            <div className="p-8 text-center">
-              <div className="mb-4 text-red-500">{error}</div>
-              <button onClick={loadProveedores} className="text-indigo-600 hover:underline">Intentar nuevamente</button>
-            </div>
-          ) : proveedores.length === 0 ? (
-            <div className="p-12 text-center text-slate-500">
-              No hay proveedores registrados.
-            </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-6">Gestionar Proveedores</h1>
+      
+      {loading ? (
+        <p className="text-slate-500">Cargando proveedores...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <div className="grid gap-6">
+          {proveedores.length === 0 ? (
+            <p className="text-slate-500">No hay proveedores disponibles.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Nombre</th>
-                    <th className="px-6 py-4 font-medium">Rubro</th>
-                    <th className="px-6 py-4 font-medium">Contacto</th>
-                    <th className="px-6 py-4 font-medium text-center">Estado</th>
-                    <th className="px-6 py-4 font-medium text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {proveedores.map((prov) => (
-                    <tr key={prov.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-800">
-                        {prov.nombre}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
-                          {prov.rubro}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>{prov.email}</div>
-                        <div className="text-xs text-slate-400">{prov.telefono}</div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {prov.activo ? (
-                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
-                            Inactivo
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleOpenEdit(prov)}
-                          className="mr-3 font-medium text-indigo-600 hover:text-indigo-900"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(prov.id, prov.nombre)}
-                          className="font-medium text-red-600 hover:text-red-900"
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            proveedores.map(p => (
+              <div key={p.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center transition-shadow hover:shadow-md">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">{p.name}</h2>
+                  <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mt-1">{p.serviceType}</p>
+                  <p className="text-slate-600 mt-2">{p.description}</p>
+                  <div className="mt-2 text-sm text-slate-500">
+                    <span className="mr-4"><strong>Email:</strong> {p.email}</span>
+                    <span><strong>Teléfono:</strong> {p.phone}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSeleccionar(p.id)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-lg transition-colors shadow-sm ml-4 whitespace-nowrap"
+                >
+                  Seleccionar
+                </button>
+              </div>
+            ))
           )}
         </div>
-      </div>
-
-      <ProveedorFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={handleSave} 
-        proveedor={editingProveedor} 
-      />
+      )}
     </div>
   );
 }
