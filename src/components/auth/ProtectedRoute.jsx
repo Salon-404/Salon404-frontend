@@ -1,6 +1,10 @@
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { decodeToken } from '../../globals/decodeToken'
 import { TOKEN_KEY, RUTA_LOGIN } from '../../constants/auth'
+import { Link, Navigate } from 'react-router-dom'
+import { decodeToken } from '../../globals/decodeToken'
+import { TOKEN_KEY, RUTA_LOGIN } from '../../constants/auth'
+
 export default function ProtectedRoute({ children, rolRequerido }) {
   const token = localStorage.getItem(TOKEN_KEY)
 

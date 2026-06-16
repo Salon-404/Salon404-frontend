@@ -58,9 +58,7 @@ export async function register({name,lastName,email,password,phone})
 
 
 export async function logout() {
-  await api.post('/api/auth/logout', null, {
-    headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
-  })
+  // El cierre de sesión se maneja localmente en el frontend borrando el token de localStorage
 }
 
 export async function getMe(token) {
@@ -77,8 +75,8 @@ export async function getMe(token) {
     const { password: _, ...usuarioSinPassword } = usuario
     return usuarioSinPassword
   }
-  const { data } = await api.get('/api/auth/me', {
+  const response = await axios.get(`${services.auth}me`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  return data
+  return response.data
 }
