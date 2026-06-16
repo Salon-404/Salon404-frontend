@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { decodeToken } from "../../globals/decodeToken";
-import { TOKEN_KEY } from "../../constants/auth";
+import { TOKEN_KEY, ROLES } from "../../constants/auth";
 
 export default function Navbar() {
   const { logout } = useAuth();
@@ -39,12 +39,23 @@ export default function Navbar() {
             Disponibilidad
           </Link>
 
-          <Link
-            to="/eventos"
-            className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
-          >
-            Eventos
-          </Link>
+          {data?.role === ROLES.ADMIN && (
+            <Link
+              to="/eventos"
+              className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
+            >
+              Eventos
+            </Link>
+          )}
+
+          {data?.role === ROLES.ADMIN && (
+            <Link
+              to="/proveedores"
+              className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
+            >
+              Proveedores
+            </Link>
+          )}
         </div>
 
         {/* Acciones */}

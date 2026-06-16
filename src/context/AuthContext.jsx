@@ -24,6 +24,7 @@ export function AuthProvider({ children }) {
     const { token, user: userData } = await loginService({ email, password })
     localStorage.setItem(TOKEN_KEY, token)
     setUser(userData)
+    return userData;
   }, [])
 
 //Use callback sirve para que react no vuelva a crear una funcion cada vez que renderice la pag

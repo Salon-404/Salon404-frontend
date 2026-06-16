@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getEvento, updateEvento } from '../../services/eventosService'
+import { useAuth } from '../../context/AuthContext'
+import { ROLES } from '../../constants/auth'
 
 const MAX_NOMBRE = 100
 const MAX_DESCRIPCION = 500
@@ -43,6 +45,9 @@ function validarFormulario(form) {
 export default function EventoEditarPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isAdmin = user?.role === ROLES.ADMIN
+  const basePath = isAdmin ? '/admin/eventos' : '/cliente/eventos'
 
   const [evento, setEvento] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -112,7 +117,7 @@ export default function EventoEditarPage() {
         notas: form.notas.trim(),
       }
       await updateEvento(id, payload, evento.version)
-      navigate(`/eventos/${id}`)
+      navigate(`${basePath}/${id}`)
     } catch (err) {
       if (err?.response?.status === 409) {
         setConflictError('Este evento fue modificado por otro usuario. Recargá la página.')
@@ -147,7 +152,7 @@ export default function EventoEditarPage() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/eventos')}
+            onClick={() => navigate(basePath)}
             className={BTN_PRIMARY}
             data-testid="btn-volver-lista"
           >
@@ -165,7 +170,7 @@ export default function EventoEditarPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <button
           type="button"
-          onClick={() => navigate(`/eventos/${id}`)}
+          onClick={() => navigate(`${basePath}/${id}`)}
           className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mb-4"
           data-testid="btn-volver"
         >
@@ -224,48 +229,52 @@ export default function EventoEditarPage() {
               {validationErrors.descripcion && <p className={ERROR_TEXT_CLASS}>{validationErrors.descripcion}</p>}
             </div>
 
-            <div>
-              <label htmlFor="cantidad-invitados" className={LABEL_CLASS}>
-                Cantidad de invitados <span className="text-red-600">*</span>
-              </label>
-              <input
-                id="cantidad-invitados"
-                type="number"
-                data-testid="input-invitados"
-                min="1"
-                max={MAX_INVITADOS}
-                className={INPUT_CLASS}
-                value={form.cantidadInvitados}
-                onChange={(e) => handleChange('cantidadInvitados', e.target.value)}
-              />
-              {validationErrors.cantidadInvitados && (
-                <p className={ERROR_TEXT_CLASS}>{validationErrors.cantidadInvitados}</p>
-              )}
-            </div>
+            {isAdmin && (
+              <>
+                <div>
+                  <label htmlFor="cantidad-invitados" className={LABEL_CLASS}>
+                    Cantidad de invitados <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    id="cantidad-invitados"
+                    type="number"
+                    data-testid="input-invitados"
+                    min="1"
+                    max={MAX_INVITADOS}
+                    className={INPUT_CLASS}
+                    value={form.cantidadInvitados}
+                    onChange={(e) => handleChange('cantidadInvitados', e.target.value)}
+                  />
+                  {validationErrors.cantidadInvitados && (
+                    <p className={ERROR_TEXT_CLASS}>{validationErrors.cantidadInvitados}</p>
+                  )}
+                </div>
 
-            <div>
-              <label htmlFor="notas" className={LABEL_CLASS}>
-                Notas adicionales
-              </label>
-              <textarea
-                id="notas"
-                rows={3}
-                data-testid="input-notas"
-                maxLength={MAX_NOTAS}
-                className={`${INPUT_CLASS} resize-none`}
-                value={form.notas}
-                onChange={(e) => handleChange('notas', e.target.value)}
-              />
-              <p className={CHAR_COUNT_CLASS} data-testid="char-count-notas">
-                {form.notas.length}/{MAX_NOTAS}
-              </p>
-              {validationErrors.notas && <p className={ERROR_TEXT_CLASS}>{validationErrors.notas}</p>}
-            </div>
+                <div>
+                  <label htmlFor="notas" className={LABEL_CLASS}>
+                    Notas adicionales
+                  </label>
+                  <textarea
+                    id="notas"
+                    rows={3}
+                    data-testid="input-notas"
+                    maxLength={MAX_NOTAS}
+                    className={`${INPUT_CLASS} resize-none`}
+                    value={form.notas}
+                    onChange={(e) => handleChange('notas', e.target.value)}
+                  />
+                  <p className={CHAR_COUNT_CLASS} data-testid="char-count-notas">
+                    {form.notas.length}/{MAX_NOTAS}
+                  </p>
+                  {validationErrors.notas && <p className={ERROR_TEXT_CLASS}>{validationErrors.notas}</p>}
+                </div>
+              </>
+            )}
 
             <div className="flex justify-between pt-4">
               <button
                 type="button"
-                onClick={() => navigate(`/eventos/${id}`)}
+                onClick={() => navigate(`${basePath}/${id}`)}
                 className={BTN_SECONDARY}
                 data-testid="btn-cancelar"
               >

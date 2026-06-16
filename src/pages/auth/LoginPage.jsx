@@ -31,11 +31,11 @@ export default function LoginPage() {
             const usuarioAutenticado = await login({ email, password })
 
             // ✨ Extraemos el rol que devuelve la API real
-            const rolUser = usuarioAutenticado?.rol?.toUpperCase() || 'CLIENTE'
+            const rolUser = usuarioAutenticado?.role?.toUpperCase() || 'USER'
 
             // 🗺️ Enrutamiento estratégico por roles
-            if (rolUser === 'CLIENTE') {
-                navigate('/pagos', { replace: true })
+            if (rolUser === 'USER') {
+                navigate('/cliente/eventos', { replace: true })
             } else {
                 const destino = location.state?.from?.pathname ?? RUTA_DEFAULT
                 navigate(destino, { replace: true })

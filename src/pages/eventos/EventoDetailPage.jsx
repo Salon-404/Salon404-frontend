@@ -11,6 +11,8 @@ import { formatearMonto } from '../../utils/eventos'
 import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useAuth } from '../../context/AuthContext'
+import { ROLES } from '../../constants/auth'
 
 function getTipoNombre(tipoEventoId) {
   const tipo = tiposEventoMock.find((t) => t.id === tipoEventoId)
@@ -25,6 +27,9 @@ function formatFecha(fecha) {
 export default function EventoDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isAdmin = user?.role === ROLES.ADMIN
+  const basePath = isAdmin ? '/admin/eventos' : '/cliente/eventos'
 
   const [evento, setEvento] = useState(null)
   const hayInconsistencia = evento?.estado === 'en_curso' && evento?.reserva?.estado === 'expirada'
@@ -105,7 +110,7 @@ export default function EventoDetailPage() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/eventos')}
+            onClick={() => navigate(basePath)}
             className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
             data-testid="btn-volver-lista"
           >
@@ -121,7 +126,7 @@ export default function EventoDetailPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <button
           type="button"
-          onClick={() => navigate('/eventos')}
+          onClick={() => navigate(basePath)}
           className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mb-4"
           data-testid="btn-volver"
         >
@@ -154,22 +159,40 @@ export default function EventoDetailPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => navigate(`/eventos/${id}/editar`)}
+                onClick={() => navigate(`${basePath}/${id}/cronograma`)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                data-testid="btn-cronograma"
+              >
+                Cronograma
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/${id}/catering`)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                data-testid="btn-catering"
+              >
+                Catering
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/${id}/editar`)}
                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 data-testid="btn-editar"
                 disabled={updating}
               >
                 Editar
               </button>
-              <button
-                type="button"
-                onClick={handleCancelarEvento}
-                className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                data-testid="btn-cancelar-evento"
-                disabled={updating}
-              >
-                Cancelar evento
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={handleCancelarEvento}
+                  className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  data-testid="btn-cancelar-evento"
+                  disabled={updating}
+                >
+                  Cancelar evento
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -284,7 +307,7 @@ export default function EventoDetailPage() {
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
-            onClick={() => navigate('/eventos')}
+            onClick={() => navigate(basePath)}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
             data-testid="btn-volver-lista"
           >
@@ -292,21 +315,23 @@ export default function EventoDetailPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate(`/eventos/${id}/editar`)}
+            onClick={() => navigate(`${basePath}/${id}/editar`)}
             className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
             data-testid="btn-editar-footer"
           >
             Editar
           </button>
-          <button
-            type="button"
-            onClick={handleCancelarReserva}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            data-testid="btn-cancelar-reserva"
-            disabled={updating}
-          >
-            Cancelar reserva
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={handleCancelarReserva}
+              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              data-testid="btn-cancelar-reserva"
+              disabled={updating}
+            >
+              Cancelar reserva
+            </button>
+          )}
         </div>
       </div>
     </div>

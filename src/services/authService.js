@@ -2,8 +2,9 @@ import axios from 'axios'
 import { usuariosMock } from '../mocks/authMock'
 import { TOKEN_KEY } from '../constants/auth'
 import { services } from './endpointsUrl';
+import { decodeToken } from '../globals/decodeToken';
 // Poner en false cuando el backend de Juan Cruz (Dupla 1) esté listo
-const USE_MOCK = true
+const USE_MOCK = false
 
 function delay(ms = 250) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -30,11 +31,13 @@ export async function login({email,password}) {
   try
   {
     const response = await axios.post( `${services.auth}login`,{email,password});
-    return response.data;
+    const tokenStr = response.data.token || response.data; // Extraer el token del objeto devuelto
+    const userData = decodeToken(tokenStr);
+    return { token: tokenStr, user: userData };
   }
   catch(error)
   {
-     throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+     throw new Error(error.response?.data?.details || error.response?.data?.message || error.message || "No se pudo conectar con el servidor");
   }
 }
 
@@ -48,7 +51,7 @@ export async function register({name,lastName,email,password,phone})
   }
   catch(error)
   {
-    throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+    throw new Error(error.response?.data?.details || error.response?.data?.message || error.message || "No se pudo conectar con el servidor");
   }
 
 }
