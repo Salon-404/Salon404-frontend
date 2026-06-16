@@ -12,11 +12,12 @@ export default function ClienteLayout() {
   };
 
   const navLinks = [
-    { name: "Mis Eventos", path: "/cliente/eventos" },
     { name: "Pagos", path: "/cliente/pagos" },
     { name: "Invitados", path: "/cliente/invitados" },
     { name: "Mesas", path: "/cliente/mesas" },
     { name: "Cronograma", path: "/cliente/cronograma" },
+    { name: "Catering", path: "/cliente/catering" },
+    { name: "Proveedores", path: "/cliente/proveedores" },
   ];
 
   return (

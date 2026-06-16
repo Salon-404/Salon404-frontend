@@ -7,7 +7,8 @@ import { decodeToken } from '../../globals/decodeToken';
 import { TOKEN_KEY, ROLES } from '../../constants/auth';
 
 export default function CronogramaPage() {
-  const { id } = useParams(); // eventoId
+  const { id: paramId } = useParams();
+  const id = paramId || 1; // MOCK: fallback a 1 si no hay ID (ej. vista de cliente)
   const navigate = useNavigate();
   
   const { user } = useAuth();

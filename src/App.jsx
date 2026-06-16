@@ -65,15 +65,12 @@ export default function App() {
 
         {/* ======================= RUTAS DEL CLIENTE ======================= */}
         <Route path="/cliente" element={<ProtectedRoute rolRequerido={ROLES.CLIENTE}><ClienteLayout /></ProtectedRoute>}>
-          <Route path="eventos" element={<EventosPage />} />
-          <Route path="eventos/:id" element={<EventoDetailPage />} />
-          <Route path="eventos/:id/editar" element={<EventoEditarPage />} />
           <Route path="pagos" element={<PagosPage />} />
           <Route path="invitados/*" element={<InvitadosRoutes />} />
           <Route path="mesas" element={<PlanoPage />} />
-          <Route path="cronograma" element={<CalendarioEventosPage />} />
-          <Route path="eventos/:id/cronograma" element={<CronogramaPage />} />
-          <Route path="eventos/:id/catering" element={<CateringPage />} />
+          <Route path="cronograma" element={<CronogramaPage />} />
+          <Route path="catering" element={<CateringPage />} />
+          <Route path="proveedores" element={<ProveedoresPage />} />
         </Route>
         {/* Redirects — rutas legacy /reservas → /eventos */}
         <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
