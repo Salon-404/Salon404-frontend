@@ -11,13 +11,11 @@ import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import RedirectConBanner from './components/common/RedirectConBanner'
 import { ROLES } from './constants/auth'
-import PagosPage from './pages/pagos/PagosPage'
-
 // Módulo Proveedores
 import ProveedoresList from "./pages/proveedores/ProveedoresList";
 import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
-
+import HomePage from './pages/home/HomePage'
 // Módulo Invitados — Victor Balbuena
 import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
 
@@ -36,7 +34,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* Redirects — rutas legacy /reservas → /eventos */}
@@ -76,7 +74,7 @@ export default function App() {
         } />
 
         {/* Módulo Pagos — Mariano Figueroa */}
-        <Route path="/pagos" element={<PagosPage />} />
+       
 
         {/* Módulo Invitados — Victor Balbuena */}
         <Route path="/invitados/*" element={<InvitadosRoutes />} />

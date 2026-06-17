@@ -78,11 +78,7 @@ export default function CalendarioEventosPage() {
   const { isAdmin, vista } = useCalendarRole(user)
 
   const { tipos, tiposById, loading: loadingTipos, error: errorTipos } = useTiposEvento()
-<<<<<<< HEAD
   const { eventos, loading: loadingEventos, error: errorEventos } = useEventos()
-=======
-  const { eventos, loading: loadingEventos, error: errorEventos } = useEventos(year, month)
->>>>>>> origin/develop
 
   const eventosFiltrados = useMemo(
     () => filtrarEventosParaVista(eventos, vista),
@@ -111,13 +107,8 @@ export default function CalendarioEventosPage() {
       <nav className="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
         <span className="font-bold text-lg tracking-wide">SALON 404</span>
         <div className="flex items-center gap-4">
-<<<<<<< HEAD
           <Link to="/eventos" className="text-slate-300 hover:text-white text-sm transition-colors">
             ← Eventos
-=======
-          <Link to="/reservas" className="text-slate-300 hover:text-white text-sm transition-colors">
-            ← Reservas
->>>>>>> origin/develop
           </Link>
           <UserMenu />
         </div>
