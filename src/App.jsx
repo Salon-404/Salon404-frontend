@@ -1,23 +1,24 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
-import PlanoPage from './pages/mesas/PlanoPage'
-import EditorPage from './pages/mesas/EditorPage'
-import AsignarPage from './pages/mesas/AsignarPage'
-import LoginPage from './pages/auth/LoginPage'
-import EventoNuevoPage from './pages/eventos/EventoNuevoPage'
-import EventosPage from './pages/eventos/EventosPage'
-import EventoDetailPage from './pages/eventos/EventoDetailPage'
-import EventoEditarPage from './pages/eventos/EventoEditarPage'
-import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage'
-import ProtectedRoute from './components/auth/ProtectedRoute'
-import RedirectConBanner from './components/common/RedirectConBanner'
-import { ROLES } from './constants/auth'
-// Módulo Proveedores
+
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import PlanoPage from './pages/mesas/PlanoPage';
+import EditorPage from './pages/mesas/EditorPage';
+import AsignarPage from './pages/mesas/AsignarPage';
+import LoginPage from './pages/auth/LoginPage';
+import EventoNuevoPage from './pages/eventos/EventoNuevoPage';
+import EventosPage from './pages/eventos/EventosPage';
+import EventoDetailPage from './pages/eventos/EventoDetailPage';
+import EventoEditarPage from './pages/eventos/EventoEditarPage';
+import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import RedirectConBanner from './components/common/RedirectConBanner';
+import { ROLES } from './constants/auth';
+import DisponibilityPage from './pages/Disponibility/DisponibilityPage';
 import ProveedoresList from "./pages/proveedores/ProveedoresList";
 import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
-import HomePage from './pages/home/HomePage'
-// Módulo Invitados — Victor Balbuena
-import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
+import HomePage from './pages/home/HomePage';
+import SalonesPage from './pages/salon/SalonesPage';
+import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes';
 
 function ReservaRedirect() {
   const { id } = useParams()
@@ -34,11 +35,15 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/*RUTAS PARA EL USUARIO. LAS PUEDE VER SIN LOGUEARSE*/}
         <Route path="/" element={<HomePage />} />
+        <Route path="/salones" element={<SalonesPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/disponibilidad" element={<DisponibilityPage />} />
+        
 
         {/* Redirects — rutas legacy /reservas → /eventos */}
-        <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
+        {/*<Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />*/}
         <Route path="/reservas/calendario" element={<RedirectConBanner to="/eventos/calendario" />} />
         <Route path="/reservas/nueva" element={<RedirectConBanner to="/eventos/nuevo" />} />
         <Route path="/reservas/:id" element={<ReservaRedirect />} />

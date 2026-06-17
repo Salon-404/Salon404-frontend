@@ -45,6 +45,13 @@ export default function Navbar() {
           >
             Eventos
           </Link>
+          
+          <Link
+            to="/salones"
+            className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
+          >
+            Salones
+          </Link>
         </div>
 
         {/* Acciones */}
