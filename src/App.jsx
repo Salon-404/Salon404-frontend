@@ -25,13 +25,26 @@ import CronogramaPage from './pages/eventos/CronogramaPage'
 import CateringPage from './pages/eventos/CateringPage'
 
 
-// Módulo Proveedores
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import PlanoPage from './pages/mesas/PlanoPage';
+import EditorPage from './pages/mesas/EditorPage';
+import AsignarPage from './pages/mesas/AsignarPage';
+import LoginPage from './pages/auth/LoginPage';
+import EventoNuevoPage from './pages/eventos/EventoNuevoPage';
+import EventosPage from './pages/eventos/EventosPage';
+import EventoDetailPage from './pages/eventos/EventoDetailPage';
+import EventoEditarPage from './pages/eventos/EventoEditarPage';
+import CalendarioEventosPage from './pages/eventos/CalendarioEventosPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import RedirectConBanner from './components/common/RedirectConBanner';
+import { ROLES } from './constants/auth';
+import DisponibilityPage from './pages/Disponibility/DisponibilityPage';
 import ProveedoresList from "./pages/proveedores/ProveedoresList";
 import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
-
-// Módulo Invitados — Victor Balbuena
-import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
+import HomePage from './pages/home/HomePage';
+import SalonesPage from './pages/salon/SalonesPage';
+import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes';
 
 function ReservaRedirect() {
   const { id } = useParams()
@@ -56,7 +69,12 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
+        {/*RUTAS PARA EL USUARIO. LAS PUEDE VER SIN LOGUEARSE*/}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/salones" element={<SalonesPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/disponibilidad" element={<DisponibilityPage />} />
+
 
         {/* Redirects — rutas legacy /reservas → /cliente/eventos */}
         <Route path="/reservas" element={<RedirectConBanner to="/cliente/eventos" />} />
@@ -75,7 +93,7 @@ export default function App() {
           <Route path="proveedores" element={<ProveedoresPage />} />
         </Route>
         {/* Redirects — rutas legacy /reservas → /eventos */}
-        <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
+        {/*<Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />*/}
         <Route path="/reservas/calendario" element={<RedirectConBanner to="/eventos/calendario" />} />
         <Route path="/reservas/nueva" element={<RedirectConBanner to="/eventos/nuevo" />} />
         <Route path="/reservas/:id" element={<ReservaRedirect />} />
@@ -138,7 +156,7 @@ export default function App() {
         } />
 
         {/* Módulo Pagos — Mariano Figueroa */}
-        <Route path="/pagos" element={<PagosPage />} />
+
 
         {/* Módulo Invitados — Victor Balbuena */}
         <Route path="/invitados/*" element={<InvitadosRoutes />} />

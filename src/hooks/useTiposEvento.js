@@ -12,6 +12,7 @@ export function useTiposEvento() {
 
   useEffect(() => {
     let cancelled = false
+
     async function fetchTipos() {
       setLoading(true)
       setError(null)

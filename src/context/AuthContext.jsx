@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { login as loginService, logout as logoutService, getMe, register as registerService } from '../services/authService'
 import { TOKEN_KEY } from '../constants/auth'
+import { decodeToken } from '../globals/decodeToken'
 
 const AuthContext = createContext(null)
 
@@ -33,6 +34,17 @@ export function AuthProvider({ children }) {
     return userData;
     const userData = await getMe(token)
     setUser({ ...userData, rol: userData.role || userData.rol })
+    localStorage.setItem(TOKEN_KEY, token);
+    const payload = decodeToken(token);
+    const usuario =
+    {
+      id: payload.id,
+      name: payload.name,
+      role: payload.role,
+      email: payload.email
+    };
+    setUser(usuario);
+    return usuario;
   }, [])
 
   //Use callback sirve para que react no vuelva a crear una funcion cada vez que renderice la pag

@@ -56,6 +56,19 @@ export default function Navbar() {
               Proveedores
             </Link>
           )}
+          <Link
+            to="/eventos"
+            className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
+          >
+            Eventos
+          </Link>
+
+          <Link
+            to="/salones"
+            className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
+          >
+            Salones
+          </Link>
         </div>
 
         {/* Acciones */}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation, replace } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
-import { TOKEN_KEY,RUTA_ADMIN,RUTA_USER } from '../../constants/auth'
+import { TOKEN_KEY, RUTA_ADMIN, RUTA_USER } from '../../constants/auth'
 import { decodeToken } from '../../globals/decodeToken'
 
 const INPUT_CLASS =
@@ -27,15 +27,10 @@ export default function LoginPage() {
     async function onSubmit({ email, password }) {
         setErrorGeneral(null)
         try {
-            // 🔐 Autenticación real conectada al AuthContext
             const usuarioAutenticado = await login({ email, password })
-
-            // ✨ Extraemos el rol que devuelve la API real
-            const rolUser = usuarioAutenticado?.role?.toUpperCase() || 'USER'
-
-            // 🗺️ Enrutamiento estratégico por roles
-            if (rolUser === 'USER') {
-                navigate('/cliente/eventos', { replace: true })
+            const rolUser = usuarioAutenticado?.rol?.toUpperCase() || 'CLIENTE'
+            if (rolUser === 'CLIENTE') {
+                navigate(RUTA_USER)
             } else {
                 const destino = location.state?.from?.pathname ?? RUTA_DEFAULT
                 navigate(destino, { replace: true })
