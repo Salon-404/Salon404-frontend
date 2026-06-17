@@ -1,9 +1,7 @@
 import axios from 'axios'
-import { usuariosMock } from '../mocks/authMock'
-import { TOKEN_KEY } from '../constants/auth'
 import { services } from './endpointsUrl';
 // Poner en false cuando el backend de Juan Cruz (Dupla 1) esté listo
-const USE_MOCK = false;
+
 
 function delay(ms = 250) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -12,54 +10,57 @@ function delay(ms = 250) {
 function generarTokenMock(usuario) {
   return `mock_token_${usuario.id}_${Date.now()}`
 }
+import { services } from './endpointsUrl'
 
-export async function login({email,password}) {  
-  try
-  {
-    const response = await axios.post( `${services.auth}login`,{email,password});
+export async function login({ email, password }) {
+  try {
+    const response = await axios.post(`${services.auth}login`, { email, password });
     return response.data;
   }
-  catch(error)
-  {
-     throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
-  }
-}
-
-export async function register({name,lastName,email,password,phone})
-{
-  try
-  {
-    const response = await axios.post(`${services.auth}register`,{name,lastName,email,password,phone});
-    return response.data;
-  }
-  catch(error)
-  {
+  catch (error) {
     throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
-  }
-
-}
-
-
-export async function logout() {
-  // El cierre de sesión se maneja localmente en el frontend borrando el token de localStorage
-}
-
-export async function getMe(token) {
-  if (USE_MOCK) {
-    await delay()
-    const partes = token?.split('_')
-    const id = partes ? parseInt(partes[2]) : null
-    const usuario = usuariosMock.find(u => u.id === id)
-    if (!usuario) {
-      const error = new Error('Token inválido')
-      error.response = { status: 401 }
-      throw error
+    export async function login({ email, password }) {
+      try {
+        const response = await axios.post(`${services.auth}login`, { email, password })
+        return response.data
+      } catch (error) {
+        throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor')
+      }
     }
-    const { password: _, ...usuarioSinPassword } = usuario
-    return usuarioSinPassword
+
+    export async function register({ name, lastName, email, password, phone }) {
+      try {
+        const response = await axios.post(`${services.auth}register`, { name, lastName, email, password, phone });
+        return response.data;
+      }
+      catch (error) {
+        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+        export async function register({ name, lastName, email, password, phone }) {
+          try {
+            const response = await axios.post(`${services.auth}register`, {
+              name,
+              lastName,
+              email,
+              password,
+              phone,
+            })
+            return response.data
+          } catch (error) {
+            throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor')
+          }
+        }
+
+        export async function logout() {
+          // El cierre de sesion se maneja localmente en el frontend borrando el token de localStorage.
+        }
+
+        export async function getMe(token) {
+          const response = await axios.get(`${services.auth}me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          return response.data
+        }
+      }
+    }
   }
-  const response = await axios.get(`${services.auth}me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  return response.data
 }

@@ -8,7 +8,7 @@ const api = axios.create({
  * Devuelve todos los eventos, con filtros opcionales.
  */
 export async function getEventos(filtros = {}, signal) {
-  const { data } = await api.get("",{
+  const { data } = await api.get("", {
     params: filtros,
     signal,
   })
@@ -19,7 +19,7 @@ export async function getEventos(filtros = {}, signal) {
  * Devuelve un evento por id.
  */
 export async function getEvento(id) {
-  const { data } = await api.get(id)
+  const { data } = await api.get(`/${id}`)
   return data
 }
 
@@ -37,17 +37,17 @@ export async function getEventoPorReservaId(reservaId) {
  * Crea un nuevo evento.
  */
 export async function createEvento(evento) {
-  const { data } = await api.post('/api/v1/events', evento)
+  const { data } = await api.post('', evento)
   return data
 }
 
 /**
  * Actualiza un evento existente.
  */
-export async function updateEvento(id, evento) {
+export async function updateEvento(id, evento, version) {
   const { data } = await api.put(
-    `/api/v1/events/${id}`,
-    evento
+    `/${id}`,
+    { ...evento, version }
   )
 
   return data
@@ -62,7 +62,7 @@ export async function updateEstadoEvento(
   version
 ) {
   const { data } = await api.patch(
-    `/api/v1/events/${id}/status`,
+    `/${id}/status`,
     {
       estado,
       version,
@@ -81,7 +81,7 @@ export async function updateEstadoReserva(
   version
 ) {
   const { data } = await api.patch(
-    `/api/v1/events/${id}/reservation/status`,
+    `/${id}/reservation/status`,
     {
       estado,
       version,
@@ -96,7 +96,7 @@ export async function updateEstadoReserva(
  */
 export async function bloquearHorario(datos) {
   const { data } = await api.post(
-    '/api/v1/events/lock',
+    '/lock',
     datos
   )
 
@@ -108,7 +108,7 @@ export async function bloquearHorario(datos) {
  */
 export async function liberarHorario(reservaId) {
   const { data } = await api.delete(
-    `/api/v1/events/lock/${reservaId}`
+    `/lock/${reservaId}`
   )
 
   return data
@@ -119,7 +119,7 @@ export async function liberarHorario(reservaId) {
  */
 export async function getDisponibilidad(fecha) {
   const { data } = await api.get(
-    '/api/v1/events/availability',
+    '/availability',
     {
       params: { fecha },
     }

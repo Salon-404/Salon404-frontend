@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getTiposEvento } from '../services/disponibilidadService'
+import { getTipos as getTiposEvento } from '../services/tiposEventoService'
 
 /**
  * Hook para obtener los tipos de evento disponibles.

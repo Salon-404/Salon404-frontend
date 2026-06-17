@@ -3,14 +3,13 @@ import { es } from 'date-fns/locale'
 import EstadoEventoBadge from './EstadoEventoBadge'
 import EstadoReservaBadge from './EstadoReservaBadge'
 import { formatearMonto } from '../../utils/eventos'
-import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 
-function getTipoNombre(tipoEventoId) {
-  const tipo = tiposEventoMock.find((t) => t.id === tipoEventoId)
+function getTipoNombre(tipoEventoId, tiposById) {
+  const tipo = tiposById?.[tipoEventoId]
   return tipo?.nombre ?? `Tipo ${tipoEventoId}`
 }
 
-export default function EventoCard({ evento, onSeleccionar }) {
+export default function EventoCard({ evento, onSeleccionar, tiposById = {} }) {
   const hayInconsistencia = evento.estado === 'en_curso' && evento.reserva?.estado === 'expirada'
 
   return (
@@ -29,7 +28,7 @@ export default function EventoCard({ evento, onSeleccionar }) {
         {evento.cliente?.nombre ?? '—'}
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
-        {getTipoNombre(evento.tipoEventoId)}
+        {getTipoNombre(evento.tipoEventoId, tiposById)}
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
         {evento.cantidadInvitados}

@@ -15,18 +15,19 @@ import MesaDropZone from '../../components/mesas/MesaDropZone'
 import CapacidadAlert from '../../components/mesas/CapacidadAlert'
 import UnassignedDropZone from '../../components/mesas/UnassignedDropZone'
 import { getEventoPorReservaId } from '../../services/eventosService'
-import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 import UserMenu from '../../components/auth/UserMenu'
+import { useTiposEvento } from '../../hooks/useTiposEvento'
 
 // Vista de asignación de invitados a mesas (solo admin).
 // Panel izquierdo: lista de invitados sin asignar.
 // Panel derecho: tarjetas de mesas donde se sueltan los invitados.
-function getTipoNombre(tipoEventoId) {
-  return tiposEventoMock.find(t => t.id === tipoEventoId)?.nombre ?? `Tipo ${tipoEventoId}`
+function getTipoNombre(tipoEventoId, tiposById) {
+  return tiposById?.[tipoEventoId]?.nombre ?? `Tipo ${tipoEventoId}`
 }
 
 export default function AsignarPage() {
   const { reservaId } = useParams()
+  const { tiposById } = useTiposEvento()
 
   const [evento, setEvento] = useState(null)
 
@@ -132,7 +133,7 @@ export default function AsignarPage() {
                   {' · '}
                   {format(new Date(evento.fecha + 'T12:00:00'), "d 'de' MMMM yyyy", { locale: es })}
                   {' · '}
-                  {getTipoNombre(evento.tipoEventoId)}
+                  {getTipoNombre(evento.tipoEventoId, tiposById)}
                 </p>
               )}
             </div>

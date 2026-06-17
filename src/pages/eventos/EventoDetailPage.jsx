@@ -8,12 +8,12 @@ import {
 import EstadoEventoBadge from '../../components/eventos/EstadoEventoBadge'
 import EstadoReservaBadge from '../../components/eventos/EstadoReservaBadge'
 import { formatearMonto } from '../../utils/eventos'
-import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useTiposEvento } from '../../hooks/useTiposEvento'
 
-function getTipoNombre(tipoEventoId) {
-  const tipo = tiposEventoMock.find((t) => t.id === tipoEventoId)
+function getTipoNombre(tipoEventoId, tiposById) {
+  const tipo = tiposById?.[tipoEventoId]
   return tipo?.nombre ?? `Tipo ${tipoEventoId}`
 }
 
@@ -25,6 +25,7 @@ function formatFecha(fecha) {
 export default function EventoDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { tiposById } = useTiposEvento()
 
   const [evento, setEvento] = useState(null)
   const hayInconsistencia = evento?.estado === 'en_curso' && evento?.reserva?.estado === 'expirada'
@@ -184,7 +185,7 @@ export default function EventoDetailPage() {
               <div>
                 <dt className="text-xs text-slate-500">Tipo</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-tipo">
-                  {getTipoNombre(evento.tipoEventoId)}
+                  {getTipoNombre(evento.tipoEventoId, tiposById)}
                 </dd>
               </div>
               <div>

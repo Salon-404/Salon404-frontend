@@ -3,10 +3,9 @@ import { es } from 'date-fns/locale'
 import EstadoEventoBadge from './EstadoEventoBadge'
 import EstadoReservaBadge from './EstadoReservaBadge'
 import { formatearMonto } from '../../utils/eventos'
-import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 
-function getTipoNombre(tipoEventoId) {
-  const tipo = tiposEventoMock.find((t) => t.id === tipoEventoId)
+function getTipoNombre(tipoEventoId, tiposById) {
+  const tipo = tiposById?.[tipoEventoId]
   return tipo?.nombre ?? `Tipo ${tipoEventoId}`
 }
 
@@ -22,6 +21,7 @@ export default function EventoDetalleModal({
   onEditar,
   onCancelarEvento,
   onCancelarReserva,
+  tiposById = {},
 }) {
   if (!abierto || !evento) return null
 
@@ -70,7 +70,7 @@ export default function EventoDetalleModal({
               <div>
                 <p className="text-xs text-slate-500">Tipo</p>
                 <p className="text-sm text-slate-800" data-testid="detalle-tipo">
-                  {getTipoNombre(evento.tipoEventoId)}
+                  {getTipoNombre(evento.tipoEventoId, tiposById)}
                 </p>
               </div>
               <div>

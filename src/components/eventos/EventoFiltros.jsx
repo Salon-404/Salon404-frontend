@@ -1,10 +1,9 @@
 import { ESTADOS_EVENTO, ESTADOS_RESERVA } from '../../constants/eventos'
-import { tiposEventoMock } from '../../mocks/tiposEventoMock'
 
 const INPUT_CLASS =
   'border border-slate-300 bg-white text-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
-export default function EventoFiltros({ filtros = {}, onCambiarFiltros }) {
+export default function EventoFiltros({ filtros = {}, onCambiarFiltros, tiposEvento = [] }) {
   function update(key, value) {
     onCambiarFiltros({ ...filtros, [key]: value })
   }
@@ -61,7 +60,7 @@ export default function EventoFiltros({ filtros = {}, onCambiarFiltros }) {
         aria-label="Filtrar por tipo de evento"
       >
         <option value="">Todos los tipos</option>
-        {tiposEventoMock.map((t) => (
+        {tiposEvento.map((t) => (
           <option key={t.id} value={t.id}>
             {t.nombre}
           </option>

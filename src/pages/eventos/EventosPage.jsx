@@ -4,10 +4,12 @@ import { useEventos } from '../../hooks/useEventos'
 import { updateEstadoEvento } from '../../services/eventosService'
 import EventoCard from '../../components/eventos/EventoCard'
 import EventoFiltros from '../../components/eventos/EventoFiltros'
+import { useTiposEvento } from '../../hooks/useTiposEvento'
 
 export default function EventosPage() {
   const navigate = useNavigate()
   const { eventos, loading, error, filtros, setFiltros, refetch } = useEventos()
+  const { tipos, tiposById } = useTiposEvento()
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
 
   function handleSeleccionar(evento) {
@@ -30,7 +32,11 @@ export default function EventosPage() {
         </div>
 
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <EventoFiltros filtros={filtros} onCambiarFiltros={setFiltros} />
+          <EventoFiltros
+            filtros={filtros}
+            onCambiarFiltros={setFiltros}
+            tiposEvento={tipos}
+          />
           <button
             onClick={() => navigate('/eventos/calendario')}
             className="text-indigo-600 hover:text-indigo-800 text-sm font-medium border border-indigo-300 hover:border-indigo-500 px-4 py-2 rounded-lg"
@@ -105,6 +111,7 @@ export default function EventosPage() {
                       key={evento.id}
                       evento={evento}
                       onSeleccionar={handleSeleccionar}
+                      tiposById={tiposById}
                     />
                   ))
                 )}
