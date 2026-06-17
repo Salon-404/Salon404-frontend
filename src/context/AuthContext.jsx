@@ -7,7 +7,6 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null)
   const [loading, setLoading] = useState(true)
-/*
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY)
     if (!token) {
@@ -15,15 +14,23 @@ export function AuthProvider({ children }) {
       return
     }
     getMe(token)
-      .then(userData => setUser(userData))
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
+      .then(userData => {
+        setUser({ ...userData, rol: userData.role || userData.rol })
+      })
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY)
+        setUser(null)
+      })
       .finally(() => setLoading(false))
   }, [])
-*/
+
   const login = useCallback(async ({ email, password }) => {
-    const { token, user: userData } = await loginService({ email, password })
+    const res = await loginService({ email, password })
+    const token = res?.Token || res?.token
+    if (!token) throw new Error('No se recibió el token del servidor')
     localStorage.setItem(TOKEN_KEY, token)
-    setUser(userData)
+    const userData = await getMe(token)
+    setUser({ ...userData, rol: userData.role || userData.rol })
   }, [])
 
 //Use callback sirve para que react no vuelva a crear una funcion cada vez que renderice la pag
