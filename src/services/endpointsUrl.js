@@ -6,4 +6,5 @@ export const services =
     reservation:"http://localhost:5180/api/v1/Reservations",
     eventos:"http://localhost:5180/api/v1/Events",
     salon:"http://localhost:5180/api/v1/Salon",
+    eventType:"http://localhost:5180/api/v1/EventType"
 }

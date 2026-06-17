@@ -27,15 +27,10 @@ export default function LoginPage() {
     async function onSubmit({ email, password }) {
         setErrorGeneral(null)
         try {
-            // 🔐 Autenticación real conectada al AuthContext
             const usuarioAutenticado = await login({ email, password })
-
-            // ✨ Extraemos el rol que devuelve la API real
             const rolUser = usuarioAutenticado?.rol?.toUpperCase() || 'CLIENTE'
-
-            // 🗺️ Enrutamiento estratégico por roles
             if (rolUser === 'CLIENTE') {
-                navigate('/pagos', { replace: true })
+                navigate(RUTA_USER)
             } else {
                 const destino = location.state?.from?.pathname ?? RUTA_DEFAULT
                 navigate(destino, { replace: true })

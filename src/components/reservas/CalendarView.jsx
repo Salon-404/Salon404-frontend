@@ -34,15 +34,13 @@ export default function CalendarView({
 
     if (!disponiblesSet.has(dateStr)) return;
 
-    navigate(`/reservas/nueva?fecha=${dateStr}`);
+    navigate(`/eventos/nuevo?fecha=${dateStr}`);
   }
 
   function irAProximaFecha() {
     if (!proximaFechaDisponible) return;
 
-    navigate(
-      `/reservas/nueva?fecha=${proximaFechaDisponible}`
-    );
+    navigate(`/eventos/nuevo?fecha=${proximaFechaDisponible}`);
   }
 
   function dayCellClassNames(arg) {
