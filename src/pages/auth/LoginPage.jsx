@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
 import { TOKEN_KEY,RUTA_ADMIN,RUTA_USER } from '../../constants/auth'
 import { decodeToken } from '../../globals/decodeToken'
+import { Link } from 'react-router-dom'
+import Navbar from '../../components/global/Navbar'
 
 const INPUT_CLASS =
     'w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 shadow-sm ' +
@@ -46,6 +48,8 @@ export default function LoginPage() {
     }
 
     return (
+      <div className="min-h-screen bg-slate-50">
+        <Navbar />
         <div className="flex min-h-screen items-center justify-center bg-slate-50">
             <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
                 <h1 className="mb-6 text-2xl font-bold text-slate-900 tracking-tight">Salon 404</h1>
@@ -104,6 +108,7 @@ export default function LoginPage() {
             </Link>
           </div>
             </div>
+        </div>
         </div>
     )
 }
