@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { differenceInDays, parseISO } from 'date-fns'
 import { getEvento, getSalonDiagram } from '../../services/eventosService'
 import { getAllTypes } from '../../services/eventTypeService'
-import { getAllEventSchedule } from '../../services/eventScheduleService'
+import { CreateEventSchedule, getAllEventSchedule } from '../../services/eventScheduleService'
 import { getTablesByEventId } from '../../services/mesasService'
 import { updateTableLayout } from '../../services/mesasService'
 import { createTable } from '../../services/mesasService'
@@ -33,6 +33,7 @@ export default function EventoDetailPage() {
   const containerRef = useRef(null);
   const [resizingId, setResizingId] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCreateActivity, setShowCreateActivity] = useState(false)
 
   const [newTable, setNewTable] = useState({
     tableName: 'Mesa Principal',
@@ -42,6 +43,12 @@ export default function EventoDetailPage() {
     height: 20,
     posX: 5,
     posY: 10
+  });
+  const [newActivity, setNewActivity] = useState({
+    title: 'Mesa dulce',
+    description:'Se preparará la mesa dulce',
+    startTime:'03:00:00',
+    endTime: '03:00:00',
   });
 
 const handleMouseMove = useCallback((e) => {
@@ -109,6 +116,31 @@ const handleCreateTable = async () => {
     successToast("Mesa creada con éxito");
   } catch (err) {
     console.error('Error creando mesa', err)
+  }
+}
+
+const handleCreateActivity = async () => {
+  try {
+    const mesaCreada = await CreateEventSchedule({
+      id:id,
+      title: newActivity.title,
+      description:newActivity.description,
+      startTime:newActivity.startTime,
+      endTime: newActivity.endTime,
+    });
+
+   setShowCreateActivity(false)
+
+    setNewActivity({
+    title: 'Mesa dulce',
+    description:'Se preparará la mesa dulce',
+    startTime:'03:00:00',
+    endTime: '03:00:00',
+    })
+
+    successToast("Actividad creada con éxito");
+  } catch (err) {
+    console.error('Error creando Actividad', err)
   }
 }
 
@@ -331,7 +363,7 @@ const schedulesOrdenados = useMemo(() => {
         <div className="max-w-7xl mx-auto px-10 py-10">
 
           <button
-            onClick={() => navigate('/mis-eventos')}
+            onClick={() => navigate('/eventos')}
             className="text-[#85B7EB] text-sm mb-6 hover:underline"
           >
             ← Volver a mis eventos
@@ -846,9 +878,17 @@ const schedulesOrdenados = useMemo(() => {
 
               {seccion === 'cronograma' && (
                 <>
-                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-6">
-                    Cronograma del evento
-                  </h2>
+                <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-[#0C447C]">
+                  Cronograma del evento
+                </h2>
+
+                <button
+                onClick={() => setShowCreateActivity(true)}
+                className="bg-[#185FA5] text-white px-4 py-2 rounded-lg hover:bg-[#0C447C] transition">
+                  Crear actividad
+                </button>
+                 </div>
 
                   {loadingSchedules ? (
                     <p className="text-slate-500">
@@ -908,6 +948,84 @@ const schedulesOrdenados = useMemo(() => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {showCreateActivity && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-xl">
+                        <h2 className="text-2xl font-semibold text-[#0C447C] mb-6">
+                          Crear actividad
+                        </h2>
+
+                        <div className="space-y-4">
+                          <input
+                            type="text"
+                            placeholder="Título"
+                            value={newActivity.title}
+                            onChange={(e) =>
+                              setNewActivity({
+                                ...newActivity,
+                                title: e.target.value
+                              })
+                            }
+                            className="w-full border rounded-xl px-4 py-2"
+                          />
+
+                          <textarea
+                            placeholder="Descripción"
+                            value={newActivity.description}
+                            onChange={(e) =>
+                              setNewActivity({
+                                ...newActivity,
+                                description: e.target.value
+                              })
+                            }
+                            className="w-full border rounded-xl px-4 py-2"
+                          />
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <input
+                              type="time"
+                              value={newActivity.startTime}
+                              onChange={(e) =>
+                                setNewActivity({
+                                  ...newActivity,
+                                  startTime: e.target.value + ':00'
+                                })
+                              }
+                              className="border rounded-xl px-4 py-2"
+                            />
+
+                            <input
+                              type="time"
+                              value={newActivity.endTime}
+                              onChange={(e) =>
+                                setNewActivity({
+                                  ...newActivity,
+                                  endTime: e.target.value + ':00'
+                                })
+                              }
+                              className="border rounded-xl px-4 py-2"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-8">
+                          <button
+                            onClick={() => setShowCreateActivity(false)}
+                            className="px-4 py-2 rounded-xl border"
+                          >
+                            Cancelar
+                          </button>
+
+                          <button
+                            onClick={handleCreateActivity}
+                            className="bg-[#185FA5] text-white px-5 py-2 rounded-xl"
+                          >
+                            Crear
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>
