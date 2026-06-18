@@ -175,7 +175,6 @@ export async function getEvento(id) {
 export async function getEventoPorReservaId(reservaId) {
   const { data } = await api.get(`${reservaId}`
   )
-
   return data
 }
 
@@ -186,7 +185,16 @@ export async function createEvento(evento) {
   const { data } = await api.post('', evento)
   return data
 }
-
+export async function getSalonAvailable(salonId, eventTypeId, date) {
+  const { data } = await api.get('/salon/available', {
+    params: {
+      salonId,
+      eventType: eventTypeId,
+      Date: date,
+    },
+  })
+  return data; 
+}
 /**
  * Actualiza un evento existente.
  */

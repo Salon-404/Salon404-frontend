@@ -3,7 +3,7 @@ import { login as loginService, register as registerService } from '../services/
 import { TOKEN_KEY } from '../constants/auth'
 import { decodeToken } from '../globals/decodeToken'
 
-const AuthContext = createContext(null)
+const AuthContext = createContext(null);
 
 function normalizeUser(decoded) {
   if (!decoded) return null
@@ -27,54 +27,96 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem(TOKEN_KEY)
 
     if (!token) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
 
-    const usuario = normalizeUser(decodeToken(token))
+    try {
+      const payload = decodeToken(token);
 
-    if (!usuario) {
-      localStorage.removeItem(TOKEN_KEY)
-      setUser(null)
-    } else {
-      setUser(usuario)
+      const usuario = {
+        id: payload.id,
+        name: payload.name,
+        role: payload.role,
+        email: payload.email,
+      };
+
+      setUser(usuario);
+    } catch (err) {
+      console.error("Error al decodificar el token:", err);
+      localStorage.removeItem(TOKEN_KEY);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false)
-  }, [])
+  }, []);
 
   const login = useCallback(async ({ email, password }) => {
-    const res = await loginService({ email, password })
-    const token = res?.Token || res?.token
+    const res = await loginService({ email, password });
 
-    if (!token) throw new Error('No se recibio el token del servidor')
+    const token = res?.Token || res?.token;
 
-    const usuario = normalizeUser(decodeToken(token))
-    if (!usuario) throw new Error('No se pudo leer el token del servidor')
+    if (!token) {
+      throw new Error("No se recibió el token del servidor");
+    }
 
-    localStorage.setItem(TOKEN_KEY, token)
-    setUser(usuario)
-    return usuario
-  }, [])
+    localStorage.setItem(TOKEN_KEY, token);
 
-  const register = useCallback(async ({ name, lastName, email, password, phone }) => {
-    return registerService({ name, lastName, email, password, phone })
-  }, [])
+    const payload = decodeToken(token);
 
-  const logout = useCallback(async () => {
-    localStorage.removeItem(TOKEN_KEY)
-    setUser(null)
-  }, [])
+    const usuario = {
+      id: payload.id,
+      name: payload.name,
+      role: payload.role,
+      email: payload.email,
+    };
+
+    setUser(usuario);
+
+    return usuario;
+  }, []);
+
+  const register = useCallback(
+    async ({ name, lastName, email, password, phone }) => {
+      const response = await registerService({
+        name,
+        lastName,
+        email,
+        password,
+        phone,
+      });
+
+      return response;
+    },
+    []
+  );
+
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    setUser(null);
+  }, []);
+
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider')
-  return ctx
+  const ctx = useContext(AuthContext);
+
+  if (!ctx) {
+    throw new Error("useAuth debe usarse dentro de AuthProvider");
+  }
+
+  return ctx;
 }
