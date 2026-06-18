@@ -22,7 +22,6 @@ export const GestionMenu = () => {
         setDietas(dietasRes || []);
         setResumen(resumenRes || []);
 
-        // Inicializar precios locales en 0 para cada dieta si no existen
         const preciosIniciales = {};
         (dietasRes || []).forEach(d => { preciosIniciales[d.id] = 0; });
         setPreciosLocales(preciosIniciales);

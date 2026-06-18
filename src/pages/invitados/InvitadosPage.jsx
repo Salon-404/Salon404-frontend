@@ -21,7 +21,7 @@ export const InvitadosPage = () => {
   const [filterDiet, setFilterDiet] = useState('todos');
   const [filterMesa, setFilterMesa] = useState('todos');
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue } = useForm();
 
   const fetchData = async () => {
     try {
@@ -120,7 +120,6 @@ export const InvitadosPage = () => {
       </div>
 
       <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-5 items-center">
-        {/* Filtros */}
         <div className="flex flex-col">
           <label className="text-xs font-bold text-gray-500 uppercase mb-1">Estado</label>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border rounded-md p-2 text-sm bg-gray-50 focus:ring-[#B5853F] focus:border-[#B5853F]">
