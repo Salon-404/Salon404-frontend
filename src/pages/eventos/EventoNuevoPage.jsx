@@ -10,6 +10,9 @@ import { calcularMontoTotal } from "../../utils/eventos";
 import SelectorHorarios from "../../components/reservas/SelectorHorarios";
 import CountdownReserva from "../../components/reservas/CountdownReserva";
 import FormularioReserva from "../../components/reservas/FormularioReserva";
+import { createReservation } from "../../services/reservationService";
+import { errorToast, successToast } from "../../globals/toast";
+
 
 const PASOS = [
   { id: "tipo", label: "Tipo y salón" },
@@ -128,8 +131,9 @@ export default function EventoNuevoPage() {
   // ── Estado del wizard ─────────────────────────────────────────────────────
   const [paso, setPaso] = useState("tipo");
   const [nombreEvento, setNombreEvento] = useState("");
-  const [tipoEventoId, setTipoEventoId] = useState(null);
-  const [salonId, setSalonId] = useState(null);
+  const [cantInvitados, setCantInvitados] = useState(''); 
+  const [tipoEventoId, setTipoEventoId] = useState('');
+  const [salonId, setSalonId] = useState('');
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
 
   const [datosReserva, setDatosReserva] = useState({
@@ -149,7 +153,7 @@ export default function EventoNuevoPage() {
     horarios,
     loading: loadingHorarios,
     refetch,
-  } = useHorariosDisponibles(fechaSeleccionada, tipoEventoId);
+  } = useHorariosDisponibles(fechaSeleccionada, tipoEventoId, salonId);
 
   const { segundosRestantes, bloquear, liberar } = useBloqueoHorario();
 
@@ -183,27 +187,11 @@ export default function EventoNuevoPage() {
     setPaso("horarios");
   }
 
-  async function handleSeleccionarHorario(horario) {
-    setHorarioSeleccionado(horario);
-    setError(null);
-
-    const result = await bloquear(
-      {
-        fecha: fechaSeleccionada,
-        horaInicio: horario.inicio,
-        horaFin: horario.fin,
-        tipoEventoId,
-      },
-      () => setModalExpirada(true)
-    );
-
-    if (result) {
-      setPaso("formulario");
-    } else {
-      setError("No se pudo bloquear el horario. Probá con otro.");
-      setHorarioSeleccionado(null);
-    }
-  }
+  function handleSeleccionarHorario(horario) {
+  setHorarioSeleccionado(horario);
+  setError(null);
+  setPaso("formulario");
+}
 
   async function handleConfirmarEvento(datosFormulario) {
     if (
@@ -222,36 +210,33 @@ export default function EventoNuevoPage() {
     setError(null);
 
     try {
-      const cantidadInvitados = Number(datosFormulario.cantidadInvitados);
-      const montoTotal = calcularMontoTotal(tipoEvento, cantidadInvitados);
-      const expiraEn = calcularExpiracion(segundosRestantes);
-      const cliente = construirCliente(user);
 
-      const payload = {
-        nombre: nombreEvento,
-        descripcion: datosFormulario.descripcion || "",
-        tipoEventoId,
-        salonId,
-        fecha: fechaSeleccionada,
-        horaInicio: horarioSeleccionado.inicio,
-        horaFin: horarioSeleccionado.fin,
-        eventOwner: user.id,
-        cliente,
-        reserva: {
-          estado: "pendiente",
-          montoTotal,
-          expiraEn,
-        },
-      };
-
+      const reservation = await createReservation(
+        {
+          userId:user.id,
+          salonId:salonId,
+          eventTypeId:Number(tipoEventoId),
+          dateReserved:fechaSeleccionada
+        });
+        
+      const payload=
+      {
+      eventOwner: user.id,
+      reservationId: reservation.id, 
+      estimedGuests: Number(cantInvitados),
+      eventName: nombreEvento,
+      description: "",
+      eventStart: horarioSeleccionado.startTime,
+      eventFinish: horarioSeleccionado.endTime,
+      eventDate: fechaSeleccionada,
+      }
       await createEvento(payload);
-      await liberar();
 
-      setExito(true);
-      setTimeout(() => navigate("/eventos"), DURACION_EXITO_MS);
+      successToast("Reserva creada con éxito. Puede configurar su evento. ")
     } catch (err) {
       if (err?.response?.status === 409) {
-        setError("Ese horario ya no está disponible. Elegí otro.");
+        errorToast("Ese horario ya no está disponible. Elegí otro.");
+
         setPaso("horarios");
         setHorarioSeleccionado(null);
         refetch();
@@ -348,8 +333,6 @@ export default function EventoNuevoPage() {
           {/* ── PASO 1: Nombre + Tipo + Salón ────────────────────────────── */}
           {paso === "tipo" && (
             <div>
-
-              {/* Nombre del evento */}
               <div className="mb-8">
                 <h2 className="mb-1 text-lg font-medium text-slate-800">
                   ¿Cómo se llama tu evento?
@@ -368,8 +351,26 @@ export default function EventoNuevoPage() {
                   className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
+              <div className="mb-8">
+                <h2 className="mb-1 text-lg font-medium text-slate-800">
+                  ¿Cuantos invitados tendrá?
+                </h2>
+                <p className="mb-3 text-sm text-slate-500">
+                  Ingresá el número de invitados.
+                </p>
+                <input
+                  type="number"
+                  value={cantInvitados}
+                  onChange={(e) => {
+                    setCantInvitados(e.target.value);
+                    setError(null);
+                  }}
+                  placeholder="Ej: 150"
+                  min={0}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
 
-              {/* Tipo de evento */}
               <div className="mb-8">
                 <h2 className="mb-1 text-lg font-medium text-slate-800">
                   Tipo de evento
@@ -377,7 +378,6 @@ export default function EventoNuevoPage() {
                 <p className="mb-3 text-sm text-slate-500">
                   Seleccioná la categoría que mejor describe tu evento.
                 </p>
-
                 {loadingTipos && (
                   <p className="text-sm text-slate-500">Cargando tipos de evento…</p>
                 )}
@@ -418,15 +418,13 @@ export default function EventoNuevoPage() {
                 )}
               </div>
 
-              {/* Salón */}
-             <div className="mb-8">
+              <div className="mb-8">
                 <h2 className="mb-1 text-lg font-medium text-slate-800">
                   Salón
                 </h2>
                 <p className="mb-3 text-sm text-slate-500">
                   Seleccioná el salón donde querés realizar tu evento.
                 </p>
-
                 {loadingSalones && (
                   <p className="text-sm text-slate-500">Cargando salones…</p>
                 )}
@@ -482,7 +480,6 @@ export default function EventoNuevoPage() {
                   </p>
                 </div>
               </div>
-
               <SelectorHorarios
                 horarios={horarios}
                 loading={loadingHorarios}
@@ -492,28 +489,88 @@ export default function EventoNuevoPage() {
           )}
 
           {/* ── PASO 3: Formulario ───────────────────────────────────────── */}
-          {paso === "formulario" && (
-            <>
-              <div className="mb-4">
-                <button onClick={handleAtras} className="text-sm text-indigo-600">
-                  ← Atrás
-                </button>
-              </div>
+            {paso === "formulario" && (
+              <>
+                <div className="mb-4">
+                  <button onClick={handleAtras} className="text-sm text-indigo-600">
+                    ← Atrás
+                  </button>
+                </div>
 
-              <CountdownReserva segundosRestantes={segundosRestantes} />
+                <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-5">
+                  <h3 className="mb-4 text-lg font-semibold text-slate-800">
+                    Resumen de la reserva
+                  </h3>
 
-              <FormularioReserva
-                tiposEvento={tiposEvento}
-                tipoEventoSeleccionado={tipoEventoId}
-                onSeleccionarTipo={setTipoEventoId}
-                datosReserva={datosReserva}
-                onCambiarDatos={setDatosReserva}
-                onConfirmar={handleConfirmarEvento}
-                error={error}
-                cargando={enviando}
-              />
-            </>
-          )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-sm text-slate-500">Evento</p>
+                      <p className="font-medium text-slate-800">
+                        {nombreEvento}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-slate-500">Fecha</p>
+                      <p className="font-medium text-slate-800">
+                        {fechaSeleccionada}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-slate-500">Tipo de evento</p>
+                      <p className="font-medium text-slate-800">
+                        {tipoEvento?.name}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500">Salón</p>
+                      <p className="font-medium text-slate-800">
+                        {salon?.salonName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500">Horario</p>
+                      <p className="font-medium text-slate-800">
+                        {horarioSeleccionado?.startTime} -{" "}
+                        {horarioSeleccionado?.endTime}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500">Duración</p>
+                      <p className="font-medium text-slate-800">
+                        {tipoEvento?.duration / 60} hs
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500">Invitados estimados</p>
+                      <p className="font-medium text-slate-800">
+                        {cantInvitados} 
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 border-t border-slate-200 pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-medium text-slate-700">
+                      Precio total
+                    </span>
+                    <span className="text-2xl font-bold text-indigo-600">
+                      ${tipoEvento?.price?.toLocaleString("es-AR")}
+                    </span>
+                  </div>
+                </div>
+                 <div className="mt-8 flex justify-end">
+                  <button
+                    onClick={() => handleConfirmarEvento(datosReserva)}
+                    disabled={enviando}
+                    className="rounded-md bg-indigo-600 px-6 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {enviando ? "Creando reserva..." : "Completar reserva"}
+                  </button>
+                </div>
+              </>
+            )}
         </div>
       </div>
 

@@ -1,10 +1,10 @@
 import axios from "axios";
 import { services } from "./endpointsUrl";
 
-export async function createReservation({userId,totalAmount,dateReserved}) {
+export async function createReservation({userId,salonId,eventTypeId,dateReserved}) {
 
     try{
-        const response = axios.post(`${services.reservation}`,{userId,totalAmount,dateReserved});
+        const response = await axios.post(`${services.reservation}`,{userId,salonId,eventTypeId,dateReserved});
         return response.data;
     }
     catch(error)

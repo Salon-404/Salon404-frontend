@@ -27,9 +27,9 @@ export default function LoginPage() {
     async function onSubmit({ email, password }) {
         setErrorGeneral(null)
         try {
-            const usuarioAutenticado = await login({ email, password })
-            const rolUser = usuarioAutenticado?.rol?.toUpperCase() || 'CLIENTE'
-            if (rolUser === 'CLIENTE') {
+            const usuarioAutenticado = await login({ email, password });
+            const rolUser = usuarioAutenticado?.role?.toUpperCase() || 'USER'
+            if (rolUser === 'USER') {
                 navigate(RUTA_USER)
             } else {
                 const destino = location.state?.from?.pathname ?? RUTA_DEFAULT

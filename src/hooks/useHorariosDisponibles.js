@@ -1,61 +1,33 @@
-import { useState, useEffect, useMemo } from 'react'
-import { getConfigSalon, getTiposEvento } from '../services/disponibilidadService'
-import { useDisponibilidad } from './useDisponibilidad'
-import { calcularHorariosDisponibles } from '../utils/disponibilidad'
-
-/**
- * Hook para calcular horarios disponibles para una fecha y tipo de evento
- * @param {string|null} fecha - Fecha en formato YYYY-MM-DD
- * @param {number|null} tipoEventoId - ID del tipo de evento
- * @returns {Object} { horarios, loading, error, configSalon, tiposEvento, refetch }
- */
-export function useHorariosDisponibles(fecha, tipoEventoId) {
-  const [configSalon, setConfigSalon] = useState(null)
-  const [tiposEvento, setTiposEvento] = useState([])
-  const [loadingConfig, setLoadingConfig] = useState(false)
+import { useState, useEffect, useCallback } from 'react'
+import { getSalonAvailable } from '../services/eventosService'
+export function useHorariosDisponibles(fecha, tipoEventoId, salonId) {
+  const [horarios, setHorarios] = useState([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const { eventos, loading: loadingEventos } = useDisponibilidad(fecha)
-
-  const loading = loadingConfig || loadingEventos
-
-  const fetchConfig = async () => {
-    setLoadingConfig(true)
-    setError(null)
-
-    try {
-      const [config, tipos] = await Promise.all([
-        getConfigSalon(),
-        getTiposEvento(),
-      ])
-      setConfigSalon(config)
-      setTiposEvento(tipos)
-    } catch (err) {
-      setError(err.message || 'Error al obtener configuración')
-    } finally {
-      setLoadingConfig(false)
+  const fetchHorarios = useCallback(async () => {
+    if (!fecha || !tipoEventoId || !salonId) {
+      setHorarios([])
+      return
     }
-  }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getSalonAvailable(salonId, tipoEventoId, fecha)
+      setHorarios(data)
+      console.log('Horarios recibidos:', data) // ← log 3
+    } catch (err) {
+      setError(err.message || 'Error al obtener horarios')
+      setHorarios([])
+    } finally {
+      setLoading(false)
+    }
+  }, [fecha, tipoEventoId, salonId])
 
   useEffect(() => {
-    fetchConfig()
-  }, [])
+    fetchHorarios()
+  }, [fetchHorarios])
 
-  const horarios = useMemo(() => {
-    if (!fecha || !tipoEventoId || !configSalon) return []
-
-    const tipoEvento = tiposEvento.find((t) => t.id === tipoEventoId)
-    if (!tipoEvento) return []
-
-    return calcularHorariosDisponibles(fecha, tipoEvento, eventos, configSalon)
-  }, [fecha, tipoEventoId, configSalon, tiposEvento, eventos])
-
-  return {
-    horarios,
-    loading,
-    error,
-    configSalon,
-    tiposEvento,
-    refetch: fetchConfig,
-  }
+  return { horarios, loading, error, refetch: fetchHorarios }
 }
