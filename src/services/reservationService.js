@@ -1,6 +1,16 @@
 import axios from "axios";
 import { services } from "./endpointsUrl";
 
+function getServiceError(error) {
+    const status = error.response?.status;
+    const message = error.response?.data?.details
+        || error.response?.data?.message
+        || error.message
+        || "No se pudo conectar con el servidor";
+
+    return status ? `${message} (${status})` : message;
+}
+
 export async function createReservation({ userId, totalAmount, dateReserved }) {
 
     try {
@@ -8,7 +18,7 @@ export async function createReservation({ userId, totalAmount, dateReserved }) {
         return response.data;
     }
     catch (error) {
-        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+        throw new Error(getServiceError(error));
     }
 
 }
@@ -19,7 +29,7 @@ export async function getAllReservations() {
         return response.data;
     }
     catch (error) {
-        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+        throw new Error(getServiceError(error));
     }
 }
 
@@ -29,6 +39,6 @@ export async function getAvailability() {
         return response.data;
     }
     catch (error) {
-        throw new Error(error.response.data.details || "No se pudo conectar con el servidor");
+        throw new Error(getServiceError(error));
     }
 }

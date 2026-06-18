@@ -27,7 +27,7 @@ export default function UserMenu({ className = '' }) {
         {user.email}
       </span>
       <span className="text-xs text-slate-300 font-medium">
-        {user.rol === 'admin' ? 'Admin' : 'Cliente'}
+        {user.rol}
       </span>
       <button
         onClick={handleLogout}

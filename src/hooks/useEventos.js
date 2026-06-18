@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { getEventos } from '../services/eventosService'
 import { filtrarEventos } from '../utils/eventos'
+import { canViewAllEventos } from '../utils/roles'
 
 // Formatea un Date local como 'YYYY-MM-DD' sin conversión UTC.
 function toLocalDateStr(date) {
@@ -13,7 +14,8 @@ function toLocalDateStr(date) {
 /**
  * Hook para obtener la lista unificada de eventos con filtros.
  */
-export function useEventos(filtrosIniciales = {}, debounceMs = 300) {
+export function useEventos(filtrosIniciales = {}, debounceMs = 300, auth = {}) {
+  const { user = null, loading: loadingAuth = false } = auth
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -22,22 +24,23 @@ export function useEventos(filtrosIniciales = {}, debounceMs = 300) {
   const isFirstRenderRef = useRef(true)
 
   const fetchEventos = async () => {
+    if (loadingAuth) return
+
     abortControllerRef.current?.abort()
     abortControllerRef.current = new AbortController()
     setLoading(true)
     setError(null)
     try {
-      const serviceFiltros = {
-        estado: filtros.estado,
+      const data = await getEventos({}, abortControllerRef.current.signal)
+      const eventosPermitidos = canViewAllEventos(user)
+        ? data
+        : data.filter((evento) => evento.eventOwner === user?.id)
+      const filtered = filtrarEventos(eventosPermitidos, {
+        estadoEvento: filtros.estadoEvento,
+        estadoReserva: filtros.estadoReserva,
         tipoEventoId: filtros.tipoEventoId,
         fechaDesde: filtros.fechaDesde,
         fechaHasta: filtros.fechaHasta,
-        eventOwner: filtros.eventOwner,
-      }
-      const data = await getEventos(serviceFiltros, abortControllerRef.current.signal)
-      const filtered = filtrarEventos(data, {
-        estadoEvento: filtros.estadoEvento,
-        estadoReserva: filtros.estadoReserva,
         busqueda: filtros.busqueda,
       })
       setEventos(filtered)
@@ -64,7 +67,7 @@ export function useEventos(filtrosIniciales = {}, debounceMs = 300) {
   }, [
     filtros.estado, filtros.estadoEvento, filtros.estadoReserva,
     filtros.tipoEventoId, filtros.fechaDesde, filtros.fechaHasta,
-    filtros.eventOwner, filtros.busqueda, debounceMs,
+    filtros.eventOwner, filtros.busqueda, debounceMs, loadingAuth, user?.id, user?.role, user?.rol,
   ])
 
   return { eventos, loading, error, filtros, setFiltros, refetch: fetchEventos }
@@ -73,7 +76,8 @@ export function useEventos(filtrosIniciales = {}, debounceMs = 300) {
 /**
  * Hook para obtener eventos del mes indicado (usado por el calendario).
  */
-export function useEventosPorMes(year, month) {
+export function useEventosPorMes(year, month, auth = {}) {
+  const { user = null, loading: loadingAuth = false } = auth
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -82,6 +86,8 @@ export function useEventosPorMes(year, month) {
   const reload = useCallback(() => setTrigger((n) => n + 1), [])
 
   useEffect(() => {
+    if (loadingAuth) return
+
     let cancelled = false
     const inicio = new Date(year, month - 1, 1 - 7)
     const fin = new Date(year, month, 0 + 7)
@@ -91,12 +97,18 @@ export function useEventosPorMes(year, month) {
     setLoading(true)
     setError(null)
     getEventos({ fechaDesde, fechaHasta })
-      .then((data) => { if (!cancelled) setEventos(data) })
+      .then((data) => {
+        if (cancelled) return
+        const eventosPermitidos = canViewAllEventos(user)
+          ? data
+          : data.filter((evento) => evento.eventOwner === user?.id)
+        setEventos(eventosPermitidos)
+      })
       .catch(() => { if (!cancelled) setError('No se pudieron cargar los eventos.') })
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [year, month, trigger])
+  }, [year, month, trigger, loadingAuth, user?.id, user?.role, user?.rol])
 
   return { eventos, loading, error, reload }
 }

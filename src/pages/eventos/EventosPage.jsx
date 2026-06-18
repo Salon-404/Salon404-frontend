@@ -1,24 +1,38 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEventos } from '../../hooks/useEventos'
-import { updateEstadoEvento } from '../../services/eventosService'
 import EventoCard from '../../components/eventos/EventoCard'
 import EventoFiltros from '../../components/eventos/EventoFiltros'
 import { useTiposEvento } from '../../hooks/useTiposEvento'
+import Navbar from '../../components/global/Navbar'
+import { useAuth } from '../../context/AuthContext'
+
+function getEventoKey(evento, index) {
+  return (
+    evento.id ||
+    evento.eventId ||
+    evento.reserva?.id ||
+    `${evento.fecha ?? 'sin-fecha'}-${evento.horaInicio ?? 'sin-inicio'}-${evento.nombre ?? 'sin-nombre'}-${index}`
+  )
+}
 
 export default function EventosPage() {
   const navigate = useNavigate()
-  const { eventos, loading, error, filtros, setFiltros, refetch } = useEventos()
+  const { user, loading: loadingAuth } = useAuth()
+  const { eventos, loading, error, filtros, setFiltros, refetch } = useEventos(
+    {},
+    300,
+    { user, loading: loadingAuth }
+  )
   const { tipos, tiposById } = useTiposEvento()
-  const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
 
   function handleSeleccionar(evento) {
-    setEventoSeleccionado(evento)
-    navigate(`/eventos/${evento.id}`)
+    const id = evento.id || evento.eventId
+    if (id) navigate(`/eventos/${id}`)
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Navbar />
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Eventos</h1>
@@ -106,9 +120,9 @@ export default function EventosPage() {
                     </td>
                   </tr>
                 ) : (
-                  eventos.map((evento) => (
+                  eventos.map((evento, index) => (
                     <EventoCard
-                      key={evento.id}
+                      key={getEventoKey(evento, index)}
                       evento={evento}
                       onSeleccionar={handleSeleccionar}
                       tiposById={tiposById}

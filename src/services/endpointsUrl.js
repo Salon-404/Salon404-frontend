@@ -4,7 +4,7 @@ export const services =
     proveedores: "http://localhost:5003/api/proveedores",
     reservation: "http://localhost:5180/api/v1/Reservations",
     eventos: "http://localhost:5180/api/v1/Events",
-    eventTypes: "http://localhost:5180/api/v1/EventTypes",
+    eventTypes: "http://localhost:5180/api/v1/EventType",
     salon: "http://localhost:5180/api/v1/Salon",
     mesas: "http://localhost:5180",
 }

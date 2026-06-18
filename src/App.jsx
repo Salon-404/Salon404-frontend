@@ -4,6 +4,7 @@ import PlanoPage from './pages/mesas/PlanoPage';
 import EditorPage from './pages/mesas/EditorPage';
 import AsignarPage from './pages/mesas/AsignarPage';
 import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import EventoNuevoPage from './pages/eventos/EventoNuevoPage';
 import EventosPage from './pages/eventos/EventosPage';
 import EventoDetailPage from './pages/eventos/EventoDetailPage';
@@ -18,6 +19,7 @@ import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import HomePage from './pages/home/HomePage';
 import SalonesPage from './pages/salon/SalonesPage';
+import SalonDetailPage from './pages/salon/SalonDetailPage';
 import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes';
 
 function ReservaRedirect() {
@@ -38,7 +40,9 @@ export default function App() {
         {/*RUTAS PARA EL USUARIO. LAS PUEDE VER SIN LOGUEARSE*/}
         <Route path="/" element={<HomePage />} />
         <Route path="/salones" element={<SalonesPage />} />
+        <Route path="/salones/:id" element={<SalonDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/disponibilidad" element={<DisponibilityPage />} />
         
 

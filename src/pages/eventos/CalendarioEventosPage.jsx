@@ -74,11 +74,15 @@ export default function CalendarioEventosPage() {
     Number(searchParams.get('mes')) || today.getMonth() + 1
   )
 
-  const { user } = useAuth()
+  const { user, loading: loadingAuth } = useAuth()
   const { isAdmin, vista } = useCalendarRole(user)
 
   const { tipos, tiposById, loading: loadingTipos, error: errorTipos } = useTiposEvento()
-  const { eventos, loading: loadingEventos, error: errorEventos } = useEventos()
+  const { eventos, loading: loadingEventos, error: errorEventos } = useEventos(
+    {},
+    300,
+    { user, loading: loadingAuth }
+  )
 
   const eventosFiltrados = useMemo(
     () => filtrarEventosParaVista(eventos, vista),

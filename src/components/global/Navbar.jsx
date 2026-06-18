@@ -1,19 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { decodeToken } from "../../globals/decodeToken";
-import { TOKEN_KEY } from "../../constants/auth";
 
 export default function Navbar() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const token = localStorage.getItem(TOKEN_KEY);
-  const data = token ? decodeToken(token) : null;
+  async function handleLogout() {
+    await logout();
+    navigate("/login");
+  }
 
   return (
     <nav className="bg-white border-b border-slate-200 shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center px-6 py-4">
-
-        {/* Logo */}
         <div className="w-1/3">
           <Link
             to="/"
@@ -23,7 +22,6 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Menú centrado */}
         <div className="flex w-1/3 justify-center items-center gap-8">
           <Link
             to="/"
@@ -45,7 +43,7 @@ export default function Navbar() {
           >
             Eventos
           </Link>
-          
+
           <Link
             to="/salones"
             className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
@@ -54,9 +52,8 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Acciones */}
         <div className="flex w-1/3 justify-end items-center gap-3">
-          {!token ? (
+          {!user ? (
             <>
               <Link
                 to="/login"
@@ -75,11 +72,11 @@ export default function Navbar() {
           ) : (
             <>
               <span className="font-medium text-slate-700">
-                Hola, {data?.name}
+                Hola, {user.name || user.nombre || user.email}
               </span>
 
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="rounded-md bg-red-500 px-4 py-2 font-medium text-white transition-colors hover:bg-red-600"
               >
                 Cerrar sesión
@@ -87,7 +84,6 @@ export default function Navbar() {
             </>
           )}
         </div>
-
       </div>
     </nav>
   );

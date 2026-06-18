@@ -9,6 +9,11 @@ import DayEventsPopover from './DayEventsPopover'
 import DayEventsBottomSheet from './DayEventsBottomSheet'
 import CalendarioLegend from './CalendarioLegend'
 import FranjaDots from './FranjaDots'
+import {
+  getEventoFecha,
+  getEventoId,
+  getEventoTipoId,
+} from '../../utils/eventos'
 
 const MOBILE_BREAKPOINT = 768
 
@@ -48,20 +53,28 @@ export default function CalendarioEventos({
   const eventosByDate = useMemo(() => {
     const map = {}
     for (const e of eventos) {
-      if (!map[e.fecha]) map[e.fecha] = []
-      map[e.fecha].push(e)
+      const fecha = getEventoFecha(e)
+      if (!fecha) continue
+      if (!map[fecha]) map[fecha] = []
+      map[fecha].push(e)
     }
     return map
   }, [eventos])
 
   const fcEvents = useMemo(
     () =>
-      eventos.map((e) => ({
-        id: e.id,
-        start: e.fecha,
-        allDay: true,
-        extendedProps: { evento: e },
-      })),
+      eventos
+        .map((e, index) => {
+          const fecha = getEventoFecha(e)
+          if (!fecha) return null
+          return {
+            id: String(getEventoId(e, `${fecha}-${index}`)),
+            start: fecha,
+            allDay: true,
+            extendedProps: { evento: e },
+          }
+        })
+        .filter(Boolean),
     [eventos],
   )
 
@@ -185,11 +198,12 @@ export default function CalendarioEventos({
     info.jsEvent.preventDefault()
     info.jsEvent.stopPropagation()
     const evento = info.event.extendedProps.evento
+    const fecha = getEventoFecha(evento)
     const cellEl = info.el.closest('.fc-daygrid-day')
     const rect = cellEl
       ? cellEl.getBoundingClientRect()
       : info.el.getBoundingClientRect()
-    openDay(evento.fecha, rect)
+    openDay(fecha, rect)
   }
 
   function handleMoreLinkClick(info) {
@@ -237,7 +251,7 @@ export default function CalendarioEventos({
         moreLinkClick={handleMoreLinkClick}
         eventContent={(arg) => {
           const evento = arg.event.extendedProps.evento
-          const tipo = tiposById[evento.tipoEventoId]
+          const tipo = tiposById[getEventoTipoId(evento)]
           return <EventoPill evento={evento} tipo={tipo} isAdmin={isAdmin} />
         }}
         dayCellDidMount={dayCellDidMount}

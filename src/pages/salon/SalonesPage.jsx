@@ -3,6 +3,31 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/global/Navbar";
 import { getSalons } from "../../services/salonService";
 
+function SalonImage({ salon }) {
+  if (salon.profilePicture) {
+    return (
+      <img
+        src={salon.profilePicture}
+        alt={salon.salonName}
+        className="h-56 w-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-56 w-full items-center justify-center bg-slate-200">
+      <div className="text-center">
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl font-bold text-indigo-600 shadow-sm">
+          404
+        </div>
+        <p className="text-sm font-medium text-slate-500">
+          Imagen no disponible
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function SalonesPage() {
   const navigate = useNavigate();
 
@@ -53,11 +78,7 @@ export default function SalonesPage() {
                 key={salon.salonId}
                 className="overflow-hidden rounded-2xl bg-white shadow transition hover:-translate-y-1 hover:shadow-lg"
               >
-                <img
-                  src={salon.profilePicture}
-                  alt={salon.salonName}
-                  className="h-56 w-full object-cover"
-                />
+                <SalonImage salon={salon} />
 
                 <div className="p-6">
                   <h2 className="mb-2 text-2xl font-bold text-slate-800">
@@ -73,7 +94,7 @@ export default function SalonesPage() {
                   </p>
 
                   <button
-                    onClick={() => navigate(`/salones/${salon.id}`)}
+                    onClick={() => navigate(`/salones/${salon.salonId}`)}
                     className="w-full rounded-lg bg-indigo-600 py-3 font-medium text-white transition hover:bg-indigo-700"
                   >
                     Ver detalles

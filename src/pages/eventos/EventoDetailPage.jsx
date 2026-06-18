@@ -7,19 +7,48 @@ import {
 } from '../../services/eventosService'
 import EstadoEventoBadge from '../../components/eventos/EstadoEventoBadge'
 import EstadoReservaBadge from '../../components/eventos/EstadoReservaBadge'
-import { formatearMonto } from '../../utils/eventos'
+import {
+  formatearMonto,
+  getEventoCliente,
+  getEventoEstado,
+  getEventoFecha,
+  getEventoHoraFin,
+  getEventoHoraInicio,
+  getEventoInvitados,
+  getEventoNombre,
+  getEventoReserva,
+  getEventoTipoId,
+  getReservaEstado,
+  getReservaMonto,
+} from '../../utils/eventos'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useTiposEvento } from '../../hooks/useTiposEvento'
 
 function getTipoNombre(tipoEventoId, tiposById) {
   const tipo = tiposById?.[tipoEventoId]
-  return tipo?.nombre ?? `Tipo ${tipoEventoId}`
+  return tipo?.nombre ?? tipo?.name ?? `Tipo ${tipoEventoId ?? '-'}`
 }
 
 function formatFecha(fecha) {
-  if (!fecha) return '—'
-  return format(parseISO(fecha), 'dd/MM/yyyy', { locale: es })
+  if (!fecha) return '-'
+  try {
+    return format(parseISO(fecha), 'dd/MM/yyyy', { locale: es })
+  } catch {
+    return fecha
+  }
+}
+
+function formatHora(hora) {
+  if (!hora) return '-'
+  return String(hora).slice(0, 5)
+}
+
+function getFranjaLabel(horaInicio) {
+  const hora = Number.parseInt(String(horaInicio ?? '').split(':')[0], 10)
+  if (hora >= 6 && hora < 14) return 'manana'
+  if (hora >= 14 && hora < 20) return 'tarde'
+  return 'noche'
 }
 
 export default function EventoDetailPage() {
@@ -28,10 +57,17 @@ export default function EventoDetailPage() {
   const { tiposById } = useTiposEvento()
 
   const [evento, setEvento] = useState(null)
-  const hayInconsistencia = evento?.estado === 'en_curso' && evento?.reserva?.estado === 'expirada'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [updating, setUpdating] = useState(false)
+
+  const reserva = getEventoReserva(evento)
+  const estadoEvento = getEventoEstado(evento)
+  const estadoReserva = getReservaEstado(reserva)
+  const hayInconsistencia = estadoEvento === 'en_curso' && estadoReserva === 'expirada'
+  const cliente = getEventoCliente(evento)
+  const horaInicio = getEventoHoraInicio(evento)
+  const horaFin = getEventoHoraFin(evento)
 
   useEffect(() => {
     let cancelled = false
@@ -63,7 +99,7 @@ export default function EventoDetailPage() {
     try {
       const updated = await updateEstadoEvento(id, 'cancelado', evento.version)
       setEvento(updated)
-    } catch (err) {
+    } catch {
       setError('No se pudo cancelar el evento')
     } finally {
       setUpdating(false)
@@ -76,7 +112,7 @@ export default function EventoDetailPage() {
     try {
       const updated = await updateEstadoReserva(id, 'cancelada', evento.version)
       setEvento(updated)
-    } catch (err) {
+    } catch {
       setError('No se pudo cancelar la reserva')
     } finally {
       setUpdating(false)
@@ -87,7 +123,7 @@ export default function EventoDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-sm text-slate-500" data-testid="loading-indicator">
-          Cargando evento…
+          Cargando evento...
         </p>
       </div>
     )
@@ -120,36 +156,26 @@ export default function EventoDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50" data-testid="evento-detail-page">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <button
-          type="button"
-          onClick={() => navigate('/eventos')}
-          className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mb-4"
-          data-testid="btn-volver"
-        >
-          ← Volver a Eventos
-        </button>
-
         {hayInconsistencia && (
           <div
             className="mb-5 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
             role="alert"
             data-testid="inconsistencia-alert"
           >
-            <strong className="font-semibold">Inconsistencia detectada:</strong> el evento está en
-            curso pero la reserva se encuentra expirada. Revisá el estado de la reserva.
+            <strong className="font-semibold">Inconsistencia detectada:</strong> el evento esta en
+            curso pero la reserva se encuentra expirada. Revisa el estado de la reserva.
           </div>
         )}
 
-        {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-800" data-testid="evento-nombre">
-                {evento.nombre}
+                {getEventoNombre(evento)}
               </h1>
               <div className="mt-2 flex items-center gap-2">
-                <EstadoEventoBadge estado={evento.estado} />
-                <EstadoReservaBadge estado={evento.reserva?.estado} />
+                <EstadoEventoBadge estado={estadoEvento} />
+                <EstadoReservaBadge estado={estadoReserva} />
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -176,7 +202,6 @@ export default function EventoDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Event info */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="card-evento">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
               Datos del evento
@@ -185,43 +210,42 @@ export default function EventoDetailPage() {
               <div>
                 <dt className="text-xs text-slate-500">Tipo</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-tipo">
-                  {getTipoNombre(evento.tipoEventoId, tiposById)}
+                  {getTipoNombre(getEventoTipoId(evento), tiposById)}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Fecha</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-fecha">
-                  {formatFecha(evento.fecha)}
+                  {formatFecha(getEventoFecha(evento))}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Horario</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-horario">
-                  {evento.horaInicio}–{evento.horaFin}
+                  {formatHora(horaInicio)}-{formatHora(horaFin)}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Franja</dt>
                 <dd className="text-sm text-slate-800 capitalize" data-testid="detalle-franja">
-                  {evento.franja}
+                  {evento.franja ?? getFranjaLabel(horaInicio)}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Invitados</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-invitados">
-                  {evento.cantidadInvitados}
+                  {getEventoInvitados(evento) ?? '-'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Descripción</dt>
+                <dt className="text-xs text-slate-500">Descripcion</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-descripcion">
-                  {evento.descripcion || '—'}
+                  {evento.descripcion || '-'}
                 </dd>
               </div>
             </dl>
           </div>
 
-          {/* Client info */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="card-cliente">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
               Cliente
@@ -230,25 +254,24 @@ export default function EventoDetailPage() {
               <div>
                 <dt className="text-xs text-slate-500">Nombre</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-cliente-nombre">
-                  {evento.cliente?.nombre ?? '—'}
+                  {cliente?.nombre ?? cliente?.name ?? 'Sin datos de cliente'}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Email</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-cliente-email">
-                  {evento.cliente?.email ?? '—'}
+                  {cliente?.email ?? '-'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Teléfono</dt>
+                <dt className="text-xs text-slate-500">Telefono</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-cliente-telefono">
-                  {evento.cliente?.telefono ?? '—'}
+                  {cliente?.telefono ?? cliente?.phone ?? '-'}
                 </dd>
               </div>
             </dl>
           </div>
 
-          {/* Reservation info */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:col-span-2" data-testid="card-reserva">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
               Reserva
@@ -257,25 +280,25 @@ export default function EventoDetailPage() {
               <div>
                 <dt className="text-xs text-slate-500">Monto total</dt>
                 <dd className="text-sm text-slate-800 font-medium" data-testid="detalle-monto">
-                  {formatearMonto(evento.reserva?.montoTotal)}
+                  {formatearMonto(getReservaMonto(reserva))}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Estado</dt>
                 <dd className="mt-1">
-                  <EstadoReservaBadge estado={evento.reserva?.estado} />
+                  <EstadoReservaBadge estado={estadoReserva} />
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Fecha de pago</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-fecha-pago">
-                  {evento.reserva?.fechaPago ? formatFecha(evento.reserva.fechaPago) : 'Sin pagar'}
+                  {reserva?.fechaPago ? formatFecha(reserva.fechaPago) : 'Sin pagar'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Expiración</dt>
+                <dt className="text-xs text-slate-500">Expiracion</dt>
                 <dd className="text-sm text-slate-800" data-testid="detalle-expiracion">
-                  {formatFecha(evento.reserva?.expiraEn)}
+                  {formatFecha(reserva?.expiraEn)}
                 </dd>
               </div>
             </dl>
