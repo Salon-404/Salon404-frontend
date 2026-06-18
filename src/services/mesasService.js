@@ -5,6 +5,31 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_MESAS_URL || services.mesas,
 })
 
+
+export async function getTablesByEventId(eventId)
+{
+  const {data} = await api.get(`${services.mesas}/${eventId}/Tables`);
+  return data;
+}
+
+
+export async function updateTableLayout(eventId, tableId, payload) {
+  const { data } = await api.patch(
+    `${services.mesas}/${eventId}/Tables/${tableId}/layout`,
+    payload
+  )
+  return data
+}
+
+export async function createTable(eventId, payload) {
+  const { data } = await api.post(
+    `${services.mesas}/${eventId}/Tables`,
+    payload
+  );
+  return data
+}
+
+
 // Devuelve el layout global del salon con todas las mesas y sus posiciones
 export async function getLayout() {
   const { data } = await api.get('/api/mesas/layout')

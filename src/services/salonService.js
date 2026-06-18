@@ -24,19 +24,15 @@ function normalizeImage(src) {
     return `${getSalonBaseUrl()}${value.startsWith('/') ? '' : '/'}${value}`;
 }
 
-function normalizeSalon(salon) {
-    return {
-        ...salon,
-        id: salon.id ?? salon.salonId,
-        salonId: salon.salonId ?? salon.id,
-        salonName: salon.salonName ?? salon.name,
-        profilePicture: normalizeImage(
-            salon.profilePicture ?? salon.picture ?? salon.image ?? salon.imageUrl ?? salon.photoUrl
-        ),
-    };
-}
 
 export async function getSalons()
+{
+    const {data} = await axios.get(services.salon);
+    return unwrapList(data).map(normalizeSalon);
+}
+
+
+export async function getSalon(id)
 {
     const {data} = await axios.get(services.salon);
     return unwrapList(data).map(normalizeSalon);

@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState} from 'react'
+import { useEffect, useMemo, useState,useRef,useCallback} from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { differenceInDays, parseISO } from 'date-fns'
-import { getEvento } from '../../services/eventosService'
+import { getEvento, getSalonDiagram } from '../../services/eventosService'
 import { getAllTypes } from '../../services/eventTypeService'
 import { getAllEventSchedule } from '../../services/eventScheduleService'
+import { getTablesByEventId } from '../../services/mesasService'
+import { updateTableLayout } from '../../services/mesasService'
+import { createTable } from '../../services/mesasService'
+import { successToast } from '../../globals/toast'
 
 export default function EventoDetailPage() {
   const { id } = useParams()
@@ -22,6 +26,140 @@ export default function EventoDetailPage() {
   const [schedules, setSchedules] = useState([])
   const [loadingSchedules, setLoadingSchedules] = useState(false)
   const [errorSchedules, setErrorSchedules] = useState(null)
+
+  const [diagram, setDiagram] = useState(null);
+  const [tables, setTables] = useState([]);
+  const [draggingId, setDraggingId] = useState(null);
+  const containerRef = useRef(null);
+  const [resizingId, setResizingId] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  const [newTable, setNewTable] = useState({
+    tableName: 'Mesa Principal',
+    capacity: 10,
+    shapeId: 2,
+    width: 20,
+    height: 20,
+    posX: 5,
+    posY: 10
+  });
+
+const handleMouseMove = useCallback((e) => {
+  if (!containerRef.current) return
+
+  const rect = containerRef.current.getBoundingClientRect()
+
+  const x = ((e.clientX - rect.left) / rect.width) * 100
+  const y = ((e.clientY - rect.top) / rect.height) * 100
+
+  setTables((prev) =>
+    prev.map((t) => {
+      if (t.id !== draggingId && t.id !== resizingId) return t
+
+      // MOVIMIENTO
+      if (draggingId && t.id === draggingId) {
+        return {
+          ...t,
+          posX: Math.max(0, Math.min(100, x)),
+          posY: Math.max(0, Math.min(100, y))
+        }
+      }
+
+      // RESIZE
+      if (resizingId && t.id === resizingId) {
+        return {
+          ...t,
+          width: Math.max(3, x - t.posX),
+          height: Math.max(3, y - t.posY)
+        }
+      }
+
+      return t
+    })
+  )
+}, [draggingId, resizingId])
+
+
+const handleCreateTable = async () => {
+  try {
+    const mesaCreada = await createTable(id, {
+      tableName: newTable.tableName,
+      capacity: Number(newTable.capacity),
+      shapeId: Number(newTable.shapeId),
+      width: Number(newTable.width),
+      height: Number(newTable.height),
+      posX: Number(newTable.posX),
+      posY: Number(newTable.posY)
+    });
+
+    setTables((prev) => [...prev, mesaCreada])
+
+    setShowCreateModal(false)
+
+    setNewTable({
+      tableName: 'Mesa Principal',
+      capacity: 10,
+      shapeId: 2,
+      width: 20,
+      height: 20,
+      posX: 5,
+      posY: 10
+    })
+
+    successToast("Mesa creada con éxito");
+  } catch (err) {
+    console.error('Error creando mesa', err)
+  }
+}
+
+
+
+
+  useEffect(() => {
+  if (!id) return
+
+  async function loadTables() {
+    try {
+      const res = await getTablesByEventId(id)
+      setTables(res)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  loadTables()
+}, [id])
+
+
+  useEffect(() => {
+    if (!id) return;
+
+    getSalonDiagram(id)
+      .then(setDiagram)
+      .catch(console.error);
+  }, [id]);
+
+
+const handleMouseUp = useCallback(async () => {
+  const mesa = tables.find(t => t.id === (draggingId || resizingId))
+  if (!mesa) return
+
+  setDraggingId(null)
+  setResizingId(null)
+
+  try {
+    await updateTableLayout(id, mesa.id, {
+      posX: Number(mesa.posX),
+      posY: Number(mesa.posY),
+      width: Number(mesa.width),
+      height: Number(mesa.height)
+    })
+  } catch (err) {
+    console.error('Error guardando layout', err)
+  }
+}, [draggingId, resizingId, tables, id])
+
+
 
   useEffect(() => {
   let cancelado = false
@@ -435,15 +573,262 @@ const schedulesOrdenados = useMemo(() => {
                 </>
               )}
 
-              {seccion === 'mesas' && (
+             {seccion === 'mesas' && (
                 <>
-                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-3">
-                    Mesas
-                  </h2>
+                        
+               <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-[#0C447C]">
+                  Mesas
+                </h2>
 
-                  <p className="text-slate-500">
-                    Configurá la distribución de las mesas del evento.
+                <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-[#185FA5] text-white px-4 py-2 rounded-lg hover:bg-[#0C447C] transition">
+                  Crear mesa
+                </button>
+                 </div>
+
+                  <p className="text-slate-500 mb-4">
+                    Vista del plano del salón.
                   </p>
+
+            
+
+                  <div
+                    ref={containerRef}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    className="relative w-full h-[750px] border-2 rounded-2xl overflow-hidden bg-gray-100"
+                  >
+                    {!diagram ? (
+                      <div className="flex items-center justify-center h-full text-slate-400">
+                        Cargando diagrama...
+                      </div>
+                    ) : (
+                      <>
+                        {/* MAPA */}
+                        <img
+                          src={diagram}
+                          alt="Diagrama del salón"
+                          className="w-full h-full object-contain"
+                        />
+
+                        {/* MESAS */}
+                        {tables.map((mesa) => {
+                        const width = mesa.width || 8
+                        const height = mesa.height || mesa.width || 8
+
+                        const isCircle = mesa.shapeId === 1
+                        const isRect = mesa.shapeId === 2
+
+                        return (
+                          <div
+                            key={mesa.id}
+                            onMouseDown={() => setDraggingId(mesa.id)}
+                            className="absolute flex items-center justify-center text-xs font-semibold text-white select-none cursor-move shadow-md"
+                            style={{
+                              left: `${mesa.posX}%`,
+                              top: `${mesa.posY}%`,
+
+                              width: `${width}%`,
+                              height: `${height}%`,
+
+                              transform: 'translate(-50%, -50%)',
+
+                              borderRadius: isCircle ? '50%' : '12px',
+
+                              background: 'linear-gradient(145deg, #1e6bb8, #185FA5)',
+                              border: '2px solid rgba(255,255,255,0.35)',
+                              boxShadow: '0 6px 15px rgba(0,0,0,0.25)'
+                            }}
+                          >
+                            {mesa.tableName} 
+                            <br />
+                            {mesa.guests?.length ?? 0} / {mesa.capacity}
+
+                            {/* RESIZE HANDLE */}
+                            <div
+                              onMouseDown={(e) => {
+                                e.stopPropagation()
+                                setResizingId(mesa.id)
+                              }}
+                              className="absolute bottom-0 right-0 w-3 h-3 bg-white border border-[#185FA5] cursor-se-resize rounded-sm"
+                            />
+                          </div>
+                        )
+                      })}
+                      </>
+                    )}
+                  </div>
+
+                  {showCreateModal && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-xl">
+                        <h2 className="text-2xl font-semibold text-[#0C447C] mb-6">
+                          Crear mesa
+                        </h2>
+
+                        <div className="space-y-4">
+
+                          {/* Nombre */}
+                          <div>
+                            <label className="block text-sm font-medium text-slate-600 mb-1">
+                              Nombre
+                            </label>
+                            <input
+                              type="text"
+                              value={newTable.tableName}
+                              onChange={(e) =>
+                                setNewTable({
+                                  ...newTable,
+                                  tableName: e.target.value
+                                })
+                              }
+                              className="w-full border rounded-xl px-4 py-2"
+                            />
+                          </div>
+
+                          {/* Capacidad */}
+                          <div>
+                            <label className="block text-sm font-medium text-slate-600 mb-1">
+                              Capacidad
+                            </label>
+                            <input
+                              type="number"
+                              value={newTable.capacity}
+                              onChange={(e) =>
+                                setNewTable({
+                                  ...newTable,
+                                  capacity: Number(e.target.value)
+                                })
+                              }
+                              className="w-full border rounded-xl px-4 py-2"
+                            />
+                          </div>
+
+                          {/* Forma */}
+                          <div>
+                            <label className="block text-sm font-medium text-slate-600 mb-1">
+                              Forma
+                            </label>
+
+                            <select
+                              value={newTable.shapeId}
+                              onChange={(e) =>
+                                setNewTable({
+                                  ...newTable,
+                                  shapeId: Number(e.target.value)
+                                })
+                              }
+                              className="w-full border rounded-xl px-4 py-2"
+                            >
+                              <option value={1}>Circular</option>
+                              <option value={2}>Rectangular</option>
+                            </select>
+                          </div>
+
+                          {/* Tamaño */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-600 mb-1">
+                                Ancho (%)
+                              </label>
+
+                              <input
+                                type="number"
+                                value={newTable.width}
+                                onChange={(e) =>
+                                  setNewTable({
+                                    ...newTable,
+                                    width: Number(e.target.value)
+                                  })
+                                }
+                                className="w-full border rounded-xl px-4 py-2"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-slate-600 mb-1">
+                                Alto (%)
+                              </label>
+
+                              <input
+                                type="number"
+                                value={newTable.height}
+                                onChange={(e) =>
+                                  setNewTable({
+                                    ...newTable,
+                                    height: Number(e.target.value)
+                                  })
+                                }
+                                className="w-full border rounded-xl px-4 py-2"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Posición */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-600 mb-1">
+                                Posición X (%)
+                              </label>
+
+                              <input
+                                type="number"
+                                value={newTable.posX}
+                                onChange={(e) =>
+                                  setNewTable({
+                                    ...newTable,
+                                    posX: Number(e.target.value)
+                                  })
+                                }
+                                className="w-full border rounded-xl px-4 py-2"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-slate-600 mb-1">
+                                Posición Y (%)
+                              </label>
+
+                              <input
+                                type="number"
+                                value={newTable.posY}
+                                onChange={(e) =>
+                                  setNewTable({
+                                    ...newTable,
+                                    posY: Number(e.target.value)
+                                  })
+                                }
+                                className="w-full border rounded-xl px-4 py-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Botones */}
+                        <div className="flex justify-end gap-3 mt-8">
+                          <button
+                            onClick={() => setShowCreateModal(false)}
+                            className="px-4 py-2 rounded-xl border border-slate-300"
+                          >
+                            Cancelar
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleCreateTable();
+                              setShowCreateModal(false)
+                            }}
+                            className="bg-[#185FA5] text-white px-5 py-2 rounded-xl hover:bg-[#0C447C]"
+                          >
+                            Crear
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -459,7 +844,7 @@ const schedulesOrdenados = useMemo(() => {
                 </>
               )}
 
-        {seccion === 'cronograma' && (
+              {seccion === 'cronograma' && (
                 <>
                   <h2 className="text-2xl font-semibold text-[#0C447C] mb-6">
                     Cronograma del evento

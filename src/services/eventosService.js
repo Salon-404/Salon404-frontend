@@ -178,6 +178,12 @@ export async function getEventoPorReservaId(reservaId) {
   return data
 }
 
+export async function getSalonDiagram(eventId)
+{
+    const {data} = await axios.get(`${services.eventos}/${eventId}/salonDiagram`);
+    return data;
+}
+
 /**
  * Crea un nuevo evento.
  */
