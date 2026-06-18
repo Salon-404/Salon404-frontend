@@ -1,81 +1,48 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_INVITADOS_URL;
+const API_URL = import.meta.env.VITE_API_INVITADOS_URL || 'http://localhost:5002';
+const EVENT_ID_MOCK = '00000000-0000-0000-0000-000000000001'; 
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const invitadosService = {
-  
-  // OBTENER TODOS LOS INVITADOS
-  // Endpoint: GET /api/v1/events/{eventId}/Guests
-  getAll: async (eventId) => {
-    try {
-      const response = await axios.get(`${API_URL}/api/v1/events/${eventId}/Guests`);
-      return response.data; 
-    } catch (error) {
-      console.error("Error al obtener invitados:", error);
-      throw error;
-    }
+  getInvitados: async (page = 1, pageSize = 100, searchTerm = '') => {
+    const response = await api.get(`/api/v1/events/${EVENT_ID_MOCK}/Guests`, { params: { page, pageSize, searchTerm } });
+    return response.data; 
   },
-
-  // CREAR UN INVITADO
-  // Endpoint: POST /api/v1/events/{eventId}/Guests
-  create: async (eventId, invitadoData) => {
-    try {
-      const payload = {
-        fullName: invitadoData.fullName,
-        phone: invitadoData.phone || "",
-        email: invitadoData.email || "",
-        dietTypeId: parseInt(invitadoData.dietTypeId)
-      };
-      
-      const response = await axios.post(`${API_URL}/api/v1/events/${eventId}/Guests`, payload);
-      return response.data;
-    } catch (error) {
-      console.error("Error al crear invitado:", error);
-      throw error;
-    }
-  },
-
-  // ELIMINAR INVITADO
-  // Endpoint: DELETE /api/v1/events/{eventId}/Guests/{guestId}
-  delete: async (eventId, guestId) => {
-    try {
-      await axios.delete(`${API_URL}/api/v1/events/${eventId}/Guests/${guestId}`);
-      return true;
-    } catch (error) {
-      console.error("Error al eliminar invitado:", error);
-      throw error;
-    }
-  },
-
-  // RESUMEN DE CATERING
-  // Endpoint: GET /api/v1/events/{eventId}/Guests/catering-summary
-  getCateringSummary: async (eventId) => {
-    try {
-      const response = await axios.get(`${API_URL}/api/v1/events/${eventId}/Guests/catering-summary`);
-      return response.data;
-    } catch (error) {
-      console.error("Error al obtener resumen de catering:", error);
-      throw error;
-    }
-  },
-
-  // ACTUALIZAR INVITADO (PUT)
-  update: async (eventId, guestId, invitadoData) => {
-    console.warn("ATENCIÓN: El endpoint PUT está comentado en el backend. Simulando respuesta...");
-    
-    const payload = {
-      fullName: invitadoData.fullName,
-      phone: invitadoData.phone,
-      email: invitadoData.email,
-      dietTypeId: parseInt(invitadoData.dietTypeId)
-    };
-
-    /* // DESCOMENTAR ESTO CUANDO EL BACKEND ESTÉ LISTO:
-    const response = await axios.put(`${API_URL}/api/v1/events/${eventId}/Guests/${guestId}`, payload);
+  crearInvitado: async (data) => {
+    const response = await api.post(`/api/v1/events/${EVENT_ID_MOCK}/Guests`, data);
     return response.data;
-    */
-
-    // Retorno temporal para que tu front no se rompa mientras prueban
-    return { ...payload, id: guestId };
+  },
+  actualizarInvitado: async (id, data) => {
+    const response = await api.put(`/api/v1/events/${EVENT_ID_MOCK}/Guests/${id}`, data);
+    return response.data;
+  },
+  eliminarInvitado: async (id) => {
+    const response = await api.delete(`/api/v1/events/${EVENT_ID_MOCK}/Guests/${id}`);
+    return response.data;
+  },
+  getCateringSummary: async () => {
+    const response = await api.get(`/api/v1/events/${EVENT_ID_MOCK}/Guests/catering-summary`);
+    return response.data;
+  },
+  getMesas: async () => {
+    const response = await api.get(`/api/v1/events/${EVENT_ID_MOCK}/Tables`);
+    return response.data;
+  },
+  getDietTypes: async () => {
+    const response = await api.get('/api/v1/diet-types');
+    return response.data;
   }
 };
