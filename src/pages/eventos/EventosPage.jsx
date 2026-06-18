@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom'
-import { useEventos } from '../../hooks/useEventos'
-import EventoCard from '../../components/eventos/EventoCard'
-import EventoFiltros from '../../components/eventos/EventoFiltros'
-import { useTiposEvento } from '../../hooks/useTiposEvento'
-import Navbar from '../../components/global/Navbar'
-import { useAuth } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom';
+import { useState,useEffect,useMemo } from "react";
+import { useEventos } from '../../hooks/useEventos';
+import EventoCard from '../../components/eventos/EventoCard';
+import EventoFiltros from '../../components/eventos/EventoFiltros';
+import { getAllTypes } from "../../services/eventTypeService";
+import Navbar from '../../components/global/Navbar';
+import { useAuth } from '../../context/AuthContext';
 
 function getEventoKey(evento, index) {
   return (
@@ -23,7 +24,36 @@ export default function EventosPage() {
     300,
     { user, loading: loadingAuth }
   )
-  const { tipos, tiposById } = useTiposEvento()
+  const [tiposEvento, setTiposEvento] = useState([]);
+  const [tipoEventoId, setTipoEventoId] = useState('');
+  const [loadingTipos, setLoadingTipos] = useState(true)
+  const [errorTipos, setErrorTipos] = useState(null)
+
+
+  useEffect(() => {
+    let cancelado = false;
+    async function cargarTipos() {
+      setLoadingTipos(true);
+      setErrorTipos(null);
+      try {
+        const data = await getAllTypes();
+        if (!cancelado) setTiposEvento(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!cancelado) setErrorTipos(err.message);
+      } finally {
+        if (!cancelado) setLoadingTipos(false);
+      }
+    }
+    cargarTipos();
+    return () => { cancelado = true; };
+  }, []);
+
+    const tiposById = useMemo(() => {
+      return tiposEvento.reduce((acc, tipo) => {
+        acc[tipo.id] = tipo
+        return acc
+      }, {})
+    }, [tiposEvento])
 
   function handleSeleccionar(evento) {
     const id = evento.id || evento.eventId
@@ -49,7 +79,7 @@ export default function EventosPage() {
           <EventoFiltros
             filtros={filtros}
             onCambiarFiltros={setFiltros}
-            tiposEvento={tipos}
+            tiposEvento={tiposEvento}
           />
           <button
             onClick={() => navigate('/eventos/calendario')}

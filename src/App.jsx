@@ -16,7 +16,6 @@ import { ROLES } from './constants/auth';
 import DisponibilityPage from './pages/Disponibility/DisponibilityPage';
 import ProveedoresList from "./pages/proveedores/ProveedoresList";
 import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
-import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import HomePage from './pages/home/HomePage';
 import SalonesPage from './pages/salon/SalonesPage';
 import SalonDetailPage from './pages/salon/SalonDetailPage';
@@ -105,14 +104,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/evento/:id/cronograma"
-          element={
-            <ProtectedRoute>
-              <CronogramaEvento />
-            </ProtectedRoute>
-          }
-        />
+      
       </Routes>
     </BrowserRouter>
   )

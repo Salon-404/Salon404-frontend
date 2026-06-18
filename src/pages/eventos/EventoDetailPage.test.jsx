@@ -51,13 +51,6 @@ vi.mock('../../services/eventosService', () => ({
   updateEstadoReserva: (...args) => updateEstadoReservaMock(...args),
 }))
 
-vi.mock('../../hooks/useTiposEvento', () => ({
-  useTiposEvento: () => ({
-    tiposById: {
-      1: { id: 1, nombre: 'XV' },
-    },
-  }),
-}))
 
 function renderConRuta(initialEntry = '/eventos/evt-002') {
   return render(

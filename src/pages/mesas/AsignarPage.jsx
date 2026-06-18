@@ -16,7 +16,6 @@ import CapacidadAlert from '../../components/mesas/CapacidadAlert'
 import UnassignedDropZone from '../../components/mesas/UnassignedDropZone'
 import { getEventoPorReservaId } from '../../services/eventosService'
 import UserMenu from '../../components/auth/UserMenu'
-import { useTiposEvento } from '../../hooks/useTiposEvento'
 
 // Vista de asignación de invitados a mesas (solo admin).
 // Panel izquierdo: lista de invitados sin asignar.
@@ -27,7 +26,7 @@ function getTipoNombre(tipoEventoId, tiposById) {
 
 export default function AsignarPage() {
   const { reservaId } = useParams()
-  const { tiposById } = useTiposEvento()
+
 
   const [evento, setEvento] = useState(null)
 

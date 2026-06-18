@@ -25,36 +25,6 @@ function unwrapList(responseData) {
   return []
 }
 
-function normalizeTipo(tipo) {
-  return {
-    ...tipo,
-    id: tipo.id ?? tipo.eventTypeId,
-    nombre: tipo.nombre ?? tipo.name,
-    precioBase: tipo.precioBase ?? tipo.price,
-    duracionMinutos: tipo.duracionMinutos ?? tipo.duration,
-    duracionMaximaMinutos: tipo.duracionMaximaMinutos ?? tipo.duration,
-    activo: tipo.activo ?? tipo.active ?? true,
-  }
-}
-
-// Devuelve todos los tipos de evento activos
-export async function getTipos() {
-  let lastError
-
-  for (const url of getCandidateUrls()) {
-    try {
-      const { data } = await axios.get(url)
-      const tipos = unwrapList(data).map(normalizeTipo)
-      return tipos.length ? tipos : TIPOS_EVENTO_FALLBACK
-    } catch (error) {
-      lastError = error
-      if (error.response?.status !== 404) break
-    }
-  }
-
-  if (lastError?.response?.status === 404) return TIPOS_EVENTO_FALLBACK
-  throw lastError
-}
 
 // Devuelve un tipo de evento por id
 export async function getTipoById(id) {

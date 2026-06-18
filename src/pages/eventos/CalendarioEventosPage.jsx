@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useTiposEvento } from '../../hooks/useTiposEvento'
 import { useEventos } from '../../hooks/useEventos'
 import { useAuth } from '../../context/AuthContext'
 import { useCalendarRole } from '../../hooks/useCalendarRole'
@@ -77,7 +76,6 @@ export default function CalendarioEventosPage() {
   const { user, loading: loadingAuth } = useAuth()
   const { isAdmin, vista } = useCalendarRole(user)
 
-  const { tipos, tiposById, loading: loadingTipos, error: errorTipos } = useTiposEvento()
   const { eventos, loading: loadingEventos, error: errorEventos } = useEventos(
     {},
     300,
