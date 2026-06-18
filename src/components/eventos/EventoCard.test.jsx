@@ -15,9 +15,13 @@ const mockEvento = {
   reserva: { estado: 'confirmada', montoTotal: 300000 },
 }
 
+const tiposById = {
+  1: { id: 1, nombre: 'XV' },
+}
+
 describe('EventoCard', () => {
   it('renders all columns correctly', () => {
-    render(<EventoCard evento={mockEvento} onSeleccionar={vi.fn()} />)
+    render(<EventoCard evento={mockEvento} onSeleccionar={vi.fn()} tiposById={tiposById} />)
 
     expect(screen.getByText('14/06/2026')).toBeInTheDocument()
     expect(screen.getByText('14:00–18:00')).toBeInTheDocument()

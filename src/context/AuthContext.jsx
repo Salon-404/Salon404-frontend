@@ -1,17 +1,30 @@
-import {  createContext,  useContext,  useState,  useEffect,  useCallback,} from "react";
-import {  login as loginService,  register as registerService,} from "../services/authService";
-import { TOKEN_KEY } from "../constants/auth";
-import { decodeToken } from "../globals/decodeToken";
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { login as loginService, register as registerService } from '../services/authService'
+import { TOKEN_KEY } from '../constants/auth'
+import { decodeToken } from '../globals/decodeToken'
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+function normalizeUser(decoded) {
+  if (!decoded) return null
 
-  // Restaurar la sesión al refrescar la página
+  const role = decoded.role || decoded.rol
+  return {
+    id: decoded.id,
+    name: decoded.name || decoded.nombre,
+    nombre: decoded.nombre || decoded.name,
+    email: decoded.email,
+    role,
+    rol: role,
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY)
 
     if (!token) {
       setLoading(false);

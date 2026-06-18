@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
 import { TOKEN_KEY, RUTA_ADMIN, RUTA_USER } from '../../constants/auth'
 import { decodeToken } from '../../globals/decodeToken'
+import { Link } from 'react-router-dom'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -43,7 +44,7 @@ export default function LoginPage() {
       {/* ── Izquierda ─────────────────────────────────────────────────── */}
       <div className="bg-[#0C447C] flex flex-col justify-between px-16 py-12">
         <div className="text-[#85B7EB] font-semibold text-lg tracking-tight">
-          EventoPro
+          EventosPro
         </div>
 
         <div className="flex flex-col gap-6">
@@ -78,7 +79,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-xs text-[#378ADD]">
-          © 2026 eventosPRO · Todos los derechos reservados
+          © 2026 EventosPro · Todos los derechos reservados
         </div>
       </div>
 
@@ -146,6 +147,12 @@ export default function LoginPage() {
             >
               {isSubmitting ? 'Ingresando…' : 'Ingresar →'}
             </button>
+            <p className="text-center text-sm text-slate-500 mt-2">
+            ¿No tenés cuenta?
+            <Link to="/register" className="text-[#185FA5] font-medium hover:underline">
+                Registrate
+            </Link>
+            </p>
           </form>
         </div>
       </div>

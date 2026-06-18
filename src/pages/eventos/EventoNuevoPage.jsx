@@ -35,6 +35,23 @@ function construirCliente(user) {
   };
 }
 
+function getTipoNombre(tipo) {
+  return tipo?.name ?? tipo?.nombre ?? `Tipo ${tipo?.id ?? ""}`;
+}
+
+function getTipoPrecio(tipo) {
+  return Number(tipo?.price ?? tipo?.precioBase ?? tipo?.basePrice ?? 0);
+}
+
+function getTipoDuracion(tipo) {
+  return Number(
+    tipo?.duration ??
+    tipo?.duracionMinutos ??
+    tipo?.duracionMaximaMinutos ??
+    0
+  );
+}
+
 function Stepper({ pasoActual }) {
   return (
     <ol className="mb-6 flex items-center justify-between gap-2">
@@ -94,7 +111,7 @@ export default function EventoNuevoPage() {
       setErrorTipos(null);
       try {
         const data = await getAllTypes();
-        if (!cancelado) setTiposEvento(data);
+        if (!cancelado) setTiposEvento(Array.isArray(data) ? data : []);
       } catch (err) {
         if (!cancelado) setErrorTipos(err.message);
       } finally {
@@ -117,7 +134,7 @@ export default function EventoNuevoPage() {
       setErrorSalones(null);
       try {
         const data = await getSalons();
-        if (!cancelado) setSalones(data);
+        if (!cancelado) setSalones(Array.isArray(data) ? data : []);
       } catch (err) {
         if (!cancelado) setErrorSalones(err.message);
       } finally {
@@ -163,7 +180,7 @@ export default function EventoNuevoPage() {
   );
 
   const salon = useMemo(
-    () => salones.find((s) => s.salonId === salonId),
+    () => salones.find((s) => String(s.salonId ?? s.id) === String(salonId)),
     [salones, salonId]
   );
 
@@ -402,13 +419,13 @@ export default function EventoNuevoPage() {
                             }`}
                           >
                             <span className="block font-medium text-slate-800">
-                              {tipo.name}
+                              {getTipoNombre(tipo)}
                             </span>
                             <span className="mt-1 block text-sm text-slate-500">
-                              ${tipo.price.toLocaleString("es-AR")}
+                              ${getTipoPrecio(tipo).toLocaleString("es-AR")}
                             </span>
                             <span className="mt-0.5 block text-sm text-slate-500">
-                              Duración: {tipo.duration / 60} hs
+                              Duración: {getTipoDuracion(tipo) / 60} hs
                             </span>
                           </button>
                         </li>
@@ -442,8 +459,8 @@ export default function EventoNuevoPage() {
                   >
                     <option value="">-- Seleccioná un salón --</option>
                     {salones.map((s) => (
-                      <option key={s.salonId} value={s.salonId}>
-                        {s.salonName}
+                      <option key={s.salonId ?? s.id} value={s.salonId ?? s.id}>
+                        {s.salonName ?? s.name ?? `Salón ${s.salonId ?? s.id}`}
                       </option>
                     ))}
                   </select>
@@ -474,7 +491,7 @@ export default function EventoNuevoPage() {
                     Evento: <strong className="text-slate-700">{nombreEvento}</strong>
                   </p>
                   <p>
-                    Tipo: <strong className="text-slate-700">{tipoEvento?.name}</strong>
+                    Tipo: <strong className="text-slate-700">{getTipoNombre(tipoEvento)}</strong>
                     {" · "}
                     Salón: <strong className="text-slate-700">{salon?.salonName}</strong>
                   </p>

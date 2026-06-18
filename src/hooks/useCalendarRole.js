@@ -1,4 +1,4 @@
-import { ROLES } from '../constants/auth'
+import { isSuperAdmin } from '../utils/roles'
 
 /**
  * Determina el rol y la vista del calendario a partir del usuario actual.
@@ -6,6 +6,6 @@ import { ROLES } from '../constants/auth'
  * @returns {{ isAdmin: boolean, vista: 'admin' | 'public' }}
  */
 export function useCalendarRole(user) {
-  const isAdmin = user?.rol === ROLES.ADMIN
+  const isAdmin = isSuperAdmin(user)
   return { isAdmin, vista: isAdmin ? 'admin' : 'public' }
 }

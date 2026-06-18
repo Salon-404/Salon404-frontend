@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getTiposEvento } from '../services/disponibilidadService'
+import { getTipos as getTiposEvento } from '../services/tiposEventoService'
+import { getTipoId } from '../utils/eventos'
 
 /**
  * Hook para obtener los tipos de evento disponibles.
@@ -35,7 +36,8 @@ export function useTiposEvento() {
   const tiposById = useMemo(() => {
     const map = {}
     for (const tipo of tipos) {
-      map[tipo.id] = tipo
+      const id = getTipoId(tipo)
+      if (id != null) map[id] = tipo
     }
     return map
   }, [tipos])

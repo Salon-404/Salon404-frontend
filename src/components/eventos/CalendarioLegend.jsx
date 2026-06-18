@@ -1,4 +1,5 @@
 import { FRANJAS } from '../../constants/eventos'
+import { getTipoColor, getTipoId, getTipoNombre } from '../../utils/eventos'
 
 const FRANJA_DOT_COLORS = {
   manana: 'bg-amber-400',
@@ -23,10 +24,10 @@ function TipoItem({ tipo }) {
     <span className="flex items-center gap-1.5 text-xs text-slate-600">
       <span
         className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
-        style={{ background: tipo.color }}
+        style={{ background: getTipoColor(tipo) }}
         aria-hidden="true"
       />
-      {tipo.nombre}
+      {getTipoNombre(tipo)}
     </span>
   )
 }
@@ -41,7 +42,7 @@ function EstadoItem({ color, label }) {
 }
 
 export default function CalendarioLegend({ tipos = [] }) {
-  const activos = tipos.filter((t) => t.activo)
+  const activos = tipos.filter((t) => t.activo ?? t.active ?? true)
   const franjasList = Object.values(FRANJAS)
   const hasContent = activos.length > 0 || franjasList.length > 0
 
@@ -60,7 +61,7 @@ export default function CalendarioLegend({ tipos = [] }) {
 
       {/* Tipos de evento */}
       {activos.map((tipo) => (
-        <TipoItem key={tipo.id} tipo={tipo} />
+        <TipoItem key={getTipoId(tipo)} tipo={tipo} />
       ))}
 
       <span className="h-3 w-px bg-slate-200 mx-1" aria-hidden="true" />

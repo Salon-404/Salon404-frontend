@@ -1,5 +1,10 @@
 import { useMemo } from 'react'
 import { parseISO, differenceInCalendarDays } from 'date-fns'
+import {
+  getEventoEstado,
+  getEventoFecha,
+  getEventoHoraInicio,
+} from '../utils/eventos'
 
 /**
  * Calcula el resumen del calendario: total de eventos y próximo evento.
@@ -11,15 +16,20 @@ export function useCalendarSummary(eventos, fechaHoy) {
   return useMemo(() => {
     const total = Array.isArray(eventos) ? eventos.length : 0
     const futuros = (eventos || [])
-      .filter((e) => e.fecha >= fechaHoy && e.estado !== 'cancelado')
+      .filter((e) => {
+        const fecha = getEventoFecha(e)
+        return fecha >= fechaHoy && getEventoEstado(e) !== 'cancelado'
+      })
       .sort((a, b) => {
-        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha)
-        return a.horaInicio.localeCompare(b.horaInicio)
+        const fechaA = getEventoFecha(a) ?? ''
+        const fechaB = getEventoFecha(b) ?? ''
+        if (fechaA !== fechaB) return fechaA.localeCompare(fechaB)
+        return (getEventoHoraInicio(a) ?? '').localeCompare(getEventoHoraInicio(b) ?? '')
       })
 
     const proximoEvento = futuros[0] ?? null
     const diasHastaProximo = proximoEvento
-      ? differenceInCalendarDays(parseISO(proximoEvento.fecha), parseISO(fechaHoy))
+      ? differenceInCalendarDays(parseISO(getEventoFecha(proximoEvento)), parseISO(fechaHoy))
       : null
 
     return { total, diasHastaProximo, proximoEvento }

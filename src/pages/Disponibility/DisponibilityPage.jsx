@@ -10,29 +10,46 @@ export default function DisponibilityPage() {
   const [availableDays, setAvailableDays] = useState([]);
   const [notAvailableDays, setNotAvailableDays] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [warning, setWarning] = useState(null);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
+      setError(null);
+      setWarning(null);
 
-      try {
-        const [available, reservations] =
-          await Promise.all([
-            getAvailability(),
-            getAllReservations(),
-          ]);
+      const [availableResult, reservationsResult] =
+        await Promise.allSettled([
+          getAvailability(),
+          getAllReservations(),
+        ]);
 
-        setAvailableDays(available);
+      if (reservationsResult.status === "fulfilled") {
+        const reservations = Array.isArray(reservationsResult.value)
+          ? reservationsResult.value
+          : [];
         setNotAvailableDays(
           reservations.map(
             (r) => r.dateReserved
-          )
+          ).filter(Boolean)
         );
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+      } else {
+        console.error(reservationsResult.reason);
+        setError(reservationsResult.reason?.message || "No se pudieron cargar las reservas.");
       }
+
+      if (availableResult.status === "fulfilled") {
+        setAvailableDays(Array.isArray(availableResult.value) ? availableResult.value : []);
+      } else {
+        console.error(availableResult.reason);
+        setAvailableDays([]);
+        setWarning(
+          "No se pudo cargar la disponibilidad exacta. Se muestran las fechas reservadas disponibles."
+        );
+      }
+
+      setLoading(false);
     }
 
     load();
@@ -99,15 +116,31 @@ export default function DisponibilityPage() {
                 Cargando disponibilidad...
               </p>
             </div>
+          ) : error ? (
+            <div className="flex h-96 flex-col items-center justify-center gap-3 text-center">
+              <p className="text-lg font-semibold text-slate-800">
+                No se pudo cargar la disponibilidad
+              </p>
+              <p className="max-w-md text-sm text-slate-500">
+                {error}
+              </p>
+            </div>
           ) : (
-            <CalendarView
-              fechasDisponibles={
-                availableDays
-              }
-              fechasReservadas={
-                notAvailableDays
-              }
-            />
+            <>
+              {warning && (
+                <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  {warning}
+                </div>
+              )}
+              <CalendarView
+                fechasDisponibles={
+                  availableDays
+                }
+                fechasReservadas={
+                  notAvailableDays
+                }
+              />
+            </>
           )}
         </div>
       </main>

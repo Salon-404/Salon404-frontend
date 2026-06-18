@@ -6,6 +6,115 @@
 const MONTO_MINIMO = 0
 const FACTOR_MONTOS = 100
 
+export function getEventoId(evento, fallback) {
+  return evento?.id ?? evento?.eventId ?? evento?.reservationId ?? fallback
+}
+
+export function getEventoFecha(evento) {
+  return evento?.fecha ?? evento?.eventDate ?? evento?.date ?? evento?.reservationDate
+}
+
+export function getEventoHoraInicio(evento) {
+  return evento?.horaInicio ?? evento?.eventStart ?? evento?.startTime ?? evento?.start
+}
+
+export function getEventoHoraFin(evento) {
+  return evento?.horaFin ?? evento?.eventFinish ?? evento?.endTime ?? evento?.finish
+}
+
+export function getEventoTipoId(evento) {
+  return evento?.tipoEventoId ?? evento?.eventTypeId ?? evento?.typeId
+}
+
+export function getEventoEstado(evento) {
+  return normalizeEstadoEvento(
+    evento?.estado ?? evento?.status ?? evento?.statusName ?? evento?.eventStatusId
+  )
+}
+
+export function getEventoNombre(evento) {
+  return evento?.nombre ?? evento?.eventName ?? evento?.name ?? 'Evento'
+}
+
+export function getEventoCliente(evento) {
+  return evento?.cliente ?? evento?.client ?? evento?.customer
+}
+
+export function getEventoClienteNombre(evento) {
+  const cliente = getEventoCliente(evento)
+  return cliente?.nombre ?? cliente?.name ?? evento?.clientName ?? evento?.customerName
+}
+
+export function getEventoInvitados(evento) {
+  return evento?.cantidadInvitados ?? evento?.estimatedGuests ?? evento?.estimedGuests ?? evento?.guests
+}
+
+export function getEventoReserva(evento) {
+  return evento?.reserva ?? evento?.reservation
+}
+
+export function getEventoReservaId(evento) {
+  return evento?.reservationId ?? evento?.reservaId ?? getEventoReserva(evento)?.id
+}
+
+export function getReservaEstado(reserva) {
+  return normalizeEstadoReserva(reserva?.estado ?? reserva?.status ?? reserva?.statusName ?? reserva?.statusId)
+}
+
+export function getReservaMonto(reserva) {
+  return reserva?.montoTotal ?? reserva?.totalAmount ?? reserva?.amount ?? reserva?.price
+}
+
+export function getTipoId(tipo) {
+  return tipo?.id ?? tipo?.eventTypeId ?? tipo?.typeId
+}
+
+export function getTipoNombre(tipo) {
+  return tipo?.nombre ?? tipo?.name ?? tipo?.description ?? 'Evento'
+}
+
+export function getTipoColor(tipo) {
+  return tipo?.color ?? tipo?.colour ?? tipo?.hexColor ?? '#64748b'
+}
+
+export function normalizeEstadoEvento(estado) {
+  const value = String(estado ?? '').trim().toLowerCase()
+  const byId = {
+    1: 'pendiente',
+    2: 'en_curso',
+    3: 'finalizado',
+    4: 'cancelado',
+  }
+  if (byId[value]) return byId[value]
+  const normalized = value
+    .replaceAll(' ', '_')
+    .replace('in_progress', 'en_curso')
+    .replace('pending', 'pendiente')
+    .replace('finished', 'finalizado')
+    .replace('completed', 'finalizado')
+    .replace('canceled', 'cancelado')
+    .replace('cancelled', 'cancelado')
+  return normalized || undefined
+}
+
+export function normalizeEstadoReserva(estado) {
+  const value = String(estado ?? '').trim().toLowerCase()
+  const byId = {
+    1: 'pendiente',
+    2: 'confirmada',
+    3: 'expirada',
+    4: 'cancelada',
+  }
+  if (byId[value]) return byId[value]
+  const normalized = value
+    .replace('pending', 'pendiente')
+    .replace('confirmed', 'confirmada')
+    .replace('expired', 'expirada')
+    .replace('canceled', 'cancelada')
+    .replace('cancelled', 'cancelada')
+  return normalized || undefined
+}
+
 /**
  * Calcula el monto total de un evento a partir del precio base y extras.
  * @param {number} precioBase - Precio base del tipo de evento
@@ -49,13 +158,16 @@ export function agruparEventosPorFranja(eventos) {
   const grupos = { manana: [], tarde: [], noche: [] }
 
   for (const evento of eventos) {
-    if (!evento?.horaInicio) continue
-    const franja = getFranja(evento.horaInicio)
+    const horaInicio = getEventoHoraInicio(evento)
+    if (!horaInicio) continue
+    const franja = getFranja(horaInicio)
     if (grupos[franja]) grupos[franja].push(evento)
   }
 
   for (const franja of Object.keys(grupos)) {
-    grupos[franja].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+    grupos[franja].sort((a, b) =>
+      (getEventoHoraInicio(a) ?? '').localeCompare(getEventoHoraInicio(b) ?? '')
+    )
   }
 
   return grupos
@@ -91,31 +203,41 @@ export function filtrarEventos(eventos, filtros = {}) {
   return eventos.filter((evento) => {
     if (!evento) return false
 
-    if (filtros.estadoEvento && evento.estado !== filtros.estadoEvento) {
+    const estado = getEventoEstado(evento)
+    const fecha = getEventoFecha(evento)
+    const reserva = getEventoReserva(evento)
+    const cliente = getEventoCliente(evento)
+    const tipoEventoId = getEventoTipoId(evento)
+    const estadoReserva = getReservaEstado(reserva)
+
+    if (filtros.estadoEvento && estado !== filtros.estadoEvento) {
       return false
     }
 
-    if (
-      filtros.estadoReserva &&
-      evento.reserva?.estado !== filtros.estadoReserva
-    ) {
+    if (filtros.estadoReserva && estadoReserva !== filtros.estadoReserva) {
       return false
     }
 
-    if (filtros.fechaDesde && evento.fecha < filtros.fechaDesde) {
+    if (filtros.tipoEventoId && Number(tipoEventoId) !== Number(filtros.tipoEventoId)) {
       return false
     }
 
-    if (filtros.fechaHasta && evento.fecha > filtros.fechaHasta) {
+    if (filtros.fechaDesde && fecha < filtros.fechaDesde) {
+      return false
+    }
+
+    if (filtros.fechaHasta && fecha > filtros.fechaHasta) {
       return false
     }
 
     if (filtros.busqueda) {
       const q = filtros.busqueda.toLowerCase()
       const campos = [
-        evento.nombre,
-        evento.cliente?.nombre,
-        evento.cliente?.email,
+        getEventoNombre(evento),
+        cliente?.nombre ?? cliente?.name,
+        cliente?.email,
+        evento.eventOwner,
+        getEventoReservaId(evento),
       ]
       const coincide = campos.some((campo) =>
         campo?.toLowerCase().includes(q)
@@ -149,7 +271,7 @@ export function agruparPorFranja(eventos) {
 
   const grupos = { manana: [], tarde: [], noche: [] }
   for (const evento of eventos) {
-    const franja = evento?.franja
+    const franja = evento?.franja ?? getFranja(getEventoHoraInicio(evento) ?? '')
     if (grupos[franja]) grupos[franja].push(evento)
   }
   return grupos
@@ -168,8 +290,9 @@ export function obtenerFranjasOcupadas(eventos) {
   const ocupadas = new Set()
 
   for (const evento of eventos) {
-    if (evento?.estado === 'cancelado') continue
-    if (orden.includes(evento?.franja)) ocupadas.add(evento.franja)
+    if (getEventoEstado(evento) === 'cancelado') continue
+    const franja = evento?.franja ?? getFranja(getEventoHoraInicio(evento) ?? '')
+    if (orden.includes(franja)) ocupadas.add(franja)
   }
 
   return orden.filter((franja) => ocupadas.has(franja))
@@ -185,5 +308,5 @@ export function obtenerFranjasOcupadas(eventos) {
 export function filtrarEventosParaVista(eventos, vista) {
   if (!Array.isArray(eventos)) return []
   if (vista === 'admin') return eventos
-  return eventos.filter((evento) => evento?.estado !== 'cancelado')
+  return eventos.filter((evento) => getEventoEstado(evento) !== 'cancelado')
 }

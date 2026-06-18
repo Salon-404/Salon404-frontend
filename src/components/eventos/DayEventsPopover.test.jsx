@@ -19,10 +19,7 @@ const eventosJunio14 = [
     tipoEventoId: 5,
     cliente: { nombre: 'Carolina López' },
     cantidadInvitados: 45,
-<<<<<<< HEAD
     reserva: { estado: 'confirmada' },
-=======
->>>>>>> origin/develop
   },
   {
     id: 'evt-002',
@@ -131,7 +128,6 @@ describe('DayEventsPopover', () => {
     expect(screen.getByText('2 eventos')).toBeInTheDocument()
   })
 
-<<<<<<< HEAD
   it('renders reservation badge when reserva.estado is present', () => {
     render(<DayEventsPopover {...defaultProps} isAdmin={true} />)
 
@@ -139,8 +135,6 @@ describe('DayEventsPopover', () => {
     expect(screen.getByText('Confirmada')).toBeInTheDocument()
   })
 
-=======
->>>>>>> origin/develop
   it('renders nothing when eventos is empty', () => {
     const { container } = render(
       <DayEventsPopover {...defaultProps} eventos={[]} />

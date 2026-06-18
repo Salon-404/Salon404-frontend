@@ -11,14 +11,25 @@ const defaultFiltros = {
   fechaHasta: '',
 }
 
+const tiposEvento = [
+  { id: 1, nombre: 'XV' },
+  { id: 2, nombre: 'Casamiento' },
+]
+
+function renderFiltros(props = {}) {
+  return render(
+    <EventoFiltros
+      filtros={defaultFiltros}
+      onCambiarFiltros={vi.fn()}
+      tiposEvento={tiposEvento}
+      {...props}
+    />
+  )
+}
+
 describe('EventoFiltros', () => {
   it('renders all filter inputs', () => {
-    render(
-      <EventoFiltros
-        filtros={defaultFiltros}
-        onCambiarFiltros={vi.fn()}
-      />
-    )
+    renderFiltros()
 
     expect(screen.getByTestId('filtro-busqueda')).toBeInTheDocument()
     expect(screen.getByTestId('filtro-estado-evento')).toBeInTheDocument()
@@ -30,9 +41,7 @@ describe('EventoFiltros', () => {
 
   it('typing in search input calls onCambiarFiltros with busqueda', () => {
     const onChange = vi.fn()
-    render(
-      <EventoFiltros filtros={defaultFiltros} onCambiarFiltros={onChange} />
-    )
+    renderFiltros({ onCambiarFiltros: onChange })
 
     fireEvent.change(screen.getByTestId('filtro-busqueda'), {
       target: { value: 'María' },
@@ -46,9 +55,7 @@ describe('EventoFiltros', () => {
 
   it('selecting estadoEvento calls onCambiarFiltros', () => {
     const onChange = vi.fn()
-    render(
-      <EventoFiltros filtros={defaultFiltros} onCambiarFiltros={onChange} />
-    )
+    renderFiltros({ onCambiarFiltros: onChange })
 
     fireEvent.change(screen.getByTestId('filtro-estado-evento'), {
       target: { value: 'pendiente' },
@@ -62,9 +69,7 @@ describe('EventoFiltros', () => {
 
   it('selecting estadoReserva calls onCambiarFiltros', () => {
     const onChange = vi.fn()
-    render(
-      <EventoFiltros filtros={defaultFiltros} onCambiarFiltros={onChange} />
-    )
+    renderFiltros({ onCambiarFiltros: onChange })
 
     fireEvent.change(screen.getByTestId('filtro-estado-reserva'), {
       target: { value: 'confirmada' },
@@ -78,9 +83,7 @@ describe('EventoFiltros', () => {
 
   it('selecting tipoEventoId calls onCambiarFiltros with number', () => {
     const onChange = vi.fn()
-    render(
-      <EventoFiltros filtros={defaultFiltros} onCambiarFiltros={onChange} />
-    )
+    renderFiltros({ onCambiarFiltros: onChange })
 
     fireEvent.change(screen.getByTestId('filtro-tipo-evento'), {
       target: { value: '2' },
@@ -94,9 +97,7 @@ describe('EventoFiltros', () => {
 
   it('setting fechaDesde/Hasta calls onCambiarFiltros', () => {
     const onChange = vi.fn()
-    render(
-      <EventoFiltros filtros={defaultFiltros} onCambiarFiltros={onChange} />
-    )
+    renderFiltros({ onCambiarFiltros: onChange })
 
     fireEvent.change(screen.getByTestId('filtro-fecha-desde'), {
       target: { value: '2026-06-01' },

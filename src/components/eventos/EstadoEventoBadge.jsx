@@ -1,9 +1,11 @@
 import { ESTADOS_EVENTO } from '../../constants/eventos'
+import { normalizeEstadoEvento } from '../../utils/eventos'
 
 export default function EstadoEventoBadge({ estado }) {
-  const config = ESTADOS_EVENTO.find((e) => e.value === estado)
+  const estadoNormalizado = normalizeEstadoEvento(estado)
+  const config = ESTADOS_EVENTO.find((e) => e.value === estadoNormalizado)
   const badge = config?.badge ?? 'bg-slate-100 text-slate-600'
-  const label = config?.label ?? estado
+  const label = config?.label ?? estadoNormalizado ?? 'Sin estado'
 
   return (
     <span

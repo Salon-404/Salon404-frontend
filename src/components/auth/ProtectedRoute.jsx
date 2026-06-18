@@ -1,23 +1,25 @@
 import { Link, Navigate } from 'react-router-dom'
-import { decodeToken } from '../../globals/decodeToken'
-import { TOKEN_KEY, RUTA_LOGIN } from '../../constants/auth'
+import { RUTA_LOGIN } from '../../constants/auth'
+import { useAuth } from '../../context/AuthContext'
 
 export default function ProtectedRoute({ children, rolRequerido }) {
-  const token = localStorage.getItem(TOKEN_KEY)
+  const { user, loading } = useAuth()
 
-  if (!token) {
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <p className="text-sm text-slate-500">Validando sesión...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
     return <Navigate to={RUTA_LOGIN} replace />
   }
 
-  let user = null
+  const userRole = user.role || user.rol
 
-  try {
-    user = decodeToken(token)
-  } catch {
-    return <Navigate to={RUTA_LOGIN} replace />
-  }
-
-  if (rolRequerido && user.role !== rolRequerido) {
+  if (rolRequerido && userRole !== rolRequerido) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50">
         <p className="text-xl font-semibold text-slate-700">Acceso restringido</p>
