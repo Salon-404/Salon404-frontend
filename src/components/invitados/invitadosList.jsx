@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { invitadosService } from "../../services/invitadosService";
 import Swal from "sweetalert2"; // Asegurate de tenerlo importado acá
-import {  getSalonDiagram } from "../../services/eventosService";
-import {  getTablesByEventId } from "../../services/mesasService";
+import { getSalonDiagram } from "../../services/eventosService";
+import { getTablesByEventId } from "../../services/mesasService";
 export function InvitadosList({ eventId }) {
   const [invitados, setInvitados] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -12,7 +12,11 @@ export function InvitadosList({ eventId }) {
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [totalInvitados, setTotalInvitados] = useState(0);
+  const [totalFiltrados, setTotalFiltrados] = useState(0);
   const TAMANIO_PAGINA = 10;
+
+  // ESTADO PARA LA BÚSQUEDA
+  const [busqueda, setBusqueda] = useState("");
 
   // Estado para controlar qué menú "Gestionar" está abierto
   const [menuAbiertoId, setMenuAbiertoId] = useState(null);
@@ -44,7 +48,6 @@ export function InvitadosList({ eventId }) {
   const imgRef = useRef(null);
   const [imgRect, setImgRect] = useState(null);
 
-
   const cargarInvitados = async () => {
     try {
       setCargando(true);
@@ -53,11 +56,16 @@ export function InvitadosList({ eventId }) {
         eventId,
         paginaActual,
         TAMANIO_PAGINA,
+        busqueda,
       );
       if (respuesta) {
         setInvitados(Array.isArray(respuesta.data) ? respuesta.data : []);
         setTotalPaginas(respuesta.totalPages || 1);
-        setTotalInvitados(respuesta.total || 0);
+        setTotalFiltrados(respuesta.total || 0);
+
+        if (!busqueda) {
+          setTotalInvitados(respuesta.total || 0);
+        }
       }
     } catch (err) {
       console.error("Error al cargar invitados:", err);
@@ -68,10 +76,21 @@ export function InvitadosList({ eventId }) {
   };
 
   useEffect(() => {
-    if (eventId) cargarInvitados();
-  }, [eventId, paginaActual]);
+    if (!eventId) return;
 
- useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      cargarInvitados();
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [eventId, paginaActual, busqueda]);
+
+  const handleBusquedaChange = (e) => {
+    setBusqueda(e.target.value);
+    setPaginaActual(1);
+  };
+
+  useEffect(() => {
     if (!showAssignModal) return;
 
     const medir = () => {
@@ -97,7 +116,6 @@ export function InvitadosList({ eventId }) {
     return () => window.removeEventListener("resize", medir);
   }, [showAssignModal, diagram]);
 
-  
   useEffect(() => {
     if (eventId) {
       cargarInvitados();
@@ -155,57 +173,53 @@ export function InvitadosList({ eventId }) {
     }
   };
 
- const handleDropGuest = async (mesa) => {
-  if (!guestSelected) return;
+  const handleDropGuest = async (mesa) => {
+    if (!guestSelected) return;
 
-  try {
-    await invitadosService.update(
-      eventId,
-      guestSelected.id,
-      {
+    try {
+      await invitadosService.update(eventId, guestSelected.id, {
         fullName: guestSelected.fullName,
         phone: guestSelected.phone,
         email: guestSelected.email,
         dietTypeId: guestSelected.dietTypeId,
         guestStatusId: guestSelected.guestStatusId,
         tableId: mesa.id,
-      }
-    );
+      });
 
-    await cargarInvitados();
+      await cargarInvitados();
 
-    Swal.fire({
-      title: "Mesa asignada",
-      text: `${guestSelected.fullName} fue asignado a ${mesa.tableName}`,
-      icon: "success",
-      confirmButtonColor: "#185FA5",
-    });
+      Swal.fire({
+        title: "Mesa asignada",
+        text: `${guestSelected.fullName} fue asignado a ${mesa.tableName}`,
+        icon: "success",
+        confirmButtonColor: "#185FA5",
+      });
 
-    setShowAssignModal(false);
-    setGuestSelected(null);
-    setDraggingGuest(false);
-  } catch (err) {
-    console.error(err);
+      setShowAssignModal(false);
+      setGuestSelected(null);
+      setDraggingGuest(false);
+    } catch (err) {
+      console.error(err);
 
-    Swal.fire({
-      title: "Error",
-      text: "No se pudo asignar la mesa.",
-      icon: "error",
-      confirmButtonColor: "#185FA5",
-    });
-  }
-};
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo asignar la mesa.",
+        icon: "error",
+        confirmButtonColor: "#185FA5",
+      });
+    }
+  };
 
   // --- DRAG MANUAL DEL INVITADO (mouse) ---
- const updateDragPos = (e) => {
-  const rect = canvasRef.current?.getBoundingClientRect();
-  if (!rect) return;
+  const updateDragPos = (e) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
 
-  setDragPos({
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
-  });
-};
+    setDragPos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
 
   const handleGuestMouseDown = (e) => {
     e.preventDefault();
@@ -229,8 +243,6 @@ export function InvitadosList({ eventId }) {
     setDraggingGuest(false);
     setHoveredMesaId(null);
   };
-
-
 
   // --- ACCIONES DEL MENÚ GESTIONAR ---
   const handleBorrar = async (invitadoId) => {
@@ -296,7 +308,6 @@ export function InvitadosList({ eventId }) {
     }
   };
 
-
   const handleGenerarInvitacion = (invitado) => {
     // Construimos la URL pública incluyendo el eventId del componente y el id del invitado
     const linkInvitacion = `${window.location.origin}/invitacion/${eventId}/${invitado.id}`;
@@ -322,11 +333,23 @@ export function InvitadosList({ eventId }) {
             Invitados
           </h2>
           <p className="text-slate-500 text-sm">
-            Tienes{" "}
-            <span className="font-semibold text-slate-700">
-              {totalInvitados}
-            </span>{" "}
-            invitados registrados.
+            {busqueda ? (
+              <>
+                Encontrados{" "}
+                <span className="font-semibold text-slate-700">
+                  {totalFiltrados}
+                </span>{" "}
+                resultados de un total de {totalInvitados} invitados.
+              </>
+            ) : (
+              <>
+                Tienes{" "}
+                <span className="font-semibold text-slate-700">
+                  {totalInvitados}
+                </span>{" "}
+                invitados registrados.
+              </>
+            )}
           </p>
         </div>
         <button
@@ -335,6 +358,22 @@ export function InvitadosList({ eventId }) {
         >
           + Agregar Invitado
         </button>
+      </div>
+
+      {/* 🔍 BARRA DE BÚSQUEDA */}
+      <div className="max-w-md">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar invitado por nombre..."
+            value={busqueda}
+            onChange={handleBusquedaChange}
+            className="w-full px-4 py-2.5 pl-10 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-[#185FA5] text-slate-700 placeholder-slate-400"
+          />
+          <span className="absolute left-3.5 top-3 text-slate-400 text-sm">
+            🔍
+          </span>
+        </div>
       </div>
 
       {/* TABLA / CONTENIDO */}
@@ -573,49 +612,49 @@ export function InvitadosList({ eventId }) {
             </form>
           </div>
         </div>
-
       )}
 
-     
       {/* MODAL DE ASIGNAR MESA (click o arrastrar y soltar) */}
-{showAssignModal && (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    
-<div className="bg-white rounded-3xl w-full max-w-[95vw] h-[92vh] shadow-2xl flex flex-col overflow-hidden">      {/* HEADER */}
-      <div className="p-6 pb-3">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-[#0C447C]">
-              Asignar Mesa
-            </h2>
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-[95vw] h-[92vh] shadow-2xl flex flex-col overflow-hidden">
+            {" "}
+            {/* HEADER */}
+            <div className="p-6 pb-3">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#0C447C]">
+                    Asignar Mesa
+                  </h2>
 
-            <p className="text-slate-500 text-sm mt-1">
-              Hacé clic en una mesa o arrastrá el invitado para asignarlo a:
-              <span className="font-semibold text-[#185FA5] ml-2">
-                {guestSelected?.fullName}
-              </span>
-            </p>
-          </div>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Hacé clic en una mesa o arrastrá el invitado para asignarlo
+                    a:
+                    <span className="font-semibold text-[#185FA5] ml-2">
+                      {guestSelected?.fullName}
+                    </span>
+                  </p>
+                </div>
 
-          <button
-            onClick={() => {
-              setShowAssignModal(false);
-              setGuestSelected(null);
-              setDraggingGuest(false);
-              setHoveredMesaId(null);
-            }}
-            className="text-2xl text-slate-400 hover:text-slate-600"
-          >
-            ×
-          </button>
-        </div>
+                <button
+                  onClick={() => {
+                    setShowAssignModal(false);
+                    setGuestSelected(null);
+                    setDraggingGuest(false);
+                    setHoveredMesaId(null);
+                  }}
+                  className="text-2xl text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              </div>
 
-        {/* INVITADO ARRASTRABLE */}
-        {guestSelected && (
-          <div className="flex justify-center mb-4">
-            <div
-              onMouseDown={handleGuestMouseDown}
-              className={`
+              {/* INVITADO ARRASTRABLE */}
+              {guestSelected && (
+                <div className="flex justify-center mb-4">
+                  <div
+                    onMouseDown={handleGuestMouseDown}
+                    className={`
                 bg-[#185FA5]
                 text-white
                 px-5
@@ -628,105 +667,102 @@ export function InvitadosList({ eventId }) {
                 transition-opacity
                 ${draggingGuest ? "opacity-40 cursor-grabbing" : "cursor-grab"}
               `}
+                  >
+                    {guestSelected.fullName}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* DIAGRAMA */}
+            <div
+              ref={assignContainerRef}
+              className="relative flex-1 overflow-auto bg-gray-100"
+              onMouseMove={handleContainerMouseMove}
+              onMouseUp={handleContainerMouseUp}
+              onMouseLeave={handleContainerMouseUp}
             >
-              {guestSelected.fullName}
+              {!diagram ? (
+                <div className="flex items-center justify-center h-full text-slate-400">
+                  Cargando diagrama...
+                </div>
+              ) : (
+                <div
+                  className="relative w-full h-full flex items-center justify-center"
+                  ref={canvasRef}
+                  style={{
+                    width: CANVAS_WIDTH,
+                    height: CANVAS_HEIGHT,
+                    margin: "0 auto",
+                  }}
+                >
+                  {/* PLANO */}
+                  <img
+                    ref={imgRef}
+                    src={diagram}
+                    className="max-w-full items-center justify-cent max-h-full object-contain"
+                    draggable={false}
+                  />
+
+                  {/* MESAS */}
+                  {tables.map((mesa) => {
+                    const isCircle = mesa.shapeId === 1;
+                    const mesaLlena =
+                      (mesa.guests?.length ?? 0) >= mesa.capacity;
+
+                    return (
+                      <div
+                        key={mesa.id}
+                        onMouseEnter={() => setHoveredMesaId(mesa.id)}
+                        onMouseLeave={() => setHoveredMesaId(null)}
+                        className="absolute flex items-center justify-center text-xs font-semibold text-white shadow-md cursor-pointer"
+                        style={{
+                          left: `${mesa.posX}%`,
+                          top: `${mesa.posY}%`,
+                          width: `${mesa.width}%`,
+                          height: `${mesa.height}%`,
+                          transform: "translate(-50%, -50%)",
+
+                          borderRadius: isCircle ? "50%" : "12px",
+                          background: mesaLlena
+                            ? "#dc2626"
+                            : "linear-gradient(145deg,#1e6bb8,#185FA5)",
+                          border: "2px solid rgba(255,255,255,0.35)",
+                          boxShadow: "0 6px 15px rgba(0,0,0,0.25)",
+                          zIndex: 10,
+                        }}
+                      >
+                        <div className="text-center leading-tight">
+                          <div>{mesa.tableName}</div>
+                          <div className="text-[10px]">
+                            {mesa.guests?.length ?? 0} / {mesa.capacity}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* DRAG */}
+                  {draggingGuest && guestSelected && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: dragPos.x,
+                        top: dragPos.y,
+                        transform: "translate(-50%, -50%)",
+                        pointerEvents: "none",
+                        zIndex: 20,
+                      }}
+                      className="bg-[#185FA5] text-white px-4 py-2 rounded-xl shadow-2xl text-sm font-semibold"
+                    >
+                      {guestSelected.fullName}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </div>
-
-      {/* DIAGRAMA */}
-  <div
-  ref={assignContainerRef}
-  className="relative flex-1 overflow-auto bg-gray-100"
-  onMouseMove={handleContainerMouseMove}
-  onMouseUp={handleContainerMouseUp}
-  onMouseLeave={handleContainerMouseUp}
->
-  {!diagram ? (
-    <div className="flex items-center justify-center h-full text-slate-400">
-      Cargando diagrama...
-    </div>
-  ) : (
-<div
-  className="relative w-full h-full flex items-center justify-center"
-    ref={canvasRef}
-  style={{
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
-    margin: "0 auto", 
-  }}
->
-      {/* PLANO */}
-      <img
-        ref={imgRef}
-        src={diagram}
-        className="max-w-full items-center justify-cent max-h-full object-contain"
-          draggable={false}
-      />
-
-      {/* MESAS */}
-      {tables.map((mesa) => {
-        const isCircle = mesa.shapeId === 1;
-        const mesaLlena =
-          (mesa.guests?.length ?? 0) >= mesa.capacity;
-
-        return (
-          <div
-            key={mesa.id}
-            onMouseEnter={() => setHoveredMesaId(mesa.id)}
-            onMouseLeave={() => setHoveredMesaId(null)}
-            className="absolute flex items-center justify-center text-xs font-semibold text-white shadow-md cursor-pointer"
-            style={{
-             left: `${mesa.posX}%`,
-              top: `${mesa.posY}%`,
-              width: `${mesa.width}%`,
-              height: `${mesa.height}%`,
-              transform: "translate(-50%, -50%)",
-
-              borderRadius: isCircle ? "50%" : "12px",
-              background: mesaLlena
-                ? "#dc2626"
-                : "linear-gradient(145deg,#1e6bb8,#185FA5)",
-              border: "2px solid rgba(255,255,255,0.35)",
-              boxShadow: "0 6px 15px rgba(0,0,0,0.25)",
-              zIndex: 10,
-            }}
-          >
-            <div className="text-center leading-tight">
-              <div>{mesa.tableName}</div>
-              <div className="text-[10px]">
-                {mesa.guests?.length ?? 0} / {mesa.capacity}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* DRAG */}
-      {draggingGuest && guestSelected && (
-        <div
-          style={{
-            position: "absolute",
-            left: dragPos.x,
-            top: dragPos.y,
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-            zIndex: 20,
-          }}
-          className="bg-[#185FA5] text-white px-4 py-2 rounded-xl shadow-2xl text-sm font-semibold"
-        >
-          {guestSelected.fullName}
         </div>
       )}
     </div>
-  )}
-</div>
-    </div>
-  </div>
-)}
-
-</div>
   );
-
 }
