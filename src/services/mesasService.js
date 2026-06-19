@@ -8,14 +8,14 @@ const api = axios.create({
 
 export async function getTablesByEventId(eventId)
 {
-  const {data} = await api.get(`${services.mesas}/${eventId}/Tables`);
+  const {data} = await api.get(`${eventId}/Tables`);
   return data;
 }
 
 
 export async function updateTableLayout(eventId, tableId, payload) {
   const { data } = await api.patch(
-    `${services.mesas}/${eventId}/Tables/${tableId}/layout`,
+    `${eventId}/Tables/${tableId}/layout`,
     payload
   )
   return data
@@ -23,7 +23,7 @@ export async function updateTableLayout(eventId, tableId, payload) {
 
 export async function createTable(eventId, payload) {
   const { data } = await api.post(
-    `${services.mesas}/${eventId}/Tables`,
+    `${eventId}/Tables`,
     payload
   );
   return data

@@ -5,13 +5,22 @@ import { getEvento, getSalonDiagram } from "../../services/eventosService";
 import { getAllTypes } from "../../services/eventTypeService";
 import {
   CreateEventSchedule,
+  deleteEventSchedule,
   getAllEventSchedule,
+  updateEventSchedule,
 } from "../../services/eventScheduleService";
 import { getTablesByEventId } from "../../services/mesasService";
 import { updateTableLayout } from "../../services/mesasService";
 import { createTable } from "../../services/mesasService";
-import { successToast } from "../../globals/toast";
+import { errorToast, successToast } from "../../globals/toast";
 import { InvitadosList } from "../../components/invitados/invitadosList";
+
+const getScheduleId = (activity) =>
+  activity?.id ?? activity?.eventScheduleId ?? activity?.EventScheduleId;
+
+const toTimeInput = (time) => (time ? String(time).slice(0, 5) : "");
+
+const toApiTime = (time) => (time?.length === 5 ? `${time}:00` : time);
 
 export default function EventoDetailPage() {
   const { id } = useParams();
@@ -30,9 +39,14 @@ export default function EventoDetailPage() {
   const [schedules, setSchedules] = useState([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [errorSchedules, setErrorSchedules] = useState(null);
+  const [editingActivity, setEditingActivity] = useState(null);
+  const [activityToDelete, setActivityToDelete] = useState(null);
+  const [scheduleActionId, setScheduleActionId] = useState(null);
 
   const [diagram, setDiagram] = useState(null);
   const [tables, setTables] = useState([]);
+  const [loadingTables, setLoadingTables] = useState(false);
+  const [errorTables, setErrorTables] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   const containerRef = useRef(null);
   const [resizingId, setResizingId] = useState(null);
@@ -127,7 +141,7 @@ export default function EventoDetailPage() {
 
   const handleCreateActivity = async () => {
     try {
-      const mesaCreada = await CreateEventSchedule({
+      await CreateEventSchedule({
         id: id,
         title: newActivity.title,
         description: newActivity.description,
@@ -136,6 +150,7 @@ export default function EventoDetailPage() {
       });
 
       setShowCreateActivity(false);
+      await loadSchedules();
 
       setNewActivity({
         title: "Mesa dulce",
@@ -146,7 +161,7 @@ export default function EventoDetailPage() {
 
       successToast("Actividad creada con éxito");
     } catch (err) {
-      console.error("Error creando Actividad", err);
+      errorToast("No se pudo crear la actividad", err.message);
     }
   };
 
@@ -154,11 +169,21 @@ export default function EventoDetailPage() {
     if (!id) return;
 
     async function loadTables() {
+      setLoadingTables(true);
+      setErrorTables(null);
+
       try {
         const res = await getTablesByEventId(id);
-        setTables(res);
+        setTables(Array.isArray(res) ? res : res?.data ?? res?.value ?? []);
       } catch (e) {
-        console.error(e);
+        setTables([]);
+        setErrorTables(
+          e.code === "ERR_NETWORK"
+            ? "No se pudo conectar con el servicio de mesas. Verificá que esté iniciado y que la URL configurada sea correcta."
+            : "No se pudieron cargar las mesas de este evento.",
+        );
+      } finally {
+        setLoadingTables(false);
       }
     }
 
@@ -271,38 +296,76 @@ export default function EventoDetailPage() {
     };
   }, [id]);
 
-  useEffect(() => {
-    if (seccion !== "cronograma") return;
+  const loadSchedules = useCallback(async () => {
+    setLoadingSchedules(true);
+    setErrorSchedules(null);
 
-    let cancelado = false;
-
-    async function cargarCronograma() {
-      setLoadingSchedules(true);
-      setErrorSchedules(null);
-
-      try {
-        const data = await getAllEventSchedule(id);
-
-        if (!cancelado) {
-          setSchedules(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        if (!cancelado) {
-          setErrorSchedules("No se pudo cargar el cronograma.");
-        }
-      } finally {
-        if (!cancelado) {
-          setLoadingSchedules(false);
-        }
-      }
+    try {
+      const data = await getAllEventSchedule(id);
+      const items = Array.isArray(data)
+        ? data
+        : data?.data ?? data?.value ?? data?.items ?? [];
+      setSchedules(Array.isArray(items) ? items : []);
+    } catch (scheduleError) {
+      setErrorSchedules(scheduleError.message || "No se pudo cargar el cronograma.");
+    } finally {
+      setLoadingSchedules(false);
     }
+  }, [id]);
 
-    cargarCronograma();
+  useEffect(() => {
+    if (seccion !== "cronograma" && seccion !== "editar") return;
+    loadSchedules();
+  }, [loadSchedules, seccion]);
 
-    return () => {
-      cancelado = true;
-    };
-  }, [id, seccion]);
+  const openActivityEditor = (activity) => {
+    setEditingActivity({
+      id: getScheduleId(activity),
+      title: activity.title ?? "",
+      description: activity.description ?? "",
+      startTime: toTimeInput(activity.startTime),
+      endTime: toTimeInput(activity.endTime),
+    });
+  };
+
+  const handleUpdateActivity = async () => {
+    if (!editingActivity?.id) return;
+
+    setScheduleActionId(editingActivity.id);
+    try {
+      await updateEventSchedule({
+        ...editingActivity,
+        startTime: toApiTime(editingActivity.startTime),
+        endTime: toApiTime(editingActivity.endTime),
+      });
+      setEditingActivity(null);
+      await loadSchedules();
+      successToast("Actividad actualizada con éxito");
+    } catch (scheduleError) {
+      errorToast("No se pudo actualizar la actividad", scheduleError.message);
+    } finally {
+      setScheduleActionId(null);
+    }
+  };
+
+  const handleDeleteActivity = async () => {
+    const activityId = getScheduleId(activityToDelete);
+    if (!activityId) return;
+
+    setScheduleActionId(activityId);
+    try {
+      await deleteEventSchedule(id, activityId);
+      setSchedules((current) =>
+        current.filter((item) => getScheduleId(item) !== activityId),
+      );
+      setActivityToDelete(null);
+      successToast("Actividad eliminada con éxito");
+    } catch (scheduleError) {
+      errorToast("No se pudo eliminar la actividad", scheduleError.message);
+    } finally {
+      setScheduleActionId(null);
+    }
+  };
 
   const toMinutesWithNextDay = (time) => {
     if (!time) return 0;
@@ -574,7 +637,8 @@ export default function EventoDetailPage() {
 
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className="bg-[#185FA5] text-white px-4 py-2 rounded-lg hover:bg-[#0C447C] transition"
+                      disabled={Boolean(errorTables)}
+                      className="bg-[#185FA5] text-white px-4 py-2 rounded-lg hover:bg-[#0C447C] transition disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Crear mesa
                     </button>
@@ -583,6 +647,12 @@ export default function EventoDetailPage() {
                   <p className="text-slate-500 mb-4">
                     Vista del plano del salón.
                   </p>
+
+                  {errorTables && (
+                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {errorTables}
+                    </div>
+                  )}
 
                   <div
                     ref={containerRef}
@@ -605,7 +675,11 @@ export default function EventoDetailPage() {
                         />
 
                         {/* MESAS */}
-                        {tables.map((mesa) => {
+                        {loadingTables ? (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-slate-500">
+                            Cargando mesas...
+                          </div>
+                        ) : tables.map((mesa) => {
                           const width = mesa.width || 8;
                           const height = mesa.height || mesa.width || 8;
 
@@ -983,14 +1057,218 @@ export default function EventoDetailPage() {
               )}
               {seccion === "editar" && (
                 <>
-                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-3">
-                    Editar cronograma
-                  </h2>
+                  <div className="mb-5">
+                    <h2 className="text-2xl font-semibold text-[#0C447C]">
+                      Editar cronograma
+                    </h2>
+                  </div>
 
-                  <p className="text-slate-500">
-                    Desde aquí podrás agregar actividades, horarios y
-                    responsables.
-                  </p>
+                  {loadingSchedules ? (
+                    <p className="text-slate-500">Cargando cronograma...</p>
+                  ) : errorSchedules ? (
+                    <p className="text-red-600">{errorSchedules}</p>
+                  ) : schedulesOrdenados.length === 0 ? (
+                    <p className="text-slate-500">
+                      El evento todavía no tiene actividades programadas.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {schedulesOrdenados.map((activity) => {
+                        const activityId = getScheduleId(activity);
+                        const processing = scheduleActionId === activityId;
+
+                        return (
+                          <div
+                            key={activityId}
+                            className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1 flex flex-wrap items-center gap-3">
+                                <h3 className="font-semibold text-[#0C447C]">
+                                  {activity.title}
+                                </h3>
+                                <span className="text-sm font-medium text-[#185FA5]">
+                                  {toTimeInput(activity.startTime)} - {toTimeInput(activity.endTime)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-slate-600">
+                                {activity.description || "Sin descripción"}
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openActivityEditor(activity)}
+                                disabled={processing}
+                                className="rounded-lg border border-[#185FA5] px-3 py-2 text-sm font-medium text-[#185FA5] hover:bg-[#E6F1FB] disabled:opacity-50"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActivityToDelete(activity)}
+                                disabled={processing}
+                                className="rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                {processing ? "Procesando..." : "Eliminar"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {editingActivity && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+                        <h3 className="mb-5 text-xl font-semibold text-[#0C447C]">
+                          Editar actividad
+                        </h3>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">
+                              Título
+                            </label>
+                            <input
+                              value={editingActivity.title}
+                              onChange={(event) =>
+                                setEditingActivity((current) => ({
+                                  ...current,
+                                  title: event.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">
+                              Descripción
+                            </label>
+                            <textarea
+                              value={editingActivity.description}
+                              onChange={(event) =>
+                                setEditingActivity((current) => ({
+                                  ...current,
+                                  description: event.target.value,
+                                }))
+                              }
+                              rows={3}
+                              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                              <label className="mb-1 block text-sm font-medium text-slate-700">
+                                Hora de inicio
+                              </label>
+                              <input
+                                type="time"
+                                value={editingActivity.startTime}
+                                onChange={(event) =>
+                                  setEditingActivity((current) => ({
+                                    ...current,
+                                    startTime: event.target.value,
+                                  }))
+                                }
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-sm font-medium text-slate-700">
+                                Hora de finalización
+                              </label>
+                              <input
+                                type="time"
+                                value={editingActivity.endTime}
+                                onChange={(event) =>
+                                  setEditingActivity((current) => ({
+                                    ...current,
+                                    endTime: event.target.value,
+                                  }))
+                                }
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditingActivity(null)}
+                            disabled={Boolean(scheduleActionId)}
+                            className="rounded-lg border border-slate-300 px-4 py-2"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleUpdateActivity}
+                            disabled={Boolean(scheduleActionId)}
+                            className="rounded-lg bg-[#185FA5] px-4 py-2 text-white disabled:opacity-50"
+                          >
+                            {scheduleActionId ? "Guardando..." : "Guardar cambios"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activityToDelete && (
+                    <div
+                      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="delete-activity-title"
+                    >
+                      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                        <h3
+                          id="delete-activity-title"
+                          className="text-xl font-semibold text-slate-900"
+                        >
+                          Eliminar actividad
+                        </h3>
+                        <p className="mt-3 text-slate-600">
+                          Estás por eliminar la siguiente actividad:
+                        </p>
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                          <p className="font-semibold text-[#0C447C]">
+                            {activityToDelete.title}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {toTimeInput(activityToDelete.startTime)} - {toTimeInput(activityToDelete.endTime)}
+                          </p>
+                        </div>
+                        <p className="mt-4 text-sm text-slate-500">
+                          Esta acción no se puede deshacer.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setActivityToDelete(null)}
+                            disabled={Boolean(scheduleActionId)}
+                            className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDeleteActivity}
+                            disabled={Boolean(scheduleActionId)}
+                            className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {scheduleActionId ? "Eliminando..." : "Confirmar eliminación"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
