@@ -1,56 +1,153 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import ReservasPage from './pages/reservas/ReservasPage'
-import NuevaReservaPage from './pages/reservas/NuevaReservaPage'
-import EditarReservaPage from './pages/reservas/EditarReservaPage'
-import CalendarioPage from './pages/reservas/CalendarioPage'
-import ReservaDetailPage from './pages/reservas/ReservaDetailPage'
-import PlanoPage from './pages/mesas/PlanoPage'
-import EditorPage from './pages/mesas/EditorPage'
-import AsignarPage from './pages/mesas/AsignarPage'
-import LoginPage from './pages/auth/LoginPage'
-import ProtectedRoute from './components/auth/ProtectedRoute'
-import { ROLES } from './constants/auth'
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+} from "react-router-dom";
+import PlanoPage from "./pages/mesas/PlanoPage";
+import EditorPage from "./pages/mesas/EditorPage";
+import AsignarPage from "./pages/mesas/AsignarPage";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import EventoNuevoPage from "./pages/eventos/EventoNuevoPage";
+import EventosPage from "./pages/eventos/EventosPage";
+import EventoDetailPage from "./pages/eventos/EventoDetailPage";
+import EventoEditarPage from "./pages/eventos/EventoEditarPage";
+import CalendarioEventosPage from "./pages/eventos/CalendarioEventosPage";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import RedirectConBanner from "./components/common/RedirectConBanner";
+import { ROLES } from "./constants/auth";
+import DisponibilityPage from "./pages/Disponibility/DisponibilityPage";
+import ProveedoresList from "./pages/proveedores/ProveedoresList";
+import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
+import HomePage from "./pages/home/HomePage";
+import SalonesPage from "./pages/salon/SalonesPage";
+import SalonDetailPage from "./pages/salon/SalonDetailPage";
+import { InvitadosRoutes } from "./pages/invitados/InvitadosRoutes";
+import { InvitadosList } from "./components/invitados/InvitadosList";
+import { InvitacionForm } from "./components/invitados/InvitacionForm";
+import ProveedoresPage from './pages/proveedores/ProveedoresPage';
+import CronogramaEvento from './pages/cronograma/CronogramaEvento';
+import CateringPage from './pages/eventos/CateringPage';
 
-// Rutas de cada módulo se descomentan a medida que se desarrollan
+function ReservaRedirect() {
+  const { id } = useParams();
+  return <RedirectConBanner to={`/eventos/${id}`} />;
+}
 
-// Módulo Auth — Juan Cruz Merino / Federico Oviedo
-// import { AuthRoutes } from './pages/auth/AuthRoutes'
+function ReservaEditarRedirect() {
+  const { id } = useParams();
+  return <RedirectConBanner to={`/eventos/${id}/editar`} />;
+}
 
-// Módulo Reservas — Federico Oviedo
-// import { ReservasRoutes } from './pages/reservas/ReservasRoutes'
-
-// Módulo Invitados — Victor Balbuena
-import { InvitadosRoutes } from './pages/invitados/InvitadosRoutes'
-
+// Módulo Pagos — Mariano Figueroa
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* La app arranca por el login de Fede */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* Módulo Auth — Federico Oviedo */}
+        {/*RUTAS PARA EL USUARIO. LAS PUEDE VER SIN LOGUEARSE*/}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/salones" element={<SalonesPage />} />
+        <Route path="/salones/:id" element={<SalonDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/disponibilidad" element={<DisponibilityPage />} />
+        <Route path="/proveedores" element={<ProveedoresPage />} />
+        <Route path="/eventos/:id/cronograma" element={<CronogramaEvento />} />
+        <Route path="/eventos/:id/catering" element={<CateringPage />} />
+        {/* Redirects — rutas legacy /reservas → /eventos */}
+        {/*<Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />*/}
+        <Route
+          path="/reservas/calendario"
+          element={<RedirectConBanner to="/eventos/calendario" />}
+        />
+        <Route
+          path="/reservas/nueva"
+          element={<RedirectConBanner to="/eventos/nuevo" />}
+        />
+        <Route path="/reservas/:id" element={<ReservaRedirect />} />
+        <Route
+          path="/reservas/:id/editar"
+          element={<ReservaEditarRedirect />}
+        />
 
-        {/* Módulo Reservas — Federico Oviedo */}
-        <Route path="/reservas" element={<ReservasPage />} />
-        <Route path="/reservas/calendario" element={<CalendarioPage />} />
-        <Route path="/reservas/nueva" element={<NuevaReservaPage />} />
-        <Route path="/reservas/:id" element={<ReservaDetailPage />} />
-        <Route path="/reservas/:id/editar" element={<EditarReservaPage />} />
+        {/* Módulo Eventos — Federico Oviedo */}
+        <Route path="/eventos" element={<EventosPage />} />
+        <Route path="/eventos/:id" element={<EventoDetailPage />} />
+        <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
+        <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
+        <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
+        {/* Redirects reservas → eventos */}
+        <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
+        <Route
+          path="/reservas/calendario"
+          element={<RedirectConBanner to="/eventos/calendario" />}
+        />
+        <Route
+          path="/reservas/nueva"
+          element={<RedirectConBanner to="/eventos/nuevo" />}
+        />
+        <Route path="/reservas/:id" element={<ReservaRedirect />} />
+        <Route
+          path="/reservas/:id/editar"
+          element={<ReservaEditarRedirect />}
+        />
+
+        {/* Módulo Eventos — Federico Oviedo */}
+        <Route path="/eventos" element={<EventosPage />} />
+        <Route path="/eventos/:id" element={<EventoDetailPage />} />
+        <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
+        <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
+        <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
 
         {/* Módulo Mesas — Federico Oviedo */}
         <Route path="/mesas" element={<PlanoPage />} />
-        <Route path="/mesas/editor" element={
-          <ProtectedRoute rolRequerido={ROLES.ADMIN}><EditorPage /></ProtectedRoute>
-        } />
-        <Route path="/mesas/asignar/:reservaId" element={
-          <ProtectedRoute rolRequerido={ROLES.ADMIN}><AsignarPage /></ProtectedRoute>
-        } />
+        <Route
+          path="/mesas/editor"
+          element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}>
+              <EditorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mesas/asignar/:reservaId"
+          element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}>
+              <AsignarPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Módulo Pagos — Mariano Figueroa */}
 
         {/* Módulo Invitados — Victor Balbuena */}
         <Route path="/invitados/*" element={<InvitadosRoutes />} />
+        <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
+        <Route
+          path="/invitacion/:eventId/:guestId"
+          element={<InvitacionForm />}
+        />
+
+        {/* Módulo Proveedores */}
+        <Route
+          path="/proveedores"
+          element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}>
+              <ProveedoresList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/evento/:id/catering"
+          element={
+            <ProtectedRoute>
+              <SugerenciaCatering />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }

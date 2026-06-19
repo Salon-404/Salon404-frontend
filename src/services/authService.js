@@ -1,67 +1,42 @@
 import axios from 'axios'
-import { usuariosMock } from '../mocks/authMock'
-import { TOKEN_KEY } from '../constants/auth'
-
-// Poner en false cuando el backend de Juan Cruz (Dupla 1) esté listo
-const USE_MOCK = true
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_AUTH_URL,
-})
-
-function delay(ms = 250) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-function generarTokenMock(usuario) {
-  return `mock_token_${usuario.id}_${Date.now()}`
-}
+import { services } from './endpointsUrl'
 
 export async function login({ email, password }) {
-  if (USE_MOCK) {
-    await delay()
-    const usuario = usuariosMock.find(
-      u => u.email === email && u.password === password
-    )
-    if (!usuario) {
-      const error = new Error('Credenciales incorrectas')
-      error.response = { status: 401 }
-      throw error
-    }
-    const { password: _, ...usuarioSinPassword } = usuario
-    const token = generarTokenMock(usuarioSinPassword)
-    return { token, user: usuarioSinPassword }
+  try {
+    const response = await axios.post(`${services.auth}login`, { email, password })
+    return response.data
+  } catch (error) {
+    throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor')
   }
-  const { data } = await api.post('/api/auth/login', { email, password })
-  return data
+}
+
+export async function register({ name, lastName, email, password, phone }) {
+  try {
+    const response = await axios.post(`${services.auth}register`, {
+      name,
+      lastName,
+      email,
+      password,
+      phone,
+    })
+    return response.data
+  } catch (error) {
+    throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor')
+  }
 }
 
 export async function logout() {
-  if (USE_MOCK) {
-    await delay(100)
-    return null
-  }
-  await api.post('/api/auth/logout', null, {
-    headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
-  })
+  // El cierre de sesion se maneja localmente en el frontend borrando el token de localStorage.
 }
 
 export async function getMe(token) {
-  if (USE_MOCK) {
-    await delay()
-    const partes = token?.split('_')
-    const id = partes ? parseInt(partes[2]) : null
-    const usuario = usuariosMock.find(u => u.id === id)
-    if (!usuario) {
-      const error = new Error('Token inválido')
-      error.response = { status: 401 }
-      throw error
-    }
-    const { password: _, ...usuarioSinPassword } = usuario
-    return usuarioSinPassword
-  }
-  const { data } = await api.get('/api/auth/me', {
+  const response = await axios.get(`${services.auth}me`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  return data
+  return response.data
+}
+
+export async function getUserById(id) {
+  const response = await axios.get(`${services.auth}${id}`)
+  return response.data
 }

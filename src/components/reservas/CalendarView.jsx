@@ -1,84 +1,148 @@
-import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import { useNavigate } from 'react-router-dom'
-import { CALENDARIO_BG, CALENDARIO_COLORES } from '../../constants/reservas'
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function CalendarView({ fechasOcupadas = [], fechasPendientes = [], initialDate, onMonthChange }) {
-  const navigate = useNavigate()
+export default function CalendarView({
+  fechasDisponibles = [],
+  fechasReservadas = [],
+  initialDate,
+}) {
+  const navigate = useNavigate();
 
-  const eventos = [
-    ...fechasOcupadas.map((fecha) => ({
-      title: 'Ocupado',
-      date: fecha,
-      backgroundColor: CALENDARIO_BG.confirmada,
-      borderColor: CALENDARIO_COLORES.confirmada,
-      textColor: CALENDARIO_COLORES.confirmada,
-      extendedProps: { estado: 'confirmada' },
-    })),
-    ...fechasPendientes.map((fecha) => ({
-      title: 'Pendiente',
-      date: fecha,
-      backgroundColor: CALENDARIO_BG.pendiente,
-      borderColor: CALENDARIO_COLORES.pendiente,
-      textColor: CALENDARIO_COLORES.pendiente,
-      extendedProps: { estado: 'pendiente' },
-    })),
-  ]
+  const disponiblesSet = useMemo(
+    () => new Set(fechasDisponibles),
+    [fechasDisponibles]
+  );
 
-  const fechasOcupadasSet = new Set([...fechasOcupadas, ...fechasPendientes])
+  const reservadasSet = useMemo(
+    () => new Set(fechasReservadas),
+    [fechasReservadas]
+  );
+
+  const proximaFechaDisponible = useMemo(() => {
+    const hoy = new Date().toISOString().split("T")[0];
+
+    return [...fechasDisponibles]
+      .filter((fecha) => fecha >= hoy)
+      .sort()[0];
+  }, [fechasDisponibles]);
 
   function handleDateClick(info) {
-    if (fechasOcupadasSet.has(info.dateStr)) return
-    navigate(`/reservas/nueva?fecha=${info.dateStr}`)
+    const dateStr = info.dateStr;
+
+    if (!disponiblesSet.has(dateStr)) return;
+
+    navigate(`/eventos/nuevo?fecha=${dateStr}`);
+  }
+
+  function irAProximaFecha() {
+    if (!proximaFechaDisponible) return;
+
+    navigate(`/eventos/nuevo?fecha=${proximaFechaDisponible}`);
   }
 
   function dayCellClassNames(arg) {
-    const dateStr = arg.date.toISOString().split('T')[0]
-    if (fechasOcupadas.includes(dateStr)) return ['fc-day-occupied']
-    if (fechasPendientes.includes(dateStr)) return ['fc-day-pending']
-    return ['fc-day-available']
+    const dateStr =
+      arg.date.toISOString().split("T")[0];
+
+    if (reservadasSet.has(dateStr)) {
+      return ["fc-day-occupied"];
+    }
+
+    if (disponiblesSet.has(dateStr)) {
+      return ["fc-day-available"];
+    }
+
+    return ["fc-day-unavailable"];
   }
 
   return (
-    <div className="fc-wrapper">
-      <FullCalendar
+    <div>
+      {/* Encabezado */}
+      <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-800">
+            Calendario de reservas
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-slate-500">
+            Seleccioná una fecha marcada en verde
+            para iniciar una nueva reserva.
+          </p>
+        </div>
+
+        <button
+          onClick={irAProximaFecha}
+          disabled={!proximaFechaDisponible}
+          className="
+            rounded-2xl
+            bg-indigo-600
+            px-6
+            py-4
+            font-semibold
+            text-white
+            shadow-md
+            transition-all
+            hover:-translate-y-1
+            hover:bg-indigo-700
+            hover:shadow-lg
+            disabled:cursor-not-allowed
+            disabled:bg-slate-300
+            disabled:shadow-none
+          "
+        >
+           Próxima fecha disponible
+        </button>
+      </div>
+
+      {/* Leyenda */}
+      <div className="mb-8 flex flex-wrap gap-5 rounded-3xl bg-slate-50 p-5">
+        <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
+          <span className="h-3 w-3 rounded-full bg-green-500" />
+          <span className="font-medium text-slate-700">
+            Disponible
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
+          <span className="h-3 w-3 rounded-full bg-red-500" />
+          <span className="font-medium text-slate-700">
+            Reservado
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
+          <span className="h-3 w-3 rounded-full bg-slate-300" />
+          <span className="font-medium text-slate-700">
+            Sin disponibilidad
+          </span>
+        </div>
+      </div>
+
+      {/* Calendario */}
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
+        <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         initialDate={initialDate}
         locale="es"
-        buttonText={{ today: 'Hoy', month: 'Mes' }}
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: '',
-        }}
-        events={eventos}
         dateClick={handleDateClick}
         dayCellClassNames={dayCellClassNames}
-        datesSet={(info) => {
-          if (onMonthChange) {
-            const d = info.view.currentStart
-            onMonthChange(d.getFullYear(), d.getMonth() + 1)
-          }
-        }}
         height="auto"
+        headerToolbar={{
+          left: "prev,next",
+          center: "title",
+          right: "today",
+        }}
+        buttonText={{
+          today: "Hoy",
+          prev: "←",
+          next: "→",
+        }}
       />
-
-      <div className="flex gap-6 mt-4 text-sm text-slate-600">
-        <span className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded" style={{ backgroundColor: CALENDARIO_BG.confirmada, border: `1px solid ${CALENDARIO_COLORES.confirmada}` }} />
-          Ocupado (confirmada)
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded" style={{ backgroundColor: CALENDARIO_BG.pendiente, border: `1px solid ${CALENDARIO_COLORES.pendiente}` }} />
-          Pendiente
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded bg-white border border-slate-300" />
-          Disponible
-        </span>
       </div>
     </div>
-  )
+  );
 }

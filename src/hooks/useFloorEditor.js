@@ -14,23 +14,22 @@ import {
   MESA_DIAMETRO_MIN,
 } from '../constants/mesas'
 import { putLayout, deleteMesa as deleteMesaService } from '../services/mesasService'
-import { nextMesaMockId } from '../mocks/mesasMock'
 
 // Administra el estado interactivo del editor del plano.
 // Usa mouse events nativos del DOM para drag/resize/rotate sin librerías externas.
 // arrastrandoRef.current.modo distingue entre 'mover', 'redimensionar' y 'rotar'.
 export function useFloorEditor(layoutInicial) {
-  const [mesas,             setMesas]             = useState(() =>
+  const [mesas, setMesas] = useState(() =>
     layoutInicial?.mesas ? JSON.parse(JSON.stringify(layoutInicial.mesas)) : []
   )
   const [mesaSeleccionadaId, setMesaSeleccionadaId] = useState(null)
-  const [isSaving,          setIsSaving]           = useState(false)
-  const [errorGuardar,      setErrorGuardar]       = useState(null)
-  const [isEliminating,     setIsEliminating]      = useState(false)
-  const [errorEliminar,     setErrorEliminar]      = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [errorGuardar, setErrorGuardar] = useState(null)
+  const [isEliminating, setIsEliminating] = useState(false)
+  const [errorEliminar, setErrorEliminar] = useState(null)
 
   const canvasAncho = layoutInicial?.canvasAncho ?? CANVAS_ANCHO_DEFAULT
-  const canvasAlto  = layoutInicial?.canvasAlto  ?? CANVAS_ALTO_DEFAULT
+  const canvasAlto = layoutInicial?.canvasAlto ?? CANVAS_ALTO_DEFAULT
 
   const arrastrandoRef = useRef(null)
   const layoutSnapshotRef = useRef(JSON.parse(JSON.stringify(layoutInicial?.mesas ?? [])))
@@ -44,7 +43,7 @@ export function useFloorEditor(layoutInicial) {
     }
     return {
       ancho: mesa.ancho ?? MESA_RECTANGULAR_ANCHO_DEFAULT,
-      alto:  mesa.alto  ?? MESA_RECTANGULAR_ALTO_DEFAULT,
+      alto: mesa.alto ?? MESA_RECTANGULAR_ALTO_DEFAULT,
     }
   }
 
@@ -53,12 +52,12 @@ export function useFloorEditor(layoutInicial) {
     const mesa = mesas.find(m => m.id === mesaId)
     if (!mesa) return
     arrastrandoRef.current = {
-      modo:         'mover',
+      modo: 'mover',
       mesaId,
       cursorStartX: e.clientX,
       cursorStartY: e.clientY,
-      mesaStartX:   mesa.x,
-      mesaStartY:   mesa.y,
+      mesaStartX: mesa.x,
+      mesaStartY: mesa.y,
     }
   }, [mesas])
 
@@ -68,11 +67,11 @@ export function useFloorEditor(layoutInicial) {
     if (!mesa) return
     const valorInicial = mesa[campo] ?? (
       campo === 'diametro' ? MESA_REDONDA_DIAMETRO_DEFAULT :
-      campo === 'ancho'    ? MESA_RECTANGULAR_ANCHO_DEFAULT :
-                             MESA_RECTANGULAR_ALTO_DEFAULT
+        campo === 'ancho' ? MESA_RECTANGULAR_ANCHO_DEFAULT :
+          MESA_RECTANGULAR_ALTO_DEFAULT
     )
     arrastrandoRef.current = {
-      modo:         'redimensionar',
+      modo: 'redimensionar',
       mesaId,
       campo,
       signo,
@@ -88,10 +87,10 @@ export function useFloorEditor(layoutInicial) {
     if (!mesa) return
     const { ancho, alto } = dimensionMesa(mesa)
     arrastrandoRef.current = {
-      modo:    'rotar',
+      modo: 'rotar',
       mesaId,
       centerX: canvasRect.left + mesa.x + ancho / 2,
-      centerY: canvasRect.top  + mesa.y + alto  / 2,
+      centerY: canvasRect.top + mesa.y + alto / 2,
     }
   }, [mesas])
 
@@ -111,7 +110,7 @@ export function useFloorEditor(layoutInicial) {
         return {
           ...mesa,
           x: Math.max(0, Math.min(mesaStartX + deltaX, canvasAncho - ancho)),
-          y: Math.max(0, Math.min(mesaStartY + deltaY, canvasAlto  - alto)),
+          y: Math.max(0, Math.min(mesaStartY + deltaY, canvasAlto - alto)),
         }
       }))
 
@@ -121,8 +120,8 @@ export function useFloorEditor(layoutInicial) {
         ? e.clientX - cursorStartX
         : e.clientY - cursorStartY
       const minValor = campo === 'diametro' ? MESA_DIAMETRO_MIN
-                     : campo === 'ancho'    ? MESA_ANCHO_MIN
-                                            : MESA_ALTO_MIN
+        : campo === 'ancho' ? MESA_ANCHO_MIN
+          : MESA_ALTO_MIN
       const nuevoValor = Math.max(minValor, Math.round(valorInicial + delta * signo))
       setMesas(prev => prev.map(m => m.id === mesaId ? { ...m, [campo]: nuevoValor } : m))
 
@@ -139,17 +138,17 @@ export function useFloorEditor(layoutInicial) {
   }, [])
 
   const agregarMesa = useCallback((forma) => {
-    const offset    = mesas.length * 20
+    const offset = mesas.length * 20
     const esRedonda = forma === FORMAS.REDONDA
     const nueva = {
-      id:       nextMesaMockId(),
-      nombre:   `Mesa ${mesas.length + 1}`,
+      id: crypto.randomUUID(),
+      nombre: `Mesa ${mesas.length + 1}`,
       forma,
       capacidad: CAPACIDAD_DEFAULT,
-      grupo:     GRUPOS.SIN_GRUPO,
-      rotacion:  ROTACION_DEFAULT,
+      grupo: GRUPOS.SIN_GRUPO,
+      rotacion: ROTACION_DEFAULT,
       x: Math.min(50 + offset, canvasAncho - 150),
-      y: Math.min(50 + offset, canvasAlto  - 120),
+      y: Math.min(50 + offset, canvasAlto - 120),
       ...(esRedonda
         ? { diametro: MESA_REDONDA_DIAMETRO_DEFAULT }
         : { ancho: MESA_RECTANGULAR_ANCHO_DEFAULT, alto: MESA_RECTANGULAR_ALTO_DEFAULT }
