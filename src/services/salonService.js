@@ -28,7 +28,7 @@ function normalizeImage(src) {
 export async function getSalons()
 {
     const {data} = await axios.get(services.salon);
-    return unwrapList(data).map(normalizeSalon);
+    return data;
 }
 
 
@@ -36,4 +36,9 @@ export async function getSalon(id)
 {
     const {data} = await axios.get(services.salon);
     return unwrapList(data).map(normalizeSalon);
+}
+export async function getSalonsName()
+{
+    const {data} = await axios.get(`${services.salon}/salonsName`);
+    return data
 }
