@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invitadosService } from "../../services/invitadosService";
 import Swal from "sweetalert2"; // Asegurate de tenerlo importado acá
-
+import {  getSalonDiagram } from "../../services/eventosService";
+import {  getTablesByEventId } from "../../services/mesasService";
 export function InvitadosList({ eventId }) {
   const [invitados, setInvitados] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -27,6 +28,23 @@ export function InvitadosList({ eventId }) {
     dietTypeId: "1",
   });
 
+  const CANVAS_WIDTH = 900;
+  const CANVAS_HEIGHT = 800;
+  const canvasRef = useRef(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [guestSelected, setGuestSelected] = useState(null);
+  const [tables, setTables] = useState([]);
+  const [diagram, setDiagram] = useState(null);
+  const [draggingGuest, setDraggingGuest] = useState(false);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const [hoveredMesaId, setHoveredMesaId] = useState(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  const assignContainerRef = useRef(null);
+  const imgRef = useRef(null);
+  const [imgRect, setImgRect] = useState(null);
+
+
   const cargarInvitados = async () => {
     try {
       setCargando(true);
@@ -50,6 +68,37 @@ export function InvitadosList({ eventId }) {
   };
 
   useEffect(() => {
+    if (eventId) cargarInvitados();
+  }, [eventId, paginaActual]);
+
+ useEffect(() => {
+    if (!showAssignModal) return;
+
+    const medir = () => {
+      const container = assignContainerRef.current;
+      const img = imgRef.current;
+
+      if (!container || !img) return;
+
+      const cRect = container.getBoundingClientRect();
+      const iRect = img.getBoundingClientRect();
+
+      setImgRect({
+        left: iRect.left - cRect.left,
+        top: iRect.top - cRect.top,
+        width: iRect.width,
+        height: iRect.height,
+      });
+    };
+
+    medir();
+    window.addEventListener("resize", medir);
+
+    return () => window.removeEventListener("resize", medir);
+  }, [showAssignModal, diagram]);
+
+  
+  useEffect(() => {
     if (eventId) {
       cargarInvitados();
     }
@@ -61,6 +110,23 @@ export function InvitadosList({ eventId }) {
     document.addEventListener("click", cerrarMenu);
     return () => document.removeEventListener("click", cerrarMenu);
   }, []);
+
+  // Medir el tamaño real del contenedor del diagrama (para corregir la proporción de las mesas)
+  useEffect(() => {
+    if (!showAssignModal) return;
+    const el = assignContainerRef.current;
+    if (!el) return;
+
+    const medir = () => {
+      const rect = el.getBoundingClientRect();
+      setContainerSize({ width: rect.width, height: rect.height });
+    };
+
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [showAssignModal, diagram]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -88,6 +154,83 @@ export function InvitadosList({ eventId }) {
       setGuardandoInvitado(false);
     }
   };
+
+ const handleDropGuest = async (mesa) => {
+  if (!guestSelected) return;
+
+  try {
+    await invitadosService.update(
+      eventId,
+      guestSelected.id,
+      {
+        fullName: guestSelected.fullName,
+        phone: guestSelected.phone,
+        email: guestSelected.email,
+        dietTypeId: guestSelected.dietTypeId,
+        guestStatusId: guestSelected.guestStatusId,
+        tableId: mesa.id,
+      }
+    );
+
+    await cargarInvitados();
+
+    Swal.fire({
+      title: "Mesa asignada",
+      text: `${guestSelected.fullName} fue asignado a ${mesa.tableName}`,
+      icon: "success",
+      confirmButtonColor: "#185FA5",
+    });
+
+    setShowAssignModal(false);
+    setGuestSelected(null);
+    setDraggingGuest(false);
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      title: "Error",
+      text: "No se pudo asignar la mesa.",
+      icon: "error",
+      confirmButtonColor: "#185FA5",
+    });
+  }
+};
+
+  // --- DRAG MANUAL DEL INVITADO (mouse) ---
+ const updateDragPos = (e) => {
+  const rect = canvasRef.current?.getBoundingClientRect();
+  if (!rect) return;
+
+  setDragPos({
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  });
+};
+
+  const handleGuestMouseDown = (e) => {
+    e.preventDefault();
+    updateDragPos(e);
+    setDraggingGuest(true);
+  };
+
+  const handleContainerMouseMove = (e) => {
+    if (!draggingGuest) return;
+    updateDragPos(e);
+  };
+
+  const handleContainerMouseUp = () => {
+    if (draggingGuest && hoveredMesaId) {
+      const mesa = tables.find((t) => t.id === hoveredMesaId);
+      const mesaLlena = mesa && (mesa.guests?.length ?? 0) >= mesa.capacity;
+      if (mesa && !mesaLlena) {
+        handleDropGuest(mesa);
+      }
+    }
+    setDraggingGuest(false);
+    setHoveredMesaId(null);
+  };
+
+
 
   // --- ACCIONES DEL MENÚ GESTIONAR ---
   const handleBorrar = async (invitadoId) => {
@@ -127,10 +270,32 @@ export function InvitadosList({ eventId }) {
     });
   };
 
-  const handleAsignarMesa = (invitadoId) => {
-    console.log("Abrir modal de asignación de mesa para:", invitadoId);
-    //Asignar mesa aqui
+  const handleAsignarMesa = async (invitado) => {
+    try {
+      const [mesas, plano] = await Promise.all([
+        getTablesByEventId(eventId),
+        getSalonDiagram(eventId),
+      ]);
+
+      setGuestSelected(invitado);
+      setTables(mesas);
+      setDiagram(plano);
+      setShowAssignModal(true);
+      setMenuAbiertoId(null);
+      setDraggingGuest(false);
+      setHoveredMesaId(null);
+    } catch (err) {
+      console.error(err);
+
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo cargar el plano del salón.",
+        icon: "error",
+        confirmButtonColor: "#185FA5",
+      });
+    }
   };
+
 
   const handleGenerarInvitacion = (invitado) => {
     // Construimos la URL pública incluyendo el eventId del componente y el id del invitado
@@ -265,20 +430,20 @@ export function InvitadosList({ eventId }) {
                               onClick={() => handleGenerarInvitacion(invitado)}
                               className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
                             >
-                              ✨ Generar Invitación
+                              Generar Invitación
                             </button>
                             <button
-                              onClick={() => handleAsignarMesa(invitado.id)}
+                              onClick={() => handleAsignarMesa(invitado)}
                               className="w-full px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
                             >
-                              🪑 Asignar Mesa
+                              Asignar Mesa
                             </button>
                             <hr className="border-slate-100 my-1" />
                             <button
                               onClick={() => handleBorrar(invitado.id)}
                               className="w-full px-4 py-2 hover:bg-red-50 text-red-600 font-medium flex items-center gap-2"
                             >
-                              ❌ Borrar
+                              Borrar
                             </button>
                           </div>
                         )}
@@ -408,7 +573,160 @@ export function InvitadosList({ eventId }) {
             </form>
           </div>
         </div>
+
+      )}
+
+     
+      {/* MODAL DE ASIGNAR MESA (click o arrastrar y soltar) */}
+{showAssignModal && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    
+<div className="bg-white rounded-3xl w-full max-w-[95vw] h-[92vh] shadow-2xl flex flex-col overflow-hidden">      {/* HEADER */}
+      <div className="p-6 pb-3">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-[#0C447C]">
+              Asignar Mesa
+            </h2>
+
+            <p className="text-slate-500 text-sm mt-1">
+              Hacé clic en una mesa o arrastrá el invitado para asignarlo a:
+              <span className="font-semibold text-[#185FA5] ml-2">
+                {guestSelected?.fullName}
+              </span>
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowAssignModal(false);
+              setGuestSelected(null);
+              setDraggingGuest(false);
+              setHoveredMesaId(null);
+            }}
+            className="text-2xl text-slate-400 hover:text-slate-600"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* INVITADO ARRASTRABLE */}
+        {guestSelected && (
+          <div className="flex justify-center mb-4">
+            <div
+              onMouseDown={handleGuestMouseDown}
+              className={`
+                bg-[#185FA5]
+                text-white
+                px-5
+                py-3
+                rounded-2xl
+                shadow-lg
+                select-none
+                text-base
+                font-semibold
+                transition-opacity
+                ${draggingGuest ? "opacity-40 cursor-grabbing" : "cursor-grab"}
+              `}
+            >
+              {guestSelected.fullName}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* DIAGRAMA */}
+  <div
+  ref={assignContainerRef}
+  className="relative flex-1 overflow-auto bg-gray-100"
+  onMouseMove={handleContainerMouseMove}
+  onMouseUp={handleContainerMouseUp}
+  onMouseLeave={handleContainerMouseUp}
+>
+  {!diagram ? (
+    <div className="flex items-center justify-center h-full text-slate-400">
+      Cargando diagrama...
+    </div>
+  ) : (
+<div
+  className="relative w-full h-full flex items-center justify-center"
+    ref={canvasRef}
+  style={{
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    margin: "0 auto", 
+  }}
+>
+      {/* PLANO */}
+      <img
+        ref={imgRef}
+        src={diagram}
+        className="max-w-full items-center justify-cent max-h-full object-contain"
+          draggable={false}
+      />
+
+      {/* MESAS */}
+      {tables.map((mesa) => {
+        const isCircle = mesa.shapeId === 1;
+        const mesaLlena =
+          (mesa.guests?.length ?? 0) >= mesa.capacity;
+
+        return (
+          <div
+            key={mesa.id}
+            onMouseEnter={() => setHoveredMesaId(mesa.id)}
+            onMouseLeave={() => setHoveredMesaId(null)}
+            className="absolute flex items-center justify-center text-xs font-semibold text-white shadow-md cursor-pointer"
+            style={{
+             left: `${mesa.posX}%`,
+              top: `${mesa.posY}%`,
+              width: `${mesa.width}%`,
+              height: `${mesa.height}%`,
+              transform: "translate(-50%, -50%)",
+
+              borderRadius: isCircle ? "50%" : "12px",
+              background: mesaLlena
+                ? "#dc2626"
+                : "linear-gradient(145deg,#1e6bb8,#185FA5)",
+              border: "2px solid rgba(255,255,255,0.35)",
+              boxShadow: "0 6px 15px rgba(0,0,0,0.25)",
+              zIndex: 10,
+            }}
+          >
+            <div className="text-center leading-tight">
+              <div>{mesa.tableName}</div>
+              <div className="text-[10px]">
+                {mesa.guests?.length ?? 0} / {mesa.capacity}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* DRAG */}
+      {draggingGuest && guestSelected && (
+        <div
+          style={{
+            position: "absolute",
+            left: dragPos.x,
+            top: dragPos.y,
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+            zIndex: 20,
+          }}
+          className="bg-[#185FA5] text-white px-4 py-2 rounded-xl shadow-2xl text-sm font-semibold"
+        >
+          {guestSelected.fullName}
+        </div>
       )}
     </div>
+  )}
+</div>
+    </div>
+  </div>
+)}
+
+</div>
   );
+
 }

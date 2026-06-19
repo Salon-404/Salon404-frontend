@@ -1,6 +1,6 @@
 import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_INVITADOS_URL;
+import { services } from "./endpointsUrl";
+const API_URL = services.invitados;
 const token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImp0aSI6IjMzYjIyMWQwLTNhY2QtNDI3Ni04YmUzLWZkMzIxZDI5YmMwZCIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc4MTgzNjQ2MywiZXhwIjoxNzgxODQwMDYzLCJpYXQiOjE3ODE4MzY0NjMsImlzcyI6IlNhbG9uNDA0LUF1dGgiLCJhdWQiOiJTYWxvbjQwNC1DbGllbnRzIn0.8xxawSt3m8ArHyv3bWfdvIz47fB88AvvoeuUiFo2nMU";
 
@@ -10,7 +10,7 @@ export const invitadosService = {
   getAll: async (eventId, page, pageSize) => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/v1/events/${eventId}/Guests?page=${page}&pageSize=${pageSize}`,
+        `${API_URL}/${eventId}/Guests?page=${page}&pageSize=${pageSize}`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // <-- Clave para pasar el JWT
@@ -34,10 +34,11 @@ export const invitadosService = {
         phone: invitadoData.phone || "",
         email: invitadoData.email || "",
         dietTypeId: parseInt(invitadoData.dietTypeId),
+        tableId:null,
       };
 
       const response = await axios.post(
-        `${API_URL}/api/v1/events/${eventId}/Guests`,
+        `${API_URL}/${eventId}/Guests`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -53,7 +54,7 @@ export const invitadosService = {
   delete: async (eventId, guestId) => {
     try {
       await axios.delete(
-        `${API_URL}/api/v1/events/${eventId}/Guests/${guestId}`,
+        `${API_URL}/${eventId}/Guests/${guestId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       return true;
@@ -68,7 +69,7 @@ export const invitadosService = {
   getCateringSummary: async (eventId) => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/v1/events/${eventId}/Guests/catering-summary`,
+        `${API_URL}/${eventId}/Guests/catering-summary`,
       );
       return response.data;
     } catch (error) {
@@ -82,7 +83,7 @@ export const invitadosService = {
     try {
       // Al ser una ruta pública accedida por el invitado, no le pasamos token de Bearer
       const response = await axios.put(
-        `${API_URL}/api/v1/events/${eventId}/Guests/${guestId}`,
+        `${API_URL}/${eventId}/Guests/${guestId}`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -97,7 +98,7 @@ export const invitadosService = {
     try {
       // Al ser una vista pública para el invitado, no enviamos token de Authorization
       const response = await axios.get(
-        `${API_URL}/api/v1/events/${eventId}/Guests/${guestId}`,
+        `${API_URL}/${eventId}/Guests/${guestId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       return response.data; // Tu backend debería retornar el objeto del invitado
@@ -111,7 +112,7 @@ export const invitadosService = {
   generarTicket: async (eventId, guestId) => {
     try {
       const response = await axios.post(
-        `${API_URL}/api/v1/events/${eventId}/Guests/${guestId}/ticket`,
+        `${API_URL}/${eventId}/Guests/${guestId}/ticket`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -126,7 +127,7 @@ export const invitadosService = {
   getTicket: async (eventId, guestId) => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/v1/events/${eventId}/Guests/${guestId}/ticket`,
+        `${API_URL}/${eventId}/Guests/${guestId}/ticket`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       return response.data;
