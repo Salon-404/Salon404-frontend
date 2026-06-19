@@ -96,8 +96,8 @@ export function InvitacionForm() {
       // PASO 1: Primero realizamos el PUT para pasar el invitado a estado Confirmado (guestStatusId: 2)
       await invitadosService.update(eventId, guestId, {
         fullName: formData.fullName,
-        phone: formData.phone || "00000000",
-        email: formData.email || "invitado@evento.com",
+        phone: formData.phone || "",
+        email: formData.email || "",
         dietTypeId: formData.dietTypeId,
         guestStatusId: 2, // <--- CAMBIO DE ESTADO REQUERIDO POR EL BACKEND
       });

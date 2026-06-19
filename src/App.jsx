@@ -122,6 +122,7 @@ export default function App() {
         {/* Módulo Pagos — Mariano Figueroa */}
 
         {/* Módulo Invitados*/}
+
         <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
         <Route
           path="/invitacion/:eventId/:guestId"
