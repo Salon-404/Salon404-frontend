@@ -7,16 +7,21 @@ const token =
 export const invitadosService = {
   // OBTENER TODOS LOS INVITADOS
   // Endpoint: GET /api/v1/events/{eventId}/Guests
-  getAll: async (eventId, page, pageSize) => {
+  getAll: async (eventId, page, pageSize, searchTerm = "") => {
     try {
-      const response = await axios.get(
-        `${API_URL}/${eventId}/Guests?page=${page}&pageSize=${pageSize}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // <-- Clave para pasar el JWT
-          },
+      // Construimos la URL base con los parámetros obligatorios
+      let url = `${API_URL}/${eventId}/Guests?page=${page}&pageSize=${pageSize}`;
+
+      // Si viene un término de búsqueda, lo agregamos codificado a la URL
+      if (searchTerm) {
+        url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       return response.data;
     } catch (error) {
@@ -24,7 +29,6 @@ export const invitadosService = {
       throw error;
     }
   },
-
   // CREAR UN INVITADO
   // Endpoint: POST /api/v1/events/{eventId}/Guests
   create: async (eventId, invitadoData) => {
@@ -34,7 +38,7 @@ export const invitadosService = {
         phone: invitadoData.phone || "",
         email: invitadoData.email || "",
         dietTypeId: parseInt(invitadoData.dietTypeId),
-        tableId:null,
+        tableId: null,
       };
 
       const response = await axios.post(
@@ -53,10 +57,9 @@ export const invitadosService = {
   // Endpoint: DELETE /api/v1/events/{eventId}/Guests/{guestId}
   delete: async (eventId, guestId) => {
     try {
-      await axios.delete(
-        `${API_URL}/${eventId}/Guests/${guestId}`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      await axios.delete(`${API_URL}/${eventId}/Guests/${guestId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       return true;
     } catch (error) {
       console.error("Error al eliminar invitado:", error);
