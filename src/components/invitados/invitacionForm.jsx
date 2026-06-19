@@ -96,8 +96,8 @@ export function InvitacionForm() {
       // PASO 1: Primero realizamos el PUT para pasar el invitado a estado Confirmado (guestStatusId: 2)
       await invitadosService.update(eventId, guestId, {
         fullName: formData.fullName,
-        phone: formData.phone || "00000000",
-        email: formData.email || "invitado@evento.com",
+        phone: formData.phone || "",
+        email: formData.email || "",
         dietTypeId: formData.dietTypeId,
         guestStatusId: 2, // <--- CAMBIO DE ESTADO REQUERIDO POR EL BACKEND
       });
@@ -148,7 +148,6 @@ export function InvitacionForm() {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
         {/* HEADER */}
         <div className="bg-[#0C447C] text-white p-6 text-center space-y-1">
-          <span className="text-2xl">✨</span>
           <h2 className="text-xl font-bold tracking-wide">
             {isConfirmado ? "¡Tu Pase de Acceso!" : "Confirmar Asistencia"}
           </h2>

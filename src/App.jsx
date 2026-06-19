@@ -24,9 +24,11 @@ import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
 import HomePage from "./pages/home/HomePage";
 import SalonesPage from "./pages/salon/SalonesPage";
 import SalonDetailPage from "./pages/salon/SalonDetailPage";
-import { InvitadosRoutes } from "./pages/invitados/InvitadosRoutes";
 import { InvitadosList } from "./components/invitados/InvitadosList";
 import { InvitacionForm } from "./components/invitados/InvitacionForm";
+import ProveedoresPage from "./pages/proveedores/ProveedoresPage";
+import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
+import CateringPage from "./pages/eventos/CateringPage";
 
 function ReservaRedirect() {
   const { id } = useParams();
@@ -50,7 +52,9 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/disponibilidad" element={<DisponibilityPage />} />
-
+        <Route path="/proveedores" element={<ProveedoresPage />} />
+        <Route path="/eventos/:id/cronograma" element={<CronogramaEvento />} />
+        <Route path="/eventos/:id/catering" element={<CateringPage />} />
         {/* Redirects — rutas legacy /reservas → /eventos */}
         {/*<Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />*/}
         <Route
@@ -117,8 +121,8 @@ export default function App() {
 
         {/* Módulo Pagos — Mariano Figueroa */}
 
-        {/* Módulo Invitados — Victor Balbuena */}
-        <Route path="/invitados/*" element={<InvitadosRoutes />} />
+        {/* Módulo Invitados*/}
+
         <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
         <Route
           path="/invitacion/:eventId/:guestId"

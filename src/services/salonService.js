@@ -49,3 +49,8 @@ export async function getSalon(id) {
   const { data } = await axios.get(services.salon);
   return unwrapList(data).map(normalizeSalon);
 }
+export async function getSalonsName()
+{
+    const {data} = await axios.get(`${services.salon}/salonsName`);
+    return data
+}

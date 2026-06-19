@@ -710,7 +710,8 @@ export default function EventoDetailPage() {
                             >
                               {mesa.tableName}
                               <br />
-                              {mesa.guests?.length ?? 0} / {mesa.capacity}
+                              {"Asientos: "}
+                              {mesa.capacity}
                               {/* RESIZE HANDLE */}
                               <div
                                 onMouseDown={(e) => {
