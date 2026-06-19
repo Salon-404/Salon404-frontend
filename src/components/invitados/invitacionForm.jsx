@@ -148,7 +148,6 @@ export function InvitacionForm() {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
         {/* HEADER */}
         <div className="bg-[#0C447C] text-white p-6 text-center space-y-1">
-          <span className="text-2xl">✨</span>
           <h2 className="text-xl font-bold tracking-wide">
             {isConfirmado ? "¡Tu Pase de Acceso!" : "Confirmar Asistencia"}
           </h2>
