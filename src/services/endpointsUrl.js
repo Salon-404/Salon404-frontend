@@ -7,5 +7,6 @@ export const services = {
   eventSchedule: "http://localhost:5180/api/v1/EventSchedule",
   salon: "http://localhost:5180/api/v1/Salon",
   mesas: "http://localhost:5201/api/v1/events",
-  invitados:"http://localhost:5201/api/v1/events"
+  invitados: "http://localhost:5201/api/v1/events",
+  dashboard: "http://localhost:5162/api/Dashboard",
 };

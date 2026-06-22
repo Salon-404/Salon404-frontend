@@ -22,8 +22,8 @@ export default function HomePage() {
             </em>
           </h1>
           <p className="text-[#B5D4F4] text-base leading-relaxed max-w-md">
-            Reservá tu salón, elegí el horario y coordiná cada detalle desde
-            un solo lugar. Sin llamadas, sin formularios en papel.
+            Reservá tu salón, elegí el horario y coordiná cada detalle desde un
+            solo lugar. Sin llamadas, sin formularios en papel.
           </p>
           <button
             onClick={() => navigate("/disponibilidad")}
@@ -39,22 +39,34 @@ export default function HomePage() {
             <div className="bg-white rounded-xl border border-[#B5D4F4] px-5 py-4 flex items-center gap-4 shadow-sm">
               <span className="text-[#185FA5] text-xl"></span>
               <div>
-                <div className="text-sm font-semibold text-[#185FA5]">09:00 — 15:00</div>
-                <div className="text-xs text-slate-500">Salón Principal · disponible</div>
+                <div className="text-sm font-semibold text-[#185FA5]">
+                  09:00 — 15:00
+                </div>
+                <div className="text-xs text-slate-500">
+                  Salón Principal · disponible
+                </div>
               </div>
             </div>
             <div className="bg-[#185FA5] rounded-xl px-5 py-4 flex items-center gap-4 shadow-sm">
               <span className="text-[#85B7EB] text-xl">✓</span>
               <div>
-                <div className="text-sm font-semibold text-white">16:00 — 22:00</div>
-                <div className="text-xs text-[#85B7EB]">Reservado · XV de Juliana</div>
+                <div className="text-sm font-semibold text-white">
+                  16:00 — 22:00
+                </div>
+                <div className="text-xs text-[#85B7EB]">
+                  Reservado · XV de Juliana
+                </div>
               </div>
             </div>
             <div className="bg-white rounded-xl border border-[#B5D4F4] px-5 py-4 flex items-center gap-4 shadow-sm">
               <span className="text-[#185FA5] text-xl"></span>
               <div>
-                <div className="text-sm font-semibold text-[#185FA5]">23:00 — 05:00</div>
-                <div className="text-xs text-slate-500">Salón Principal · disponible</div>
+                <div className="text-sm font-semibold text-[#185FA5]">
+                  23:00 — 05:00
+                </div>
+                <div className="text-xs text-slate-500">
+                  Salón Principal · disponible
+                </div>
               </div>
             </div>
           </div>
@@ -98,7 +110,9 @@ export default function HomePage() {
               className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-[#378ADD] transition-colors"
             >
               <div className="text-3xl mb-3">{ev.icon}</div>
-              <div className="text-sm font-medium text-slate-700">{ev.name}</div>
+              <div className="text-sm font-medium text-slate-700">
+                {ev.name}
+              </div>
             </div>
           ))}
         </div>
@@ -151,7 +165,8 @@ export default function HomePage() {
           ¿Listo para reservar tu fecha?
         </h2>
         <p className="text-[#85B7EB] text-base mb-8">
-          Registrate y consultá disponibilidad en tiempo real. Sin turnos, sin esperas.
+          Registrate y consultá disponibilidad en tiempo real. Sin turnos, sin
+          esperas.
         </p>
         <button
           onClick={() => navigate("/register")}
@@ -164,7 +179,9 @@ export default function HomePage() {
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer className="bg-[#042C53] flex items-center justify-between px-8 py-5">
         <span className="text-[#85B7EB] font-medium text-base">EventosPro</span>
-        <span className="text-[#378ADD] text-xs">© 2026 · Todos los derechos reservados</span>
+        <span className="text-[#378ADD] text-xs">
+          © 2026 · Todos los derechos reservados
+        </span>
       </footer>
     </div>
   );
