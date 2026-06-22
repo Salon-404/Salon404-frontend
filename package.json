@@ -30,6 +30,7 @@
     "react-hook-form": "^7.76.1",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^6.27.0",
+    "recharts": "^3.8.1",
     "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
