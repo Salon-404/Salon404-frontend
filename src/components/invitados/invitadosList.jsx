@@ -310,7 +310,7 @@ export function InvitadosList({ eventId }) {
   };
 
   const handleGenerarInvitacion = (invitado) => {
-    const linkInvitacion = `${window.location.origin}/invitacion/${eventId}/${invitado.id}`;
+    const linkInvitacion = `${window.location.origin}/invitacion/${invitado.invitationToken}`;
     navigator.clipboard.writeText(linkInvitacion);
 
     Swal.fire({
@@ -320,6 +320,7 @@ export function InvitadosList({ eventId }) {
       confirmButtonColor: "#185FA5",
     });
   };
+
 
   return (
     <div className="space-y-4">
