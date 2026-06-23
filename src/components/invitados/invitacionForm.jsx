@@ -4,13 +4,14 @@ import { invitadosService } from "../../services/invitadosService";
 import Swal from "sweetalert2";
 
 export function InvitacionForm() {
-  const { eventId, guestId } = useParams();
+  const { token } = useParams();
 
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [isConfirmado, setIsConfirmado] = useState(false);
 
   const [ticket, setTicket] = useState(null);
+  const [resolvedIds, setResolvedIds] = useState({ eventId: null, guestId: null });
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -23,10 +24,15 @@ export function InvitacionForm() {
       try {
         setLoading(true);
 
-        // LÓGICA CORRECTA: 1. Primero verificamos el estado del invitado en el sistema
-        const datosInvitado = await invitadosService.getById(eventId, guestId);
+        // LÓGICA CORRECTA: 1. Primero verificamos el estado del invitado en el sistema usando el token
+        const datosInvitado = await invitadosService.getByToken(token);
 
         if (datosInvitado) {
+          // Guardamos los IDs reales resueltos por el backend para utilizarlos después en la generación de tickets
+          const evId = datosInvitado.eventId || datosInvitado.EventId;
+          const gstId = datosInvitado.id || datosInvitado.Id;
+          setResolvedIds({ eventId: evId, guestId: gstId });
+
           // Guardamos sus datos actuales en el estado del formulario
           setFormData({
             fullName: datosInvitado.fullName || datosInvitado.FullName || "",
@@ -43,8 +49,8 @@ export function InvitacionForm() {
           if (statusId === 2) {
             try {
               const ticketExistente = await invitadosService.getTicket(
-                eventId,
-                guestId,
+                evId,
+                gstId,
               );
               if (ticketExistente && ticketExistente.qrCodeToken) {
                 setTicket(ticketExistente);
@@ -56,8 +62,8 @@ export function InvitacionForm() {
               );
               // En caso de que esté confirmado pero falte el ticket por algún motivo, lo creamos en caliente
               const nuevoTicket = await invitadosService.generarTicket(
-                eventId,
-                guestId,
+                evId,
+                gstId,
               );
               setTicket(nuevoTicket);
               setIsConfirmado(true);
@@ -75,10 +81,10 @@ export function InvitacionForm() {
       }
     };
 
-    if (eventId && guestId) {
+    if (token) {
       verificarInvitadoYTicket();
     }
-  }, [eventId, guestId]);
+  }, [token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,8 +99,8 @@ export function InvitacionForm() {
     try {
       setProcesando(true);
 
-      // PASO 1: Primero realizamos el PUT para pasar el invitado a estado Confirmado (guestStatusId: 2)
-      await invitadosService.update(eventId, guestId, {
+      // PASO 1: Primero realizamos el PUT por token para pasar el invitado a estado Confirmado (guestStatusId: 2)
+      await invitadosService.updateByToken(token, {
         fullName: formData.fullName,
         phone: formData.phone || "",
         email: formData.email || "",
@@ -104,8 +110,8 @@ export function InvitacionForm() {
 
       // PASO 2: Ahora que el invitado ya está confirmado en la BD, la generación del ticket no va a fallar
       const nuevoTicket = await invitadosService.generarTicket(
-        eventId,
-        guestId,
+        resolvedIds.eventId,
+        resolvedIds.guestId,
       );
 
       if (nuevoTicket && nuevoTicket.qrCodeToken) {
@@ -131,6 +137,7 @@ export function InvitacionForm() {
       setProcesando(false);
     }
   };
+
 
   if (loading) {
     return (

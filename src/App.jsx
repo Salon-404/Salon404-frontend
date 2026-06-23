@@ -125,9 +125,10 @@ export default function App() {
 
         <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
         <Route
-          path="/invitacion/:eventId/:guestId"
+          path="/invitacion/:token"
           element={<InvitacionForm />}
         />
+
 
         {/* Módulo Dashboard — Kevin Lopez */}
         <Route
