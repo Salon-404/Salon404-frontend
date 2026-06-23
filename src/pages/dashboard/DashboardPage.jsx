@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 //Componete de cada opcion del menu de dashboard
 import Metricas from "../../components/dashboard/Metricas";
+import Calendario from "../../components/dashboard/Calendario";
+import Salones from "../../components/dashboard/Salones";
+import Proveedores from "../../components/dashboard/Proveedores";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
 
   // Modifica este estado según la sección activa que decidas crear
-  const [seccion, setSeccion] = useState("Inicio");
+  const [seccion, setSeccion] = useState("Visualizacion de metricas");
 
   return (
     <div className="min-h-screen bg-[#E6F1FB]">
@@ -52,17 +55,6 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setSeccion("Gestion de eventos")}
-                className={`text-left px-4 py-3 rounded-xl transition ${
-                  seccion === "Gestion de eventos"
-                    ? "bg-[#185FA5] text-white font-medium"
-                    : "hover:bg-slate-100 text-slate-700"
-                }`}
-              >
-                Gestion de eventos
-              </button>
-
-              <button
                 onClick={() => setSeccion("Gestion de salones")}
                 className={`text-left px-4 py-3 rounded-xl transition ${
                   seccion === "Gestion de salones"
@@ -94,17 +86,6 @@ export default function DashboardPage() {
               >
                 Gestion de proveedores
               </button>
-
-              <button
-                onClick={() => setSeccion("Gestion del catering")}
-                className={`text-left px-4 py-3 rounded-xl transition ${
-                  seccion === "Gestion del catering"
-                    ? "bg-[#185FA5] text-white font-medium"
-                    : "hover:bg-slate-100 text-slate-700"
-                }`}
-              >
-                Gestion del catering
-              </button>
             </nav>
           </aside>
 
@@ -112,58 +93,13 @@ export default function DashboardPage() {
           <main>
             {/* PANEL CENTRAL DINÁMICO */}
             <div className="bg-white rounded-3xl p-8 shadow-sm min-h-[400px]">
-              {seccion === "Inicio" && (
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-4">
-                    Bienvenido al Panel del administrador
-                  </h2>
-                  <p className="text-slate-600">
-                    Selecciona una sección que desea visualizar en la barra
-                    lateral para empezar a trabajar.
-                  </p>
-                </div>
-              )}
-
               {seccion === "Visualizacion de metricas" && <Metricas />}
 
-              {seccion === "Gestion de eventos" && (
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0C447C]">
-                    Eventos
-                  </h2>
-                </div>
-              )}
+              {seccion === "Gestion de salones" && <Salones />}
 
-              {seccion === "Gestion de salones" && (
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0C447C]">
-                    Salones
-                  </h2>
-                </div>
-              )}
+              {seccion === "Gestion del calendario" && <Calendario />}
 
-              {seccion === "Gestion del calendario" && (
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0C447C]">
-                    Calendario
-                  </h2>
-                </div>
-              )}
-              {seccion === "Gestion de proveedores" && (
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0C447C]">
-                    Proveedores
-                  </h2>
-                </div>
-              )}
-
-              {seccion === "Gestion del catering" && (
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0C447C]">
-                    Catering
-                  </h2>
-                </div>
-              )}
+              {seccion === "Gestion de proveedores" && <Proveedores />}
             </div>
           </main>
         </div>
