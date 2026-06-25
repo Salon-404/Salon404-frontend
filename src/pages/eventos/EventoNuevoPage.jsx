@@ -247,9 +247,13 @@ export default function EventoNuevoPage() {
       eventFinish: horarioSeleccionado.endTime,
       eventDate: fechaSeleccionada,
       }
-      await createEvento(payload);
+      const event = await createEvento(payload);
 
-      successToast("Reserva creada con éxito. Puede configurar su evento. ")
+      setTimeout(() => {
+        navigate(`/eventos/${event.eventId}`);
+        }, 1500);
+      successToast("Reserva creada con éxito. Puede configurar su evento. ");
+      
     } catch (err) {
       if (err?.response?.status === 409) {
         errorToast("Ese horario ya no está disponible. Elegí otro.");
