@@ -29,6 +29,7 @@ import { InvitacionForm } from "./components/invitados/InvitacionForm";
 import ProveedoresPage from "./pages/proveedores/ProveedoresPage";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import CateringPage from "./pages/eventos/CateringPage";
+import DashboardPage from "./pages/dashboard/DashboardPage";
 
 function ReservaRedirect() {
   const { id } = useParams();
@@ -40,7 +41,6 @@ function ReservaEditarRedirect() {
   return <RedirectConBanner to={`/eventos/${id}/editar`} />;
 }
 
-// Módulo Pagos — Mariano Figueroa
 export default function App() {
   return (
     <BrowserRouter>
@@ -125,8 +125,19 @@ export default function App() {
 
         <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
         <Route
-          path="/invitacion/:eventId/:guestId"
+          path="/invitacion/:token"
           element={<InvitacionForm />}
+        />
+
+
+        {/* Módulo Dashboard — Kevin Lopez */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute rolRequerido={ROLES.ADMIN}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
         />
 
         {/* Módulo Proveedores */}
@@ -146,6 +157,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* Si meten cualquier URL*/}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

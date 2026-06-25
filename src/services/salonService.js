@@ -40,8 +40,22 @@ function normalizeSalon(salon) {
   };
 }
 
-export async function getSalons() {
-  const { data } = await axios.get(services.salon);
+export async function createSalon(salonData) {
+  const { data } = await axios.post(services.salon, salonData);
+
+  const createdSalon = data?.data ?? data;
+
+  return normalizeSalon(createdSalon);
+}
+
+export async function getSalons(page = 1, size = 10) {
+  const { data } = await axios.get(services.salon, {
+    params: {
+      page: page,
+      size: size,
+    },
+  });
+
   return unwrapList(data).map(normalizeSalon);
 }
 
@@ -49,8 +63,7 @@ export async function getSalon(id) {
   const { data } = await axios.get(services.salon);
   return unwrapList(data).map(normalizeSalon);
 }
-export async function getSalonsName()
-{
-    const {data} = await axios.get(`${services.salon}/salonsName`);
-    return data
+export async function getSalonsName() {
+  const { data } = await axios.get(`${services.salon}/salonsName`);
+  return data;
 }

@@ -139,4 +139,29 @@ export const invitadosService = {
       throw error;
     }
   },
+
+  // OBTENER INVITADO POR TOKEN (PÚBLICO)
+  getByToken: async (token) => {
+    try {
+      const baseUrl = API_URL.replace(/\/events\/?$/, "/guests");
+      const response = await axios.get(`${baseUrl}/by-token/${token}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener invitado por token:", error);
+      throw error;
+    }
+  },
+
+  // ACTUALIZAR INVITADO POR TOKEN (PÚBLICO)
+  updateByToken: async (token, payload) => {
+    try {
+      const baseUrl = API_URL.replace(/\/events\/?$/, "/guests");
+      const response = await axios.put(`${baseUrl}/by-token/${token}`, payload);
+      return response.data;
+    } catch (error) {
+      console.error("Error al actualizar invitado por token:", error);
+      throw error;
+    }
+  },
 };
+

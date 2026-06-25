@@ -1,33 +1,33 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { useEventos } from '../../hooks/useEventos';
-import EventoCard from '../../components/eventos/EventoCard';
-import EventoFiltros from '../../components/eventos/EventoFiltros';
+import { useEventos } from "../../hooks/useEventos";
+import EventoCard from "../../components/eventos/EventoCard";
+import EventoFiltros from "../../components/eventos/EventoFiltros";
 import { getAllTypes } from "../../services/eventTypeService";
-import Navbar from '../../components/global/Navbar';
-import { useAuth } from '../../context/AuthContext';
+import Navbar from "../../components/global/Navbar";
+import { useAuth } from "../../context/AuthContext";
 
 function getEventoKey(evento, index) {
   return (
     evento.id ||
     evento.eventId ||
     evento.reserva?.id ||
-    `${evento.fecha ?? 'sin-fecha'}-${evento.horaInicio ?? 'sin-inicio'}-${evento.nombre ?? 'sin-nombre'}-${index}`
-  )
+    `${evento.fecha ?? "sin-fecha"}-${evento.horaInicio ?? "sin-inicio"}-${evento.nombre ?? "sin-nombre"}-${index}`
+  );
 }
 
 export default function EventosPage() {
-  const navigate = useNavigate()
-  const { user, loading: loadingAuth } = useAuth()
+  const navigate = useNavigate();
+  const { user, loading: loadingAuth } = useAuth();
   const { eventos, loading, error, filtros, setFiltros, refetch } = useEventos(
     {},
     300,
-    { user, loading: loadingAuth }
-  )
+    { user, loading: loadingAuth },
+  );
   const [tiposEvento, setTiposEvento] = useState([]);
-  const [tipoEventoId, setTipoEventoId] = useState('');
-  const [loadingTipos, setLoadingTipos] = useState(true)
-  const [errorTipos, setErrorTipos] = useState(null)
+  const [tipoEventoId, setTipoEventoId] = useState("");
+  const [loadingTipos, setLoadingTipos] = useState(true);
+  const [errorTipos, setErrorTipos] = useState(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -44,19 +44,21 @@ export default function EventosPage() {
       }
     }
     cargarTipos();
-    return () => { cancelado = true; };
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
   const tiposById = useMemo(() => {
     return tiposEvento.reduce((acc, tipo) => {
-      acc[tipo.id] = tipo
-      return acc
-    }, {})
-  }, [tiposEvento])
+      acc[tipo.id] = tipo;
+      return acc;
+    }, {});
+  }, [tiposEvento]);
 
   function handleSeleccionar(evento) {
-    const id = evento.id || evento.eventId
-    if (id) navigate(`/eventos/${id}`)
+    const id = evento.id || evento.eventId;
+    if (id) navigate(`/eventos/${id}`);
   }
 
   return (
@@ -75,7 +77,7 @@ export default function EventosPage() {
             </h1>
           </div>
           <button
-            onClick={() => navigate('/disponibilidad')}
+            onClick={() => navigate("/disponibilidad")}
             className="bg-[#378ADD] hover:bg-[#185FA5] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
             data-testid="btn-nuevo-evento"
           >
@@ -91,7 +93,7 @@ export default function EventosPage() {
             tiposEvento={tiposEvento}
           />
           <button
-            onClick={() => navigate('/eventos/calendario')}
+            onClick={() => navigate("/eventos/calendario")}
             className="text-[#185FA5] hover:text-[#0C447C] text-sm font-medium border border-[#B5D4F4] hover:border-[#378ADD] bg-white px-4 py-2 rounded-lg transition-colors"
           >
             Ver Calendario ↗
@@ -118,10 +120,7 @@ export default function EventosPage() {
               Cargando eventos…
             </p>
           ) : (
-            <table
-              className="w-full text-left"
-              aria-label="Lista de eventos"
-            >
+            <table className="w-full text-left" aria-label="Lista de eventos">
               <thead>
                 <tr className="bg-[#E6F1FB] border-b border-[#B5D4F4]">
                   <th className="px-4 py-3 text-xs font-semibold text-[#185FA5] uppercase tracking-wide">
@@ -176,5 +175,5 @@ export default function EventosPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
