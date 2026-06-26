@@ -102,7 +102,6 @@ export const invitadosService = {
       // Al ser una vista pública para el invitado, no enviamos token de Authorization
       const response = await axios.get(
         `${API_URL}/${eventId}/Guests/${guestId}`,
-        { headers: { Authorization: `Bearer ${token}` } },
       );
       return response.data; // Tu backend debería retornar el objeto del invitado
     } catch (error) {

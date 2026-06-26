@@ -30,6 +30,7 @@ import ProveedoresPage from "./pages/proveedores/ProveedoresPage";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import CateringPage from "./pages/eventos/CateringPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
+import GuestPage from "./pages/guest/GuestPage";
 
 function ReservaRedirect() {
   const { id } = useParams();
@@ -55,7 +56,15 @@ export default function App() {
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="/eventos/:id/cronograma" element={<CronogramaEvento />} />
         <Route path="/eventos/:id/catering" element={<CateringPage />} />
-        {/* Redirects — rutas legacy /reservas → /eventos */}
+        
+        {/* Módulo Invitados*/}
+        <Route path=":invitationToken" element={<GuestPage/>}></Route>
+        <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
+        <Route path="/invitacion/:token" element={<InvitacionForm />} />
+        
+        
+        
+        
         {/*<Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />*/}
         <Route
           path="/reservas/calendario"
@@ -121,13 +130,7 @@ export default function App() {
 
         {/* Módulo Pagos — Mariano Figueroa */}
 
-        {/* Módulo Invitados*/}
-
-        <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
-        <Route
-          path="/invitacion/:token"
-          element={<InvitacionForm />}
-        />
+    
 
 
         {/* Módulo Dashboard — Kevin Lopez */}

@@ -311,8 +311,9 @@ export function InvitadosList({ eventId }) {
 
   const handleGenerarInvitacion = (invitado) => {
     const linkInvitacion = `${window.location.origin}/invitacion/${invitado.invitationToken}`;
+    
     navigator.clipboard.writeText(linkInvitacion);
-
+    //Esto debería cambiar a pegarle a un endpoint que envie el mail.
     Swal.fire({
       title: "¡Link Generado!",
       html: `El enlace de invitación para <b>${invitado.fullName}</b> fue copiado al portapapeles.<br/><br/><small class="text-slate-400">${linkInvitacion}</small>`,
