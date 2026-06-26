@@ -37,6 +37,11 @@ function normalizeSalon(salon) {
         salon.imageUrl ??
         salon.photoUrl,
     ),
+    photos: Array.isArray(salon.photos)
+      ? salon.photos.map((img) => normalizeImage(img))
+      : Array.isArray(salon.images)
+        ? salon.images.map((img) => normalizeImage(img))
+        : [],
   };
 }
 
@@ -46,6 +51,14 @@ export async function createSalon(salonData) {
   const createdSalon = data?.data ?? data;
 
   return normalizeSalon(createdSalon);
+}
+
+export async function updateSalon(salonId, salonData) {
+  const { data } = await axios.put(`${services.salon}/${salonId}`, salonData);
+
+  const updatedSalon = data?.data ?? data;
+
+  return normalizeSalon(updatedSalon);
 }
 
 export async function getSalons(page = 1, size = 10) {
@@ -65,5 +78,13 @@ export async function getSalon(id) {
 }
 export async function getSalonsName() {
   const { data } = await axios.get(`${services.salon}/salonsName`);
+  return data;
+}
+
+export async function getEventsBySalon(id, date = null) {
+  const { data } = await axios.get(`${services.salon}/${id}/events`, {
+    params: date ? { eventDate: date } : {},
+  });
+
   return data;
 }
