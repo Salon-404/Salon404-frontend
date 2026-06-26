@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 //Componete de cada opcion del menu de dashboard
 import Metricas from "../../components/dashboard/Metricas";
 import Calendario from "../../components/dashboard/Calendario";
-import Salones from "../../components/dashboard/Salones";
+import Salones from "../../components/dashboard/Salones/Salones";
 import Proveedores from "../../components/dashboard/Proveedores";
 
 export default function DashboardPage() {

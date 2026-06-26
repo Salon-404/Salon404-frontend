@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getEventos } from "../../services/eventosService";
-import { getSalons } from "../../services/salonService";
+import { getSalons, getEventsBySalon } from "../../services/salonService";
 import { getAllTypes } from "../../services/eventTypeService";
 import { getUserById } from "../../services/authService";
 
@@ -14,6 +14,9 @@ export default function Calendario() {
     hoy.toISOString().split("T")[0],
   );
   const [vistaEventos, setVistaEventos] = useState(false);
+
+  // --- NUEVO ESTADO: Filtro de salón ---
+  const [salonFiltro, setSalonFiltro] = useState("");
 
   // Estados de datos indexados
   const [eventos, setEventos] = useState([]);
@@ -47,24 +50,43 @@ export default function Calendario() {
     cargarDatosMaestros();
   }, []);
 
-  // 2. Traer los eventos del mes para calcular los puntos verdes válidos (Estatus 1 o 2)
+  // 2. Traer los eventos del mes para calcular los puntos verdes válidos
+  // MODIFICADO: Agregado 'salonFiltro' a las dependencias
   useEffect(() => {
     const controller = new AbortController();
 
     async function mapearEventosDelMes() {
       try {
         const mesFormateado = String(mesActual + 1).padStart(2, "0");
-        const filtros = {
-          Anio: anioActual,
-          Mes: mesFormateado,
-        };
+        let eventosMes = [];
 
-        const eventosMes = await getEventos(filtros, controller.signal);
+        if (salonFiltro) {
+          // Si hay salón filtrado, nos traemos todo su historial (sin pasar fecha)
+          // para calcular los puntitos verdes del mes en el cliente
+          eventosMes = await getEventsBySalon(salonFiltro);
+        } else {
+          // Si no hay filtro, usamos el endpoint general con filtros de año y mes
+          const filtros = {
+            Anio: anioActual,
+            Mes: mesFormateado,
+          };
+          eventosMes = await getEventos(filtros, controller.signal);
+        }
 
         const mapa = {};
         eventosMes.forEach((ev) => {
           if (ev.eventDate) {
             const fechaStr = ev.eventDate.split("T")[0];
+            const [anio, mes] = fechaStr.split("-");
+
+            // Si filtramos por salón, nos aseguramos de marcar solo los puntos del mes/año actual
+            if (
+              salonFiltro &&
+              (anio !== String(anioActual) || mes !== mesFormateado)
+            ) {
+              return;
+            }
+
             if (ev.eventStatusId === 1 || ev.eventStatusId === 2) {
               mapa[fechaStr] = true;
             }
@@ -80,17 +102,26 @@ export default function Calendario() {
 
     mapearEventosDelMes();
     return () => controller.abort();
-  }, [mesActual, anioActual]);
+  }, [mesActual, anioActual, salonFiltro]);
 
-  // 3. Traer eventos en detalle para el día específico y consultar sus dueños (eventOwner)
+  // 3. Traer eventos en detalle para el día específico y consultar sus dueños
+  // MODIFICADO: Agregado 'salonFiltro' a las dependencias y optimizado con tu nuevo backend
   useEffect(() => {
     const controller = new AbortController();
 
     async function cargarEventosDia() {
       setCargando(true);
       try {
-        const filtros = { EventDate: fechaSeleccionada };
-        const listaEventos = await getEventos(filtros, controller.signal);
+        let listaEventos = [];
+
+        if (salonFiltro) {
+          // ¡Súper eficiente! El backend ya filtra por salón e incluye la fecha directamente de SQL
+          listaEventos = await getEventsBySalon(salonFiltro, fechaSeleccionada);
+        } else {
+          const filtros = { EventDate: fechaSeleccionada };
+          listaEventos = await getEventos(filtros, controller.signal);
+        }
+
         setEventos(listaEventos);
 
         // Identificar qué dueños de eventos no tenemos en caché todavía
@@ -98,7 +129,6 @@ export default function Calendario() {
           .map((ev) => ev.eventOwner)
           .filter((id) => id && !usuariosById[id]);
 
-        // CORREGIDO: Se eliminó el espacio en blanco inválido del nombre de la variable
         const idsUnicos = [...new Set(duenosDesconocidos)];
 
         if (idsUnicos.length > 0) {
@@ -135,7 +165,7 @@ export default function Calendario() {
 
     cargarEventosDia();
     return () => controller.abort();
-  }, [fechaSeleccionada]);
+  }, [fechaSeleccionada, salonFiltro]);
 
   // --- LÓGICA PARA GENERAR LA CUADRÍCULA ---
   const nombresMeses = [
@@ -194,6 +224,7 @@ export default function Calendario() {
 
   return (
     <div className="space-y-6">
+      {/* Encabezado Principal */}
       <div>
         <h2 className="text-2xl font-semibold text-[#0C447C]">
           Calendario de Eventos
@@ -208,69 +239,96 @@ export default function Calendario() {
       <hr className="border-slate-200" />
 
       {!vistaEventos ? (
-        /* --- VISTA A: CALENDARIO COMPLETO --- */
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-slate-800">
-              {nombresMeses[mesActual]}{" "}
-              <span className="text-[#0C447C] font-semibold">{anioActual}</span>
-            </h3>
-            <div className="flex space-x-2">
-              <button
-                onClick={manejarMesAnterior}
-                className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
-              >
-                ←
-              </button>
-              <button
-                onClick={manejarMesSiguiente}
-                className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
-              >
-                →
-              </button>
-            </div>
+        /* --- VISTA A: CALENDARIO COMPLETO (Incluye el Filtro) --- */
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* --- FILTRO UBICADO DEBAJO DEL TEXTO --- */}
+          <div className="flex items-center gap-2 max-w-xs bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+            <label
+              htmlFor="salonFilter"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap"
+            >
+              Salón:
+            </label>
+            <select
+              id="salonFilter"
+              value={salonFiltro}
+              onChange={(e) => setSalonFiltro(e.target.value)}
+              className="w-full bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="">Todos los salones</option>
+              {Object.values(salonesById).map((salon) => (
+                <option key={salon.salonId} value={salon.salonId}>
+                  {salon.salonName}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 mb-2">
-            {diasSemana.map((d) => (
-              <div key={d} className="py-1">
-                {d}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-2">
-            {matrizDias.map((dia, index) => {
-              const mesFormateado = String(mesActual + 1).padStart(2, "0");
-              const diaFormateado = String(dia).padStart(2, "0");
-              const stringCasillero = `${anioActual}-${mesFormateado}-${diaFormateado}`;
-
-              const tieneEventosValidos =
-                dia && mapaEventosMes[stringCasillero];
-
-              return (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-800">
+                {nombresMeses[mesActual]}{" "}
+                <span className="text-[#0C447C] font-semibold">
+                  {anioActual}
+                </span>
+              </h3>
+              <div className="flex space-x-2">
                 <button
-                  key={index}
-                  disabled={!dia}
-                  onClick={() => seleccionarDia(dia)}
-                  className={`h-14 rounded-lg flex flex-col justify-between items-center p-2 text-sm font-medium transition relative
+                  onClick={manejarMesAnterior}
+                  className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={manejarMesSiguiente}
+                  className="p-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 mb-2">
+              {diasSemana.map((d) => (
+                <div key={d} className="py-1">
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {matrizDias.map((dia, index) => {
+                const mesFormateado = String(mesActual + 1).padStart(2, "0");
+                const diaFormateado = String(dia).padStart(2, "0");
+                const stringCasillero = `${anioActual}-${mesFormateado}-${diaFormateado}`;
+
+                const tieneEventosValidos =
+                  dia && mapaEventosMes[stringCasillero];
+
+                return (
+                  <button
+                    key={index}
+                    disabled={!dia}
+                    onClick={() => seleccionarDia(dia)}
+                    className={`h-14 rounded-lg flex flex-col justify-between items-center p-2 text-sm font-medium transition relative
                     ${!dia ? "bg-transparent cursor-default" : "bg-white text-slate-700 border border-slate-100 hover:border-[#0C447C] hover:bg-slate-50"}
                   `}
-                >
-                  <span>{dia}</span>
+                  >
+                    <span>{dia}</span>
 
-                  {tieneEventosValidos && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  )}
-                </button>
-              );
-            })}
+                    {tieneEventosValidos && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : (
-        /* --- VISTA B: LISTA DE EVENTOS EN DETALLE --- */
+        /* --- VISTA B: LISTA DE EVENTOS EN DETALLE (Filtro oculto) --- */
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-3xl mx-auto flex flex-col space-y-6">
-          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+          <div className="flex justify-between items-start pb-4 border-b border-slate-100">
             <div>
               <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">
                 Día Inspeccionado
@@ -278,6 +336,15 @@ export default function Calendario() {
               <h3 className="text-xl font-bold text-slate-800 mt-0.5">
                 {fechaSeleccionada}
               </h3>
+              {/* --- INDICADOR DE QUÉ SALÓN SE ESTÁ CONSULTANDO --- */}
+              <p className="text-xs font-medium text-slate-500 mt-1">
+                Consulta:{" "}
+                <span className="text-[#0C447C] font-semibold">
+                  {salonFiltro
+                    ? salonesById[salonFiltro]?.salonName
+                    : "Todos los salones"}
+                </span>
+              </p>
             </div>
             <button
               onClick={() => setVistaEventos(false)}
