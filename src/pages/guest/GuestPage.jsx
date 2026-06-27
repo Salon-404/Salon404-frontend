@@ -6,7 +6,7 @@ import { getEvento } from "../../services/eventosService";
 export default function GuestPage() {
   const [evento, setEvent] = useState(null);
   const { invitationToken } = useParams();
-
+  const [ticket,setTicket] = useState(null);
   const [guest, setGuest] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,6 +19,17 @@ export default function GuestPage() {
 
         const eventData = await getEvento(guestData.eventId);
         setEvent(eventData);
+
+        if (guestData.guestStatusId === 2 || guestData.guestStatus?.name === "Confirmado")
+        {
+        const ticketData = await invitadosService.getTicket(
+          guestData.eventId,
+          guestData.id
+        );
+        setTicket(ticketData);
+        }
+
+
       } catch (err) {
         console.error(err);
         setError("No se pudieron cargar los datos");
@@ -45,6 +56,10 @@ export default function GuestPage() {
 
       const updatedGuest = await invitadosService.getByToken(invitationToken);
       setGuest(updatedGuest);
+      
+      const ticketData = await invitadosService.getTicket(updatedGuest.eventId,updatedGuest.id);  
+      setTicket(ticketData);
+    
     } catch (err) {
       console.error(err);
       setError("No se pudo confirmar la asistencia");
@@ -85,6 +100,9 @@ export default function GuestPage() {
   const isConfirmed =
     guest?.guestStatusId === 2 ||
     guest?.guestStatus?.name === "Confirmado";
+
+  const qrUrl = ticket ? `${window.location.origin}/checkin/${evento.id}/${ticket.qrCodeToken}`: null;
+  
 
 return (
   <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 flex items-center justify-center p-6">
@@ -181,8 +199,10 @@ return (
           </p>
 
           <div className="inline-block p-4 bg-slate-50 rounded-2xl shadow-inner">
+            
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${guest?.qrCodeToken}`}
+
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrUrl)}`}
               alt="QR"
               className="mx-auto"
             />

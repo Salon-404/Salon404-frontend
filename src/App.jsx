@@ -31,6 +31,7 @@ import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import CateringPage from "./pages/eventos/CateringPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import GuestPage from "./pages/guest/GuestPage";
+import CheckIn from "./pages/guest/CheckIn";
 
 function ReservaRedirect() {
   const { id } = useParams();
@@ -59,6 +60,8 @@ export default function App() {
         
         {/* Módulo Invitados*/}
         <Route path=":invitationToken" element={<GuestPage/>}></Route>
+        <Route path="/checkin/:eventId/:qrToken" element={<CheckIn/>}></Route>
+        
         <Route path="/eventos/:eventId/invitados" element={<InvitadosList />} />
         <Route path="/invitacion/:token" element={<InvitacionForm />} />
         
