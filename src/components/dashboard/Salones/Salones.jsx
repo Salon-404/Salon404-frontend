@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { getSalons } from "../../../services/salonService";
 import ModalCrearSalon from "./ModalCrearSalon";
 import ModalEditarSalon from "./ModalEditarSalon";
-import ModalGaleriaSalon from "./ModalGaleriaSalon"; // <-- 1. Importamos el nuevo modal
+import ModalGaleriaSalon from "./ModalGaleriaSalon";
+import ModalTiposEvento from "./ModalTiposEvento";
 
 export default function Salones() {
   const [salones, setSalones] = useState([]);
@@ -18,7 +19,8 @@ export default function Salones() {
   // Estados para los modales
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [salonAEditar, setSalonAEditar] = useState(null);
-  const [salonAVerFotos, setSalonAVerFotos] = useState(null); // <-- 2. Estado para la galería de fotos
+  const [salonAVerFotos, setSalonAVerFotos] = useState(null);
+  const [salonAVerTipos, setSalonAVerTipos] = useState(null); // <-- 2. Estado para pasar el salón al modal de tipos
 
   // Cargar salones
   useEffect(() => {
@@ -192,7 +194,14 @@ export default function Salones() {
 
                 {/* Acciones */}
                 <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  {/* <-- 3. BOTÓN NUEVO: FOTOS --> */}
+                  {/* <-- 3. BOTÓN NUEVO: TIPOS --> */}
+                  <button
+                    onClick={() => setSalonAVerTipos(salon)}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition"
+                  >
+                    Tipos
+                  </button>
+
                   <button
                     onClick={() => setSalonAVerFotos(salon)}
                     className="px-3 py-1.5 text-xs font-semibold text-[#0C447C] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition flex items-center gap-1"
@@ -281,12 +290,24 @@ export default function Salones() {
         />
       )}
 
-      {/* <-- 4. RENDER DEL NUEVO MODAL DE GALERÍA --> */}
+      {/* Modal de galería */}
       {salonAVerFotos && (
         <ModalGaleriaSalon
           salonName={salonAVerFotos.salonName}
           photos={salonAVerFotos.photos}
           alCerrar={() => setSalonAVerFotos(null)}
+        />
+      )}
+
+      {/* <-- 4. RENDER DEL NUEVO MODAL DE TIPOS DE EVENTO --> */}
+      {salonAVerTipos && (
+        <ModalTiposEvento
+          salon={salonAVerTipos}
+          alCerrar={() => setSalonAVerTipos(null)}
+          alAgregarTipo={(id) => {
+            console.log("Abrir alta de tipo para el salón con ID:", id);
+            // Aquí puedes abrir otro modal secundario para crear el tipo de evento si lo deseas
+          }}
         />
       )}
     </div>
