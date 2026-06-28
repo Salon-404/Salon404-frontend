@@ -14,7 +14,8 @@ import { updateTableLayout } from "../../services/mesasService";
 import { createTable } from "../../services/mesasService";
 import { errorToast, successToast } from "../../globals/toast";
 import { InvitadosList } from "../../components/invitados/invitadosList";
-import { obtenerProveedores } from "../../services/proveedoresService";
+import { obtenerProveedores, obtenerSeleccionCatering } from "../../services/proveedoresService";
+import { invitadosService } from "../../services/invitadosService";
 import {
   asignarProveedorAActividad,
   desasignarProveedorDeActividad,
@@ -87,6 +88,38 @@ export default function EventoDetailPage() {
 
   const [todosProveedores, setTodosProveedores] = useState([]);
   const [loadingTodosProveedores, setLoadingTodosProveedores] = useState(false);
+  const [cateringSeleccionado, setCateringSeleccionado] = useState(null);
+  const [cateringSummary, setCateringSummary] = useState([]);
+  const [loadingCateringSummary, setLoadingCateringSummary] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchCatering = async () => {
+      try {
+        const { data } = await obtenerSeleccionCatering(id);
+        setCateringSeleccionado(data);
+      } catch (err) {
+        console.error("Error al cargar seleccion de catering", err);
+      }
+    };
+    fetchCatering();
+  }, [id, seccion]);
+
+  useEffect(() => {
+    if (!id || seccion !== "catering") return;
+    const fetchCateringSummary = async () => {
+      setLoadingCateringSummary(true);
+      try {
+        const data = await invitadosService.getCateringSummary(id);
+        setCateringSummary(data || []);
+      } catch (err) {
+        console.error("Error al cargar resumen de catering", err);
+      } finally {
+        setLoadingCateringSummary(false);
+      }
+    };
+    fetchCateringSummary();
+  }, [id, seccion]);
 
   useEffect(() => {
     if (seccion !== "servicios" && seccion !== "editar" && seccion !== "cronograma") return;
@@ -587,6 +620,17 @@ export default function EventoDetailPage() {
               </button>
 
               <button
+                onClick={() => setSeccion("catering")}
+                className={`text-left px-4 py-3 rounded-xl transition ${
+                  seccion === "catering"
+                    ? "bg-[#185FA5] text-white"
+                    : "hover:bg-slate-100 text-slate-700"
+                }`}
+              >
+                Catering
+              </button>
+
+              <button
                 onClick={() => setSeccion("cronograma")}
                 className={`text-left px-4 py-3 rounded-xl transition ${
                   seccion === "cronograma"
@@ -680,6 +724,29 @@ export default function EventoDetailPage() {
                         <p>
                           <strong>Invitados:</strong> {evento.estimedGuests}
                         </p>
+
+                        <p>
+                          <strong>Catering:</strong>{" "}
+                          {cateringSeleccionado ? (
+                            <span className="font-semibold text-[#C9913A]">
+                              {cateringSeleccionado.nombreProveedor} ({cateringSeleccionado.nivel.toUpperCase()})
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic">No seleccionado</span>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-100">
+                        <button
+                          onClick={() => navigate(`/eventos/${id}/catering`)}
+                          className="w-full text-white text-xs font-semibold py-2 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+                          style={{ backgroundColor: '#C9913A' }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#b07b2e'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#C9913A'}
+                        >
+                          🍽️ {cateringSeleccionado ? "Cambiar Catering" : "Seleccionar Catering"}
+                        </button>
                       </div>
                     </div>
 
@@ -1101,6 +1168,133 @@ export default function EventoDetailPage() {
                       })}
                     </div>
                   )}
+                </>
+              )}
+
+              {seccion === "catering" && (
+                <>
+                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-2">
+                    Catering y Menús del Evento
+                  </h2>
+                  <p className="text-slate-500 mb-6">
+                    Gestioná la propuesta gastronómica del evento y revisá las preferencias alimenticias de tus invitados.
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Tarjeta de Servicio de Catering */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-[#0C447C] mb-4 flex items-center gap-2">
+                          🍽️ Propuesta de Catering
+                        </h3>
+
+                        {cateringSeleccionado ? (
+                          <div className="space-y-4">
+                            <div>
+                              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Proveedor</span>
+                              <p className="text-lg font-bold text-slate-800">{cateringSeleccionado.nombreProveedor}</p>
+                            </div>
+
+                            <div className="flex gap-4">
+                              <div>
+                                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Nivel</span>
+                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-1 uppercase ${
+                                  cateringSeleccionado.nivel === "alto" 
+                                    ? "bg-amber-100 text-amber-800" 
+                                    : cateringSeleccionado.nivel === "medio"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-slate-100 text-slate-800"
+                                }`}>
+                                  {cateringSeleccionado.nivel}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Precio por Persona</span>
+                                <p className="text-lg font-bold text-[#C9913A] mt-0.5">
+                                  ${cateringSeleccionado.precioPorPersona?.toLocaleString('es-AR')}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-100 space-y-2">
+                              <div className="flex justify-between text-sm text-slate-600">
+                                <span>Costo total (confirmados: {cateringSummary.reduce((sum, item) => sum + item.totalConfirmed, 0)}):</span>
+                                <span className="font-semibold text-slate-800">
+                                  ${(cateringSeleccionado.precioPorPersona * cateringSummary.reduce((sum, item) => sum + item.totalConfirmed, 0)).toLocaleString('es-AR')}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm text-slate-600">
+                                <span>Costo total (estimados: {evento.estimedGuests}):</span>
+                                <span className="font-semibold text-slate-800">
+                                  ${(cateringSeleccionado.precioPorPersona * evento.estimedGuests).toLocaleString('es-AR')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-slate-400 italic mb-4">No has seleccionado ningún catering para este evento.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => navigate(`/eventos/${id}/catering`)}
+                        className="w-full text-white text-sm font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm mt-6"
+                        style={{ backgroundColor: '#C9913A' }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#b07b2e'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#C9913A'}
+                      >
+                        🍽️ {cateringSeleccionado ? "Cambiar Propuesta de Catering" : "Seleccionar Propuesta de Catering"}
+                      </button>
+                    </div>
+
+                    {/* Tarjeta de Resumen de Dietas / Menús */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                      <h3 className="text-lg font-semibold text-[#0C447C] mb-4 flex items-center gap-2">
+                        📊 Preferencias Alimenticias (Invitados)
+                      </h3>
+
+                      {loadingCateringSummary ? (
+                        <p className="text-slate-400 italic py-8 text-center animate-pulse">Cargando preferencias...</p>
+                      ) : cateringSummary.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-slate-400 italic">No hay invitados confirmados para este evento o no hay preferencias alimenticias registradas.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="overflow-hidden border border-slate-100 rounded-2xl">
+                            <table className="w-full text-left text-sm text-slate-600">
+                              <thead className="bg-slate-50 text-slate-700 uppercase text-xs font-semibold">
+                                <tr>
+                                  <th className="px-4 py-3">Tipo de Dieta</th>
+                                  <th className="px-4 py-3 text-right">Confirmados</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {cateringSummary.map((item) => (
+                                  <tr key={item.dietTypeId} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-4 py-3 font-medium text-slate-800">{item.dietTypeName}</td>
+                                    <td className="px-4 py-3 text-right font-bold text-[#185FA5]">{item.totalConfirmed}</td>
+                                  </tr>
+                                ))}
+                                <tr className="bg-slate-50 font-bold text-slate-800">
+                                  <td className="px-4 py-3">Total Confirmados</td>
+                                  <td className="px-4 py-3 text-right text-[#0C447C]">
+                                    {cateringSummary.reduce((sum, item) => sum + item.totalConfirmed, 0)}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          
+                          <p className="text-xs text-slate-400 italic">
+                            * Los datos provienen de las confirmaciones de asistencia enviadas por los invitados.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </>
               )}
 
