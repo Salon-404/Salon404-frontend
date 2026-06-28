@@ -208,8 +208,7 @@ export default function Proveedores() {
       cargarDatos();
     } catch (error) {
       console.error("Error al guardar proveedor:", error);
-      const msg = error.response?.data?.Message || error.response?.data?.message || "Hubo un error al intentar guardar los datos del proveedor.";
-      alert(msg);
+      alert("Hubo un error al intentar guardar los datos del proveedor.");
     } finally {
       setGuardando(false);
     }

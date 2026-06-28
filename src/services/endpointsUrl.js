@@ -2,7 +2,6 @@ export const services = {
   auth: "http://localhost:5097/api/v1/User/",
   proveedores: "http://localhost:5114/api/v1/providers",
   providerCatalog: "http://localhost:5114/api/v1/provider-catalog",
-  eventProviders: "http://localhost:5114/api/v1/event-providers",
   reservation: "http://localhost:5180/api/v1/Reservations",
   eventos: "http://localhost:5180/api/v1/Events",
   eventTypes: "http://localhost:5180/api/v1/EventType",

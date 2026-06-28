@@ -14,12 +14,6 @@ import { updateTableLayout } from "../../services/mesasService";
 import { createTable } from "../../services/mesasService";
 import { errorToast, successToast } from "../../globals/toast";
 import { InvitadosList } from "../../components/invitados/invitadosList";
-import { obtenerProveedores } from "../../services/proveedoresService";
-import {
-  asignarProveedorAActividad,
-  desasignarProveedorDeActividad,
-  obtenerProveedoresDeActividad,
-} from "../../services/eventProvidersService";
 
 const getScheduleId = (activity) =>
   activity?.id ?? activity?.eventScheduleId ?? activity?.EventScheduleId;
@@ -27,16 +21,6 @@ const getScheduleId = (activity) =>
 const toTimeInput = (time) => (time ? String(time).slice(0, 5) : "");
 
 const toApiTime = (time) => (time?.length === 5 ? `${time}:00` : time);
-
-const MAPA_RUBROS = {
-  1: "DJ",
-  2: "Catering",
-  3: "Fotografía",
-  4: "Decoración",
-  5: "Animación",
-  6: "Iluminación",
-  7: "Sonido",
-};
 
 export default function EventoDetailPage() {
   const { id } = useParams();
@@ -84,45 +68,6 @@ export default function EventoDetailPage() {
     startTime: "03:00:00",
     endTime: "03:00:00",
   });
-
-  const [todosProveedores, setTodosProveedores] = useState([]);
-  const [loadingTodosProveedores, setLoadingTodosProveedores] = useState(false);
-
-  useEffect(() => {
-    if (seccion !== "servicios" && seccion !== "editar" && seccion !== "cronograma") return;
-    const fetchTodosProveedores = async () => {
-      setLoadingTodosProveedores(true);
-      try {
-        const { data } = await obtenerProveedores(1, 100);
-        setTodosProveedores(data?.data || data || []);
-      } catch (err) {
-        console.error("Error al cargar todos los proveedores", err);
-      } finally {
-        setLoadingTodosProveedores(false);
-      }
-    };
-    fetchTodosProveedores();
-  }, [seccion]);
-
-  const handleAsignarProveedor = async (activityId, providerId) => {
-    try {
-      await asignarProveedorAActividad(activityId, providerId);
-      successToast("Proveedor asignado con éxito");
-      await loadSchedules();
-    } catch (err) {
-      errorToast("No se pudo asignar el proveedor", err.message || "Error desconocido");
-    }
-  };
-
-  const handleDesasignarProveedor = async (assignmentId) => {
-    try {
-      await desasignarProveedorDeActividad(assignmentId);
-      successToast("Proveedor desvinculado con éxito");
-      await loadSchedules();
-    } catch (err) {
-      errorToast("No se pudo desvincular el proveedor", err.message || "Error desconocido");
-    }
-  };
 
   const handleMouseMove = useCallback(
     (e) => {
@@ -360,28 +305,7 @@ export default function EventoDetailPage() {
       const items = Array.isArray(data)
         ? data
         : data?.data ?? data?.value ?? data?.items ?? [];
-      
-      const itemsConProveedores = await Promise.all(
-        items.map(async (item) => {
-          const activityId = getScheduleId(item);
-          if (!activityId) return { ...item, providers: [] };
-          try {
-            const res = await obtenerProveedoresDeActividad(activityId);
-            const provs = (res.data || []).map(p => ({
-              ...p,
-              name: p.providerName || p.name
-            }));
-            return {
-              ...item,
-              providers: provs
-            };
-          } catch (e) {
-            console.error("Error al cargar proveedores de actividad", activityId, e);
-            return { ...item, providers: [] };
-          }
-        })
-      );
-      setSchedules(itemsConProveedores);
+      setSchedules(Array.isArray(items) ? items : []);
     } catch (scheduleError) {
       setErrorSchedules(scheduleError.message || "No se pudo cargar el cronograma.");
     } finally {
@@ -390,7 +314,7 @@ export default function EventoDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    if (seccion !== "cronograma" && seccion !== "editar" && seccion !== "servicios") return;
+    if (seccion !== "cronograma" && seccion !== "editar") return;
     loadSchedules();
   }, [loadSchedules, seccion]);
 
@@ -974,130 +898,13 @@ export default function EventoDetailPage() {
 
               {seccion === "servicios" && (
                 <>
-                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-2">
-                    Servicios y Proveedores Contratados
+                  <h2 className="text-2xl font-semibold text-[#0C447C] mb-3">
+                    Servicios contratados
                   </h2>
-                  <p className="text-slate-500 mb-6">
-                    Asigna y desvincula proveedores para las distintas actividades del cronograma de tu evento.
+
+                  <p className="text-slate-500">
+                    Tenés {evento.providersIds.length} servicios asociados.
                   </p>
-
-                  {loadingSchedules || loadingTodosProveedores ? (
-                    <p className="text-slate-500">Cargando servicios y actividades...</p>
-                  ) : schedulesOrdenados.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-[#B5D4F4] bg-[#F8FBFF] p-8 text-center">
-                      <p className="text-slate-600 mb-4">
-                        El evento todavía no tiene actividades programadas en el cronograma.
-                      </p>
-                      <button
-                        onClick={() => setSeccion("cronograma")}
-                        className="bg-[#185FA5] text-white px-4 py-2 rounded-xl hover:bg-[#0C447C] transition font-medium text-sm"
-                      >
-                        Ir a crear actividades
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {schedulesOrdenados.map((actividad) => {
-                        const activityId = getScheduleId(actividad);
-                        // Filtrar los proveedores que no han sido asignados aún a esta actividad
-                        const provsDisponibles = todosProveedores.filter(
-                          (p) => !actividad.providers?.some((ap) => ap.providerId === p.id)
-                        );
-
-                        return (
-                          <div
-                            key={activityId}
-                            className="bg-white rounded-2xl border border-[#D6E8F8] shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-1.5">
-                                <h3 className="font-semibold text-[#0C447C] text-lg">
-                                  {actividad.title}
-                                </h3>
-                                <span className="text-xs font-medium text-[#185FA5] bg-[#E6F1FB] px-2.5 py-1 rounded-full">
-                                  {toTimeInput(actividad.startTime)} - {toTimeInput(actividad.endTime)}
-                                </span>
-                              </div>
-                              <p className="text-slate-600 text-sm mb-4">
-                                {actividad.description || "Sin descripción"}
-                              </p>
-
-                              <div className="space-y-2">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
-                                  Proveedores asignados:
-                                </span>
-                                {actividad.providers && actividad.providers.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {actividad.providers.map((p) => (
-                                      <div
-                                        key={p.id}
-                                        className="inline-flex items-center gap-1.5 bg-[#E6F1FB] text-[#185FA5] text-xs font-medium pl-3 pr-1.5 py-1 rounded-full border border-blue-100"
-                                      >
-                                        <span>{p.name}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleDesasignarProveedor(p.id)}
-                                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px]"
-                                          title="Desvincular"
-                                        >
-                                          &times;
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-slate-400 italic">
-                                    No hay proveedores asignados a esta actividad.
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Selector para asignar un proveedor */}
-                            <div className="w-full md:w-64 bg-[#F8FBFF] border border-[#D9EAFB] rounded-xl p-4 flex flex-col gap-3">
-                              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                Vincular nuevo proveedor
-                              </span>
-                              {provsDisponibles.length > 0 ? (
-                                <div className="flex flex-col gap-2">
-                                  <select
-                                    id={`select-prov-${activityId}`}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5]"
-                                    defaultValue=""
-                                  >
-                                    <option value="" disabled>
-                                      Seleccionar proveedor...
-                                    </option>
-                                    {provsDisponibles.map((p) => (
-                                      <option key={p.id} value={p.id}>
-                                        {p.name} ({MAPA_RUBROS[p.type] || "Proveedor"})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <button
-                                    onClick={() => {
-                                      const select = document.getElementById(`select-prov-${activityId}`);
-                                      if (select && select.value) {
-                                        handleAsignarProveedor(activityId, Number(select.value));
-                                        select.value = "";
-                                      }
-                                    }}
-                                    className="w-full bg-[#185FA5] hover:bg-[#0C447C] text-white py-1.5 rounded-lg text-xs font-medium transition"
-                                  >
-                                    Vincular
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-slate-400 italic">
-                                  Todos los proveedores ya fueron asignados.
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
                 </>
               )}
 
