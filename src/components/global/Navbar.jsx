@@ -50,6 +50,15 @@ export default function Navbar() {
           >
             Salones
           </Link>
+
+          {user && (user.role === "SuperAdmin" || user.rol === "SuperAdmin") && (
+            <Link
+              to="/dashboard"
+              className="font-semibold text-indigo-600 transition-colors hover:text-indigo-800"
+            >
+              Panel Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex w-1/3 justify-end items-center gap-3">
