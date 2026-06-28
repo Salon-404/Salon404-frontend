@@ -19,7 +19,6 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RedirectConBanner from "./components/common/RedirectConBanner";
 import { ROLES } from "./constants/auth";
 import DisponibilityPage from "./pages/Disponibility/DisponibilityPage";
-import ProveedoresList from "./pages/proveedores/ProveedoresList";
 import SugerenciaCatering from "./pages/catering/SugerenciaCatering";
 import HomePage from "./pages/home/HomePage";
 import SalonesPage from "./pages/salon/SalonesPage";
@@ -148,12 +147,8 @@ export default function App() {
 
         {/* Módulo Proveedores */}
         <Route
-          path="/proveedores"
-          element={
-            <ProtectedRoute rolRequerido={ROLES.ADMIN}>
-              <ProveedoresList />
-            </ProtectedRoute>
-          }
+          path="/admin/proveedores"
+          element={<Navigate to="/dashboard" replace />}
         />
         <Route
           path="/evento/:id/catering"
