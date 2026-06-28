@@ -1,8 +1,15 @@
 import axios from "axios";
 import { services } from "./endpointsUrl";
+import { TOKEN_KEY } from "../constants/auth";
+
 const API_URL = services.invitados;
-const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImp0aSI6IjMzYjIyMWQwLTNhY2QtNDI3Ni04YmUzLWZkMzIxZDI5YmMwZCIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc4MTgzNjQ2MywiZXhwIjoxNzgxODQwMDYzLCJpYXQiOjE3ODE4MzY0NjMsImlzcyI6IlNhbG9uNDA0LUF1dGgiLCJhdWQiOiJTYWxvbjQwNC1DbGllbnRzIn0.8xxawSt3m8ArHyv3bWfdvIz47fB88AvvoeuUiFo2nMU";
+
+// Header de autenticación con el token del usuario logueado (mismo patrón que eventosService).
+// Si no hay sesión, no se envía Authorization: nunca se usa un token hardcodeado.
+function authHeader() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export const invitadosService = {
   // OBTENER TODOS LOS INVITADOS
@@ -17,11 +24,7 @@ export const invitadosService = {
         url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
       }
 
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(url, { headers: authHeader() });
 
       return response.data;
     } catch (error) {
@@ -44,7 +47,7 @@ export const invitadosService = {
       const response = await axios.post(
         `${API_URL}/${eventId}/Guests`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: authHeader() },
       );
       return response.data;
     } catch (error) {
@@ -58,7 +61,7 @@ export const invitadosService = {
   delete: async (eventId, guestId) => {
     try {
       await axios.delete(`${API_URL}/${eventId}/Guests/${guestId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader(),
       });
       return true;
     } catch (error) {
@@ -73,6 +76,7 @@ export const invitadosService = {
     try {
       const response = await axios.get(
         `${API_URL}/${eventId}/Guests/catering-summary`,
+        { headers: authHeader() },
       );
       return response.data;
     } catch (error) {
@@ -82,13 +86,13 @@ export const invitadosService = {
   },
 
   // ACTUALIZAR INVITADO (PUT)
+  // Endpoint: PUT /api/v1/events/{eventId}/Guests/{guestId}
   update: async (eventId, guestId, payload) => {
     try {
-      // Al ser una ruta pública accedida por el invitado, no le pasamos token de Bearer
       const response = await axios.put(
         `${API_URL}/${eventId}/Guests/${guestId}`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: authHeader() },
       );
       return response.data;
     } catch (error) {
@@ -97,13 +101,15 @@ export const invitadosService = {
     }
   },
 
+  // OBTENER INVITADO POR ID (autenticado)
+  // Endpoint: GET /api/v1/events/{eventId}/Guests/{guestId}
   getById: async (eventId, guestId) => {
     try {
-      // Al ser una vista pública para el invitado, no enviamos token de Authorization
       const response = await axios.get(
         `${API_URL}/${eventId}/Guests/${guestId}`,
+        { headers: authHeader() },
       );
-      return response.data; // Tu backend debería retornar el objeto del invitado
+      return response.data;
     } catch (error) {
       console.error("Error en getById de invitado:", error);
       throw error;
@@ -111,12 +117,13 @@ export const invitadosService = {
   },
 
   // GENERAR TICKET (POST)
+  // Endpoint: POST /api/v1/events/{eventId}/Guests/{guestId}/ticket
   generarTicket: async (eventId, guestId) => {
     try {
       const response = await axios.post(
         `${API_URL}/${eventId}/Guests/${guestId}/ticket`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: authHeader() },
       );
       return response.data; // Retorna el objeto con el qrCodeToken
     } catch (error) {
@@ -126,11 +133,12 @@ export const invitadosService = {
   },
 
   // OBTENER TICKET (GET)
+  // Endpoint: GET /api/v1/events/{eventId}/Guests/{guestId}/ticket
   getTicket: async (eventId, guestId) => {
     try {
       const response = await axios.get(
         `${API_URL}/${eventId}/Guests/${guestId}/ticket`,
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: authHeader() },
       );
       return response.data;
     } catch (error) {
@@ -139,7 +147,8 @@ export const invitadosService = {
     }
   },
 
-  // OBTENER INVITADO POR TOKEN (PÚBLICO)
+  // OBTENER INVITADO POR TOKEN (PÚBLICO / [AllowAnonymous])
+  // Endpoint: GET /api/v1/guests/by-token/{token}
   getByToken: async (token) => {
     try {
       const baseUrl = API_URL.replace(/\/events\/?$/, "/guests");
@@ -151,7 +160,8 @@ export const invitadosService = {
     }
   },
 
-  // ACTUALIZAR INVITADO POR TOKEN (PÚBLICO)
+  // ACTUALIZAR INVITADO POR TOKEN (PÚBLICO / [AllowAnonymous])
+  // Endpoint: PUT /api/v1/guests/by-token/{token}
   updateByToken: async (token, payload) => {
     try {
       const baseUrl = API_URL.replace(/\/events\/?$/, "/guests");
@@ -163,34 +173,38 @@ export const invitadosService = {
     }
   },
 
-
-  getByTicket: async (eventId,token)=>
-    {
-      try
-      {
-        const response= await axios.get(`${API_URL}/${eventId}/Tickets/${token}`);
-        return response.data;
-      }
-      catch(error)
-      {
-        console.error("Error al obtener los datos del invitado")
-        throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor');
-      } 
-    },
-  updateTicketStatus: async (eventId,ticket) => 
-    {
-      try
-      {
-        const response = await axios.put(`${API_URL}/${eventId}/Tickets/${ticket}/scan`)
-        return response.data;
-      }
-      catch(error)
-      {
-        console.error("Error al actualizar el ticket")
-        throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor');
-      }
-
-
+  // OBTENER DATOS DEL TICKET POR QR (check-in autenticado: admin/responsable)
+  // Endpoint: GET /api/v1/events/{eventId}/Tickets/{token}
+  getByTicket: async (eventId, token) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/${eventId}/Tickets/${token}`,
+        { headers: authHeader() },
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener los datos del invitado");
+      throw new Error(
+        error.response?.data?.details || "No se pudo conectar con el servidor",
+      );
     }
-};
+  },
 
+  // REGISTRAR INGRESO / ESCANEAR TICKET (check-in autenticado: admin/responsable)
+  // Endpoint: PUT /api/v1/events/{eventId}/Tickets/{token}/scan
+  updateTicketStatus: async (eventId, ticket) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/${eventId}/Tickets/${ticket}/scan`,
+        null,
+        { headers: authHeader() },
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al actualizar el ticket");
+      throw new Error(
+        error.response?.data?.details || "No se pudo conectar con el servidor",
+      );
+    }
+  },
+};
