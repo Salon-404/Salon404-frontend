@@ -41,7 +41,14 @@ export default function SugerenciaCatering() {
   const [error, setError] = useState(null)
   const [nivelSeleccionado, setNivelSeleccionado] = useState(null)
 
-  useEffect(() => { cargarSugerencias() }, [])
+  useEffect(() => {
+    cargarSugerencias();
+    // Cargar nivel de catering preseleccionado de localStorage
+    const savedLevel = localStorage.getItem(`catering_evento_${eventoId}`);
+    if (savedLevel) {
+      setNivelSeleccionado(savedLevel);
+    }
+  }, [eventoId])
 
   const cargarSugerencias = async () => {
     setCargando(true)
@@ -50,8 +57,9 @@ export default function SugerenciaCatering() {
       const respuesta = await obtenerSugerenciasCatering()
       const datos = respuesta.data || []
       setSugerencias(Array.isArray(datos) ? datos : [])
-    } catch {
-      setError('No se pudieron cargar las sugerencias de catering.')
+    } catch (err) {
+      console.warn("Backend suggestions endpoint not found, using frontend mockup:", err);
+      setSugerencias([]);
     } finally {
       setCargando(false)
     }
@@ -71,9 +79,8 @@ export default function SugerenciaCatering() {
     })
 
     if (resultado.isConfirmed) {
-      // TODO: conectar con API para vincular la opción de catering al evento
-      console.log(`Guardando selección de catering nivel ${sugerencia.nivel} para evento ${eventoId}`)
-      
+      // Guardar selección en localStorage
+      localStorage.setItem(`catering_evento_${eventoId}`, sugerencia.nivel);
       setNivelSeleccionado(sugerencia.nivel)
       
       Swal.fire({

@@ -9,6 +9,32 @@ import {
 } from "../../services/proveedoresService";
 import { obtenerTiposdeProveedores } from "../../services/providerCatalogService";
 
+const MAPA_RUBROS = {
+  1: "DJ",
+  2: "Catering",
+  3: "Fotografía",
+  4: "Decoración",
+  5: "Animación",
+  6: "Iluminación",
+  7: "Sonido"
+};
+
+const TIPOS_FALLBACK = [
+  { id: 1, name: "DJ" },
+  { id: 2, name: "Catering" },
+  { id: 3, name: "Fotografía" },
+  { id: 4, name: "Decoración" },
+  { id: 5, name: "Animación" },
+  { id: 6, name: "Iluminación" },
+  { id: 7, name: "Sonido" }
+];
+
+const ESTADOS_FALLBACK = [
+  { id: 1, name: "Disponible" },
+  { id: 2, name: "Reservado" },
+  { id: 3, name: "Inactivo" }
+];
+
 export default function Proveedores() {
   // Estados para los datos y el control de la API
   const [proveedores, setProveedores] = useState([]);
@@ -52,10 +78,10 @@ export default function Proveedores() {
       try {
         const respuesta = await obtenerTiposdeProveedores();
         const datosTipos = respuesta?.data || respuesta || [];
-        setTiposProveedor(Array.isArray(datosTipos) ? datosTipos : []);
+        setTiposProveedor(Array.isArray(datosTipos) && datosTipos.length > 0 ? datosTipos : TIPOS_FALLBACK);
       } catch (error) {
-        console.error("Error al cargar los tipos de proveedores:", error);
-        setTiposProveedor([]);
+        console.error("Error al cargar los tipos de proveedores, usando fallback:", error);
+        setTiposProveedor(TIPOS_FALLBACK);
       }
     };
     cargarTipos();
@@ -71,7 +97,13 @@ export default function Proveedores() {
         tipoProveedor,
       );
       const datos = respuesta?.data?.data || respuesta?.data || respuesta || [];
-      const proveedoresValidos = Array.isArray(datos) ? datos : [];
+      let proveedoresValidos = Array.isArray(datos) ? datos : [];
+      // Client-side fallback filtering by provider type in case the backend returns all
+      if (tipoProveedor) {
+        proveedoresValidos = proveedoresValidos.filter(
+          (p) => (p.type ?? p.providerTypeId ?? 0).toString() === tipoProveedor.toString()
+        );
+      }
       setProveedores(proveedoresValidos);
       setTieneMas(proveedoresValidos.length === porPagina);
     } catch (error) {
@@ -112,10 +144,10 @@ export default function Proveedores() {
     setNuevoProveedor({
       name: proveedor.name || "",
       providerTypeId:
-        proveedor.providerTypeId != null
-          ? proveedor.providerTypeId.toString()
+        (proveedor.providerTypeId ?? proveedor.type) != null
+          ? (proveedor.providerTypeId ?? proveedor.type).toString()
           : "",
-      providerStatusId: proveedor.providerStatusId || 1,
+      providerStatusId: proveedor.providerStatusId ?? proveedor.status ?? 1,
       email: proveedor.email || "",
       phone: proveedor.phone || "",
       price: proveedor.price != null ? proveedor.price.toString() : "",
@@ -154,10 +186,15 @@ export default function Proveedores() {
     setGuardando(true);
     try {
       const payload = {
-        ...nuevoProveedor,
-        providerTypeId: parseInt(nuevoProveedor.providerTypeId, 10),
-        providerStatusId: parseInt(nuevoProveedor.providerStatusId, 10),
+        name: nuevoProveedor.name,
+        type: parseInt(nuevoProveedor.providerTypeId, 10),
+        status: parseInt(nuevoProveedor.providerStatusId, 10),
+        email: nuevoProveedor.email,
+        phone: nuevoProveedor.phone,
         price: nuevoProveedor.price === "" ? 0 : Number(nuevoProveedor.price),
+        supportsVegetarian: !!nuevoProveedor.supportsVegetarian,
+        supportsVegan: !!nuevoProveedor.supportsVegan,
+        supportsGlutenFree: !!nuevoProveedor.supportsGlutenFree,
       };
 
       if (modoEdicion) {
@@ -292,7 +329,7 @@ export default function Proveedores() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {prov?.providerTypeName || "No asignado"}
+                        {prov?.providerTypeName || MAPA_RUBROS[prov?.type] || "No asignado"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
