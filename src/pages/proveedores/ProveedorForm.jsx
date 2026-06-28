@@ -181,16 +181,30 @@ export default function ProveedorForm({ abierto, onCerrar, onGuardar, proveedorE
             </div>
           </div>
 
-          {/* Notas */}
-          <div>
-            <label className="block text-xs font-medium text-texto-secundario mb-1.5 uppercase tracking-wide">Notas</label>
-            <textarea
-              value={formulario.notas}
-              onChange={(e) => manejarCambio('notas', e.target.value)}
-              rows={2}
-              className="w-full border border-borde rounded-lg px-3 py-2 text-sm text-texto-principal bg-white focus:outline-none focus:ring-2 focus:ring-dorado/30 focus:border-dorado transition-all resize-none"
-              placeholder="Observaciones adicionales..."
-            />
+          {/* Notas y Evento */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-texto-secundario mb-1.5 uppercase tracking-wide">Notas</label>
+              <textarea
+                value={formulario.notas}
+                onChange={(e) => manejarCambio('notas', e.target.value)}
+                rows={2}
+                className="w-full border border-borde rounded-lg px-3 py-2 text-sm text-texto-principal bg-white focus:outline-none focus:ring-2 focus:ring-dorado/30 focus:border-dorado transition-all resize-none"
+                placeholder="Observaciones adicionales..."
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-texto-secundario mb-1.5 uppercase tracking-wide">ID de Evento</label>
+              <input
+                type="number"
+                value={formulario.eventId}
+                onChange={(e) => manejarCambio('eventId', e.target.value ? Number(e.target.value) : '')}
+                className={estiloInput('eventId')}
+                placeholder="Vincular a Evento #..."
+                min="1"
+              />
+              <p className="text-xs text-texto-secundario mt-1">Opcional: Vincular a un evento existente</p>
+            </div>
           </div>
 
           {/* Botones */}
