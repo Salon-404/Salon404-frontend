@@ -3,7 +3,10 @@ import { RUTA_LOGIN } from '../../constants/auth'
 import { useAuth } from '../../context/AuthContext'
 
 export default function ProtectedRoute({ children, rolRequerido }) {
-  const { user, loading } = useAuth()
+  // Modo de prueba: bypass de autenticación (comentar esto para usar login real)
+  const user = { role: rolRequerido || 'admin', rol: rolRequerido || 'admin', email: 'test@admin.com' };
+  const loading = false;
+  // const { user, loading } = useAuth()
 
   if (loading) {
     return (
