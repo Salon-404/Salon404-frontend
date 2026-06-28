@@ -27,7 +27,7 @@ export default function UserMenu({ className = '' }) {
         {user.email}
       </span>
       <span className="text-xs text-slate-300 font-medium">
-        {user.rol}
+        {user.role}
       </span>
       <button
         onClick={handleLogout}

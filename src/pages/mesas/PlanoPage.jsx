@@ -9,7 +9,7 @@ import UserMenu from '../../components/auth/UserMenu'
 
 export default function PlanoPage() {
   const { user } = useAuth()
-  const isAdmin = user?.rol === ROLES.ADMIN
+  const isAdmin = user?.role === ROLES.ADMIN
   const [searchParams]           = useSearchParams()
   const reservaParam             = searchParams.get('reserva')
   const reservaId                = reservaParam || 'res-001'
