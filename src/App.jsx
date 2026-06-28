@@ -148,7 +148,7 @@ export default function App() {
 
         {/* Módulo Proveedores */}
         <Route
-          path="/proveedores"
+          path="/admin/proveedores"
           element={
             <ProtectedRoute rolRequerido={ROLES.ADMIN}>
               <ProveedoresList />
