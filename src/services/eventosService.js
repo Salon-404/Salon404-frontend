@@ -10,7 +10,7 @@ import {
 } from '../utils/eventos'
 
 const api = axios.create({
-  baseURL: services.eventos,
+  baseURL: services.eventos.endsWith('/') ? services.eventos : `${services.eventos}/`,
 })
 let authLookupDisabled = false
 
@@ -192,7 +192,7 @@ export async function createEvento(evento) {
   return data;
 }
 export async function getSalonAvailable(salonId, eventTypeId, date) {
-  const { data } = await api.get('/salon/available', {
+  const { data } = await api.get('salon/available', {
     params: {
       salonId,
       eventType: eventTypeId,
@@ -206,21 +206,21 @@ export async function getSalonAvailable(salonId, eventTypeId, date) {
  */
 export async function updateEvento(id, evento) {
   if (evento.nombre != null) {
-    await api.patch(`/${id}/name`, {
+    await api.patch(`${id}/name`, {
       eventId: id,
       eventName: evento.nombre,
     })
   }
 
   if (evento.descripcion != null) {
-    await api.patch(`/${id}/description`, {
+    await api.patch(`${id}/description`, {
       eventId: id,
       description: evento.descripcion,
     })
   }
 
   if (evento.cantidadInvitados != null) {
-    await api.patch('/guests', {
+    await api.patch('guests', {
       eventId: id,
       estimedGuests: evento.cantidadInvitados,
     })
@@ -238,12 +238,12 @@ export async function updateEstadoEvento(
   version
 ) {
   if (estado === 'cancelado') {
-    await api.patch(`/${id}/cancel`)
+    await api.patch(`${id}/cancel`)
     return getEvento(id)
   }
 
   const { data } = await api.patch(
-    `/${id}/status`,
+    `${id}/status`,
     {
       estado,
       version,
@@ -262,7 +262,7 @@ export async function updateEstadoReserva(
   version
 ) {
   const { data } = await api.patch(
-    `/${id}/reservation/status`,
+    `${id}/reservation/status`,
     {
       estado,
       version,
@@ -277,7 +277,7 @@ export async function updateEstadoReserva(
  */
 export async function bloquearHorario(datos) {
   const { data } = await api.post(
-    '/lock',
+    'lock',
     datos
   )
 
@@ -289,7 +289,7 @@ export async function bloquearHorario(datos) {
  */
 export async function liberarHorario(reservaId) {
   const { data } = await api.delete(
-    `/lock/${reservaId}`
+    `lock/${reservaId}`
   )
 
   return data
@@ -300,7 +300,7 @@ export async function liberarHorario(reservaId) {
  */
 export async function getDisponibilidad(fecha) {
   const { data } = await api.get(
-    '/availability',
+    'availability',
     {
       params: { fecha },
     }

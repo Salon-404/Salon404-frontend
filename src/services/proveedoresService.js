@@ -25,3 +25,11 @@ export const obtenerSugerenciasCatering = (nivel = null) => {
   const parametros = nivel ? { nivel } : {};
   return axios.get(`${urlBase}/catering/sugerencias`, { params: parametros });
 };
+
+export const obtenerSeleccionCatering = (eventId) => {
+  return axios.get(`${urlBase}/catering/seleccion/${eventId}`);
+};
+
+export const guardarSeleccionCatering = (eventId, providerId) => {
+  return axios.post(`${urlBase}/catering/seleccion`, { eventId, providerId });
+};

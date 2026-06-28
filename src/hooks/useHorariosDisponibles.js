@@ -18,6 +18,7 @@ export function useHorariosDisponibles(fecha, tipoEventoId, salonId) {
       setHorarios(data)
       console.log('Horarios recibidos:', data) // ← log 3
     } catch (err) {
+      console.error('Error en useHorariosDisponibles:', err)
       setError(err.message || 'Error al obtener horarios')
       setHorarios([])
     } finally {
