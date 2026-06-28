@@ -51,7 +51,12 @@ export default function Navbar() {
             Salones
           </Link>
 
-          {user && (user.role === "SuperAdmin" || user.rol === "SuperAdmin") && (
+          {user && (
+            user.role === "SuperAdmin" ||
+            user.rol === "SuperAdmin" ||
+            user.role === "Admin" ||
+            user.rol === "Admin"
+          ) && (
             <Link
               to="/dashboard"
               className="font-semibold text-indigo-600 transition-colors hover:text-indigo-800"
