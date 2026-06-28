@@ -1,7 +1,7 @@
 export const ROLES = {
   SUPER_ADMIN: "SuperAdmin",
   USER: "User",
-  ADMIN: "SuperAdmin",
+  ADMIN: "Admin",
   CLIENTE: "User",
 };
 
