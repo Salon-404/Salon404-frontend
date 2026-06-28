@@ -53,9 +53,7 @@ export default function Navbar() {
 
           {user && (
             user.role === "SuperAdmin" ||
-            user.rol === "SuperAdmin" ||
-            user.role === "Admin" ||
-            user.rol === "Admin"
+            user.role === "Admin"
           ) && (
             <Link
               to="/dashboard"

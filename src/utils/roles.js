@@ -5,11 +5,11 @@ export function normalizeRole(role) {
 }
 
 export function isSuperAdmin(user) {
-  return normalizeRole(user?.role ?? user?.rol) === ROLES.SUPER_ADMIN
+  return normalizeRole(user?.role) === ROLES.SUPER_ADMIN
 }
 
 export function isUser(user) {
-  return normalizeRole(user?.role ?? user?.rol) === ROLES.USER
+  return normalizeRole(user?.role) === ROLES.USER
 }
 
 export function canViewAllEventos(user) {

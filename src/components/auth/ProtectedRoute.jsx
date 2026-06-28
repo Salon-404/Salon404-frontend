@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 
 export default function ProtectedRoute({ children, rolRequerido }) {
   // Modo de prueba: bypass de autenticación (comentar esto para usar login real)
-  const user = { role: rolRequerido || 'admin', rol: rolRequerido || 'admin', email: 'test@admin.com' };
+  const user = { role: rolRequerido || 'admin', email: 'test@admin.com' };
   const loading = false;
   // const { user, loading } = useAuth()
 
@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children, rolRequerido }) {
     return <Navigate to={RUTA_LOGIN} replace />
   }
 
-  const userRole = user.role || user.rol
+  const userRole = user.role
 
   if (rolRequerido && userRole !== rolRequerido) {
     return (

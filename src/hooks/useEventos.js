@@ -67,7 +67,7 @@ export function useEventos(filtrosIniciales = {}, debounceMs = 300, auth = {}) {
   }, [
     filtros.estado, filtros.estadoEvento, filtros.estadoReserva,
     filtros.tipoEventoId, filtros.fechaDesde, filtros.fechaHasta,
-    filtros.eventOwner, filtros.busqueda, debounceMs, loadingAuth, user?.id, user?.role, user?.rol,
+    filtros.eventOwner, filtros.busqueda, debounceMs, loadingAuth, user?.id, user?.role,
   ])
 
   return { eventos, loading, error, filtros, setFiltros, refetch: fetchEventos }
@@ -108,7 +108,7 @@ export function useEventosPorMes(year, month, auth = {}) {
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [year, month, trigger, loadingAuth, user?.id, user?.role, user?.rol])
+  }, [year, month, trigger, loadingAuth, user?.id, user?.role])
 
   return { eventos, loading, error, reload }
 }

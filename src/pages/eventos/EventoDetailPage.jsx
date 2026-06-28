@@ -148,6 +148,9 @@ export default function EventoDetailPage() {
   };
 
   const handleDesasignarProveedor = async (assignmentId) => {
+    const confirmar = window.confirm("¿Estás seguro de que deseas desvincular a este proveedor de la actividad?");
+    if (!confirmar) return;
+
     try {
       await desasignarProveedorDeActividad(assignmentId);
       successToast("Proveedor desvinculado con éxito");
