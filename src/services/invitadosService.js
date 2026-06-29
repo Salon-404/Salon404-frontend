@@ -183,10 +183,9 @@ export const invitadosService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error al obtener los datos del invitado");
-      throw new Error(
-        error.response?.data?.details || "No se pudo conectar con el servidor",
-      );
+      console.error("Error al obtener los datos del invitado:", error);
+      // Re-lanzamos el error original para preservar response.status (401/403/404…).
+      throw error;
     }
   },
 
@@ -201,10 +200,9 @@ export const invitadosService = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error al actualizar el ticket");
-      throw new Error(
-        error.response?.data?.details || "No se pudo conectar con el servidor",
-      );
+      console.error("Error al actualizar el ticket:", error);
+      // Re-lanzamos el error original para preservar response.status (401/403/409…).
+      throw error;
     }
   },
 };

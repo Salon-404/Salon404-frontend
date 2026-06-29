@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom"
 import { invitadosService } from "../../services/invitadosService";
 import { useEffect, useState } from "react";
-import { successToast } from "../../globals/toast";
+import { successToast, errorToast } from "../../globals/toast";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 
 export default function CheckIn()
@@ -23,7 +24,7 @@ useEffect(()=>
                 catch(err)
                 {
                 console.error(err);
-                setError("No se pudieron cargar los datos");
+                setError(getApiErrorMessage(err, "No se pudieron cargar los datos"));
                 }
                 finally
                 {
@@ -41,7 +42,7 @@ useEffect(()=>
     successToast("Ingreso registrado con éxito");
     } catch (err) {
       console.error(err);
-      setError("No se pudo confirmar la entrada");
+      errorToast("No se pudo registrar el ingreso", getApiErrorMessage(err));
     }
   };
 

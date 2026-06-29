@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { invitadosService } from "../../services/invitadosService";
 import { getEvento } from "../../services/eventosService";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 export default function GuestPage() {
   const [evento, setEvent] = useState(null);
@@ -32,7 +33,7 @@ export default function GuestPage() {
 
       } catch (err) {
         console.error(err);
-        setError("No se pudieron cargar los datos");
+        setError(getApiErrorMessage(err, "No se pudieron cargar los datos"));
       } finally {
         setLoading(false);
       }
@@ -62,7 +63,7 @@ export default function GuestPage() {
     
     } catch (err) {
       console.error(err);
-      setError("No se pudo confirmar la asistencia");
+      setError(getApiErrorMessage(err, "No se pudo confirmar la asistencia"));
     }
   };
 
