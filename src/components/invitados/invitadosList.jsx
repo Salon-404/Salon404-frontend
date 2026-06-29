@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { invitadosService } from "../../services/invitadosService";
-import Swal from "sweetalert2"; // Asegurate de tenerlo importado acá
+import Swal from "sweetalert2";
 import { getSalonDiagram } from "../../services/eventosService";
 import { getTablesByEventId } from "../../services/mesasService";
+// 1. IMPORTAR EL ENDPOINT DESDE TU SERVICIO DE EMAIL
+import { sendMasiveEmails } from "../../services/emailService";
 
 export function InvitadosList({ eventId }) {
   const [invitados, setInvitados] = useState([]);
@@ -33,6 +35,9 @@ export function InvitadosList({ eventId }) {
     email: "",
     dietTypeId: "1",
   });
+
+  // 2. ESTADO PARA EL ENVÍO MASIVO
+  const [enviandoCorreos, setEnviandoCorreos] = useState(false);
 
   const CANVAS_WIDTH = 900;
   const CANVAS_HEIGHT = 800;
@@ -131,7 +136,7 @@ export function InvitadosList({ eventId }) {
     return () => document.removeEventListener("click", cerrarMenu);
   }, []);
 
-  // Medir el tamaño real del contenedor del diagrama (para corregir la proporción de las mesas)
+  // Medir el tamaño real del contenedor del diagrama
   useEffect(() => {
     if (!showAssignModal) return;
     const el = assignContainerRef.current;
@@ -311,9 +316,8 @@ export function InvitadosList({ eventId }) {
 
   const handleGenerarInvitacion = (invitado) => {
     const linkInvitacion = `${window.location.origin}/invitacion/${invitado.invitationToken}`;
-    
+
     navigator.clipboard.writeText(linkInvitacion);
-    //Esto debería cambiar a pegarle a un endpoint que envie el mail.
     Swal.fire({
       title: "¡Link Generado!",
       html: `El enlace de invitación para <b>${invitado.fullName}</b> fue copiado al portapapeles.<br/><br/><small class="text-slate-400">${linkInvitacion}</small>`,
@@ -322,6 +326,52 @@ export function InvitadosList({ eventId }) {
     });
   };
 
+  // 3. FUNCIÓN MANEJADORA DEL ENVÍO MASIVO
+  const handleEnvioMasivo = async () => {
+    Swal.fire({
+      title: "¿Enviar invitaciones a todos?",
+      text: "Se enviará un correo electrónico a todos los invitados que no hayan confirmado.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#185FA5",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, enviar todo",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setEnviandoCorreos(true);
+          const respuesta = await sendMasiveEmails(eventId);
+
+          Swal.fire({
+            title: "¡Proceso Completado!",
+            text: "Invitaciones enviadas con éxito.",
+            icon: "success",
+            confirmButtonColor: "#185FA5",
+          });
+
+          await cargarInvitados(); // Refresca los estados de la tabla si cambió la condición visual
+        } catch (err) {
+          console.error(
+            "Error al enviar correos a los invitados, revise si asigno las mesas a todos los invitados:",
+            err,
+          );
+          const msg =
+            err.response?.data?.message ||
+            "Ocurrió un error inesperado al despachar las invitaciones.";
+          Swal.fire({
+            title: "Error de envío",
+            text: msg,
+            icon: "error",
+            confirmButtonColor: "#185FA5",
+          });
+        } finally {
+          setEnviandoCorreos(false);
+        }
+      }
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -351,12 +401,25 @@ export function InvitadosList({ eventId }) {
             )}
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[#185FA5] hover:bg-[#0C447C] text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm"
-        >
-          + Agregar Invitado
-        </button>
+
+        {/* CONTENEDOR DE BOTONES DE ACCIÓN */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* 4. BOTÓN DE ENVÍO MASIVO */}
+          <button
+            onClick={handleEnvioMasivo}
+            disabled={enviandoCorreos || invitados.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            📬 {enviandoCorreos ? "Enviando..." : "Enviar correos a todos"}
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#185FA5] hover:bg-[#0C447C] text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm"
+          >
+            + Agregar Invitado
+          </button>
+        </div>
       </div>
 
       {/* 🔍 BARRA DE BÚSQUEDA */}
@@ -438,14 +501,15 @@ export function InvitadosList({ eventId }) {
                           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                             invitado.guestStatusId === 2
                               ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20"
-                              : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"
+                              : invitado.guestStatusId === 3
+                                ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20"
+                                : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"
                           }`}
                         >
                           {invitado.guestStatusName}
                         </span>
                       </td>
 
-                      {/* ACCIONES CON BOTÓN DE GESTIÓN */}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={(e) => {
@@ -458,7 +522,7 @@ export function InvitadosList({ eventId }) {
                               setMenuConfig({
                                 id: invitado.id,
                                 top: rect.bottom + window.scrollY,
-                                left: rect.left + window.scrollX - 96, // Alineación derecha aproximada
+                                left: rect.left + window.scrollX - 96,
                               });
                             }
                           }}
@@ -489,7 +553,7 @@ export function InvitadosList({ eventId }) {
               </button>
               <button
                 disabled={paginaActual === totalPaginas}
-                onClick={() => setPaginaActual((p) => p + 1)}
+                onClick={() => setPaginaActual((p) => p - 1)}
                 className="px-3 py-1.5 text-sm font-medium border rounded-lg bg-white disabled:opacity-40"
               >
                 Siguiente

@@ -163,34 +163,30 @@ export const invitadosService = {
     }
   },
 
-
-  getByTicket: async (eventId,token)=>
-    {
-      try
-      {
-        const response= await axios.get(`${API_URL}/${eventId}/Tickets/${token}`);
-        return response.data;
-      }
-      catch(error)
-      {
-        console.error("Error al obtener los datos del invitado")
-        throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor');
-      } 
-    },
-  updateTicketStatus: async (eventId,ticket) => 
-    {
-      try
-      {
-        const response = await axios.put(`${API_URL}/${eventId}/Tickets/${ticket}/scan`)
-        return response.data;
-      }
-      catch(error)
-      {
-        console.error("Error al actualizar el ticket")
-        throw new Error(error.response?.data?.details || 'No se pudo conectar con el servidor');
-      }
-
-
+  getByTicket: async (eventId, token) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/${eventId}/Tickets/${token}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener los datos del invitado");
+      throw new Error(
+        error.response?.data?.details || "No se pudo conectar con el servidor",
+      );
     }
+  },
+  updateTicketStatus: async (eventId, ticket) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/${eventId}/Tickets/${ticket}/scan`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error al actualizar el ticket");
+      throw new Error(
+        error.response?.data?.details || "No se pudo conectar con el servidor",
+      );
+    }
+  },
 };
-
