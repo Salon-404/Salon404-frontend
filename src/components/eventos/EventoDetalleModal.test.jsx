@@ -30,6 +30,10 @@ const mockEvento = {
   },
 }
 
+const tiposById = {
+  1: { id: 1, nombre: 'XV' },
+}
+
 function renderModal(props = {}) {
   return render(
     <EventoDetalleModal
@@ -39,6 +43,7 @@ function renderModal(props = {}) {
       onEditar={vi.fn()}
       onCancelarEvento={vi.fn()}
       onCancelarReserva={vi.fn()}
+      tiposById={tiposById}
       {...props}
     />
   )

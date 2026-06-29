@@ -1,7 +1,15 @@
-export const services = 
-{
-    auth:"http://localhost:5097/api/v1/User/",
-    reservation:"http://localhost:5083/api/v1/Reservations",
-    proveedores:"http://localhost:5003/api/proveedores",
-    eventos:"http://localhost:5001/api/eventos"
-}
+export const services = {
+  auth: "http://localhost:5097/api/v1/User/",
+  proveedores: "http://localhost:5114/api/v1/providers",
+  providerCatalog: "http://localhost:5114/api/v1/provider-catalog",
+  eventProviders: "http://localhost:5114/api/v1/event-providers",
+  reservation: "http://localhost:5180/api/v1/Reservations",
+  eventos: "http://localhost:5180/api/v1/Events",
+  eventTypes: "http://localhost:5180/api/v1/EventType",
+  eventSchedule: "http://localhost:5180/api/v1/EventSchedule",
+  email: "http://localhost:5201/api/v1/Email",
+  salon: "http://localhost:5180/api/v1/Salon",
+  mesas: "http://localhost:5201/api/v1/events",
+  invitados: "http://localhost:5201/api/v1/events",
+  dashboard: "http://localhost:5162/api/Dashboard",
+};

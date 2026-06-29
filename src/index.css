@@ -181,3 +181,43 @@
 .border-3 {
   border-width: 3px;
 }
+.fc-daygrid-day.fc-day-available,
+.fc-daygrid-day.fc-day-occupied {
+  position: relative;
+}
+
+/* Puntito verde */
+.fc-daygrid-day.fc-day-available::after {
+  content: "";
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background-color: #22c55e;
+  z-index: 10;
+}
+
+/* Puntito rojo */
+.fc-daygrid-day.fc-day-occupied::after {
+  content: "";
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background-color: #ef4444;
+  z-index: 10;
+}
+
+/* Opcional: efecto hover en días disponibles */
+.fc-daygrid-day.fc-day-available {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.fc-daygrid-day.fc-day-available:hover {
+  background-color: #f0fdf4;
+}

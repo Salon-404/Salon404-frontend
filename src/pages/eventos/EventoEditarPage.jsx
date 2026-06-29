@@ -5,7 +5,6 @@ import { getEvento, updateEvento } from '../../services/eventosService'
 const MAX_NOMBRE = 100
 const MAX_DESCRIPCION = 500
 const MAX_INVITADOS = 500
-const MAX_NOTAS = 500
 
 const INPUT_CLASS =
   'w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500'
@@ -34,9 +33,6 @@ function validarFormulario(form) {
   if (form.descripcion && form.descripcion.length > MAX_DESCRIPCION) {
     errores.descripcion = `Máximo ${MAX_DESCRIPCION} caracteres`
   }
-  if (form.notas && form.notas.length > MAX_NOTAS) {
-    errores.notas = `Máximo ${MAX_NOTAS} caracteres`
-  }
   return errores
 }
 
@@ -54,7 +50,6 @@ export default function EventoEditarPage() {
     nombre: '',
     descripcion: '',
     cantidadInvitados: '',
-    notas: '',
   })
 
   useEffect(() => {
@@ -71,7 +66,6 @@ export default function EventoEditarPage() {
             nombre: data.nombre || '',
             descripcion: data.descripcion || '',
             cantidadInvitados: data.cantidadInvitados ?? '',
-            notas: data.notas || '',
           })
         }
       } catch (err) {
@@ -109,15 +103,14 @@ export default function EventoEditarPage() {
         nombre: form.nombre.trim(),
         descripcion: form.descripcion.trim(),
         cantidadInvitados: Number(form.cantidadInvitados),
-        notas: form.notas.trim(),
       }
-      await updateEvento(id, payload, evento.version)
+      await updateEvento(id, payload)
       navigate(`/eventos/${id}`)
     } catch (err) {
       if (err?.response?.status === 409) {
         setConflictError('Este evento fue modificado por otro usuario. Recargá la página.')
       } else {
-        setConflictError('Ocurrió un error al guardar el evento. Intentá de nuevo.')
+        setConflictError('No se pudieron guardar los cambios del evento. Revisa que el backend de eventos este actualizado.')
       }
     } finally {
       setSaving(false)
@@ -241,25 +234,6 @@ export default function EventoEditarPage() {
               {validationErrors.cantidadInvitados && (
                 <p className={ERROR_TEXT_CLASS}>{validationErrors.cantidadInvitados}</p>
               )}
-            </div>
-
-            <div>
-              <label htmlFor="notas" className={LABEL_CLASS}>
-                Notas adicionales
-              </label>
-              <textarea
-                id="notas"
-                rows={3}
-                data-testid="input-notas"
-                maxLength={MAX_NOTAS}
-                className={`${INPUT_CLASS} resize-none`}
-                value={form.notas}
-                onChange={(e) => handleChange('notas', e.target.value)}
-              />
-              <p className={CHAR_COUNT_CLASS} data-testid="char-count-notas">
-                {form.notas.length}/{MAX_NOTAS}
-              </p>
-              {validationErrors.notas && <p className={ERROR_TEXT_CLASS}>{validationErrors.notas}</p>}
             </div>
 
             <div className="flex justify-between pt-4">

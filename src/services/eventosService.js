@@ -1,432 +1,310 @@
-import axios from 'axios'
-import { eventosMock } from '../mocks/eventosMock'
-<<<<<<< HEAD
-
-// Poner en false cuando el backend de eventos esté listo
-=======
-import { tiposEventoMock } from '../mocks/tiposEventoMock'
-import { sumarMinutos } from '../constants/eventos'
-
-// Poner en false cuando el backend de David esté listo
->>>>>>> origin/develop
-const USE_MOCK = true
+import axios from 'axios';
+import { services } from './endpointsUrl';
+import { getUserById } from './authService'
+import { TOKEN_KEY } from '../constants/auth'
+import { decodeToken } from '../globals/decodeToken'
+import {
+  getEventoReservaId,
+  normalizeEstadoEvento,
+  normalizeEstadoReserva,
+} from '../utils/eventos'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_EVENTOS_URL,
+  baseURL: services.eventos.endsWith('/') ? services.eventos : `${services.eventos}/`,
 })
+let authLookupDisabled = false
 
-// Copia local para simular persistencia durante la sesión
-let eventosState = JSON.parse(JSON.stringify(eventosMock))
-<<<<<<< HEAD
-let nextMockId = 1000
-=======
-
-let _nextId = 1000
-function nextId() { return `evt-mock-${_nextId++}` }
->>>>>>> origin/develop
-
-function delay(ms = 250) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function unwrapList(responseData) {
+  if (Array.isArray(responseData)) return responseData
+  if (Array.isArray(responseData?.data)) return responseData.data
+  if (Array.isArray(responseData?.items)) return responseData.items
+  if (Array.isArray(responseData?.result)) return responseData.result
+  if (Array.isArray(responseData?.results)) return responseData.results
+  if (Array.isArray(responseData?.value)) return responseData.value
+  if (Array.isArray(responseData?.Value)) return responseData.Value
+  return []
 }
 
-<<<<<<< HEAD
-function nextId(prefix) {
-  return `${prefix}-mock-${nextMockId++}`
+function normalizeReserva(reserva) {
+  if (!reserva) return null
+  return {
+    ...reserva,
+    estado: normalizeEstadoReserva(reserva.estado ?? reserva.status ?? reserva.statusName ?? reserva.statusId),
+    montoTotal: reserva.montoTotal ?? reserva.totalAmount ?? 0,
+    creadoEn: reserva.creadoEn ?? reserva.createdAt,
+    expiraEn: reserva.expiraEn ?? reserva.expirationAt,
+    fechaPago: reserva.fechaPago ?? reserva.paymentDate,
+  }
 }
 
-function createNotFoundError() {
-  const error = new Error('Evento no encontrado')
-  error.response = { status: 404 }
-  return error
+async function getReservasById(signal) {
+  try {
+    const { data } = await axios.get(services.reservation, { signal })
+    return new Map(
+      unwrapList(data)
+        .map(normalizeReserva)
+        .filter(Boolean)
+        .map((reserva) => [reserva.id, reserva])
+    )
+  } catch (error) {
+    if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') throw error
+    return new Map()
+  }
 }
 
-function createConflictError(message) {
-  const error = new Error(message)
-  error.response = { status: 409 }
-  return error
+function normalizeUsuario(id, user) {
+  if (!id || !user) return null
+  return {
+    id,
+    nombre: [user.name ?? user.nombre, user.lastName ?? user.apellido]
+      .filter(Boolean)
+      .join(' ')
+      .trim(),
+    email: user.email,
+    telefono: user.phone ?? user.telefono,
+  }
 }
 
-function clone(data) {
-  return JSON.parse(JSON.stringify(data))
-=======
-// Convierte 'HH:mm' a minutos desde medianoche
-function toMinutos(hora) {
-  const [h, m] = hora.split(':').map(Number)
-  return h * 60 + m
->>>>>>> origin/develop
+function getCurrentUserFromToken() {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) return null
+    const decoded = decodeToken(token)
+    if (!decoded?.id) return null
+    return normalizeUsuario(decoded.id, {
+      name: decoded.name ?? decoded.nombre,
+      email: decoded.email,
+      phone: decoded.phone ?? decoded.telefono,
+    })
+  } catch {
+    return null
+  }
+}
+
+async function getUsuariosById(eventos) {
+  const ownerIds = [...new Set(
+    eventos
+      .map((evento) => evento?.cliente?.id ?? evento?.client?.id ?? evento?.eventOwner)
+      .filter(Boolean)
+  )]
+  const currentUser = getCurrentUserFromToken()
+  const localEntries = currentUser ? [[currentUser.id, currentUser]] : []
+  const pendingIds = ownerIds.filter((id) => id !== currentUser?.id)
+
+  if (authLookupDisabled || pendingIds.length === 0) {
+    return new Map(localEntries)
+  }
+
+  const entries = await Promise.all(
+    pendingIds.map(async (id) => {
+      try {
+        const user = await getUserById(id)
+        return [id, normalizeUsuario(id, user)]
+      } catch {
+        authLookupDisabled = true
+        return [id, null]
+      }
+    })
+  )
+
+  return new Map([...localEntries, ...entries.filter(([, user]) => user)])
+}
+
+function normalizeEvento(evento, reservasById, usuariosById = new Map()) {
+  const reservaId = getEventoReservaId(evento)
+  const reserva = normalizeReserva(evento.reserva ?? evento.reservation)
+    ?? reservasById.get(reservaId)
+    ?? null
+  const cliente = evento.cliente
+    ?? evento.client
+    ?? evento.customer
+    ?? usuariosById.get(evento.eventOwner)
+    ?? null
+
+  return {
+    ...evento,
+    id: evento.id ?? evento.eventId,
+    nombre: evento.nombre ?? evento.eventName,
+    descripcion: evento.descripcion ?? evento.description,
+    tipoEventoId: evento.tipoEventoId ?? evento.eventTypeId,
+    fecha: evento.fecha ?? evento.eventDate,
+    horaInicio: evento.horaInicio ?? evento.eventStart,
+    horaFin: evento.horaFin ?? evento.eventFinish,
+    estado: normalizeEstadoEvento(evento.estado ?? evento.status ?? evento.statusName ?? evento.eventStatusId),
+    cantidadInvitados: evento.cantidadInvitados ?? evento.estimatedGuests ?? evento.estimedGuests,
+    cliente,
+    reserva,
+  }
 }
 
 /**
  * Devuelve todos los eventos, con filtros opcionales.
-<<<<<<< HEAD
- * @param {{ estado?: string, tipoEventoId?: number, fechaDesde?: string, fechaHasta?: string, eventOwner?: string, busqueda?: string }} filtros
- * @returns {Promise<Array>} eventos
  */
 export async function getEventos(filtros = {}, signal) {
-  if (USE_MOCK) {
-    await delay()
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
-    let data = [...eventosState]
-
-    if (filtros.estado) {
-      data = data.filter((e) => e.estado === filtros.estado)
-    }
-    if (filtros.tipoEventoId) {
-      data = data.filter((e) => e.tipoEventoId === Number(filtros.tipoEventoId))
-    }
-    if (filtros.fechaDesde) {
-      data = data.filter((e) => e.fecha >= filtros.fechaDesde)
-    }
-    if (filtros.fechaHasta) {
-      data = data.filter((e) => e.fecha <= filtros.fechaHasta)
-    }
-    if (filtros.eventOwner) {
-      data = data.filter((e) => e.eventOwner === filtros.eventOwner)
-    }
-    if (filtros.busqueda) {
-      const q = filtros.busqueda.toLowerCase()
-      data = data.filter(
-        (e) =>
-          e.nombre.toLowerCase().includes(q) ||
-          e.cliente.nombre.toLowerCase().includes(q) ||
-          e.cliente.email.toLowerCase().includes(q)
-      )
-    }
-
-    return clone(data)
-  }
-
-  const { data } = await api.get('/api/v1/events', { params: filtros, signal })
-=======
- * @param {{ estado?: string, tipoEventoId?: number, fechaDesde?: string, fechaHasta?: string }} filtros
- */
-export async function getEventos(filtros = {}) {
-  if (USE_MOCK) {
-    await delay()
-    let data = [...eventosState]
-    if (filtros.estado) data = data.filter((e) => e.estado === filtros.estado)
-    if (filtros.tipoEventoId) data = data.filter((e) => e.tipoEventoId === Number(filtros.tipoEventoId))
-    if (filtros.fechaDesde) data = data.filter((e) => e.fecha >= filtros.fechaDesde)
-    if (filtros.fechaHasta) data = data.filter((e) => e.fecha <= filtros.fechaHasta)
-    return JSON.parse(JSON.stringify(data))
-  }
-  const { data } = await api.get('/api/v1/events', { params: filtros })
->>>>>>> origin/develop
-  return data
+  const { data } = await api.get("", {
+    params: filtros,
+    signal,
+  })
+  const eventos = unwrapList(data)
+  const reservasById = await getReservasById(signal)
+  const usuariosById = await getUsuariosById(eventos)
+  return eventos.map((evento) => normalizeEvento(evento, reservasById, usuariosById));
 }
 
 /**
-<<<<<<< HEAD
  * Devuelve un evento por id.
- * @param {string} id
- * @returns {Promise<Object>} evento
  */
 export async function getEvento(id) {
-  if (USE_MOCK) {
-    await delay()
-    const evento = eventosState.find((e) => e.id === id)
-    if (!evento) throw createNotFoundError()
-    return clone(evento)
+  const reservasById = await getReservasById()
+  const { data } = await api.get('', {
+    params: { EventId: id },
+  })
+  const evento = unwrapList(data)[0]
+  if (!evento) {
+    const notFound = new Error('Evento no encontrado')
+    notFound.response = { status: 404 }
+    throw notFound
   }
-
-=======
- * Devuelve un evento por id o null si no existe.
- * @param {string} id
- */
-export async function getEventoById(id) {
-  if (USE_MOCK) {
-    await delay()
-    const evento = eventosState.find((e) => e.id === id)
-    if (!evento) return null
-    return JSON.parse(JSON.stringify(evento))
-  }
->>>>>>> origin/develop
-  const { data } = await api.get(`/api/v1/events/${id}`)
-  return data
+  const usuariosById = await getUsuariosById([evento])
+  return normalizeEvento(evento, reservasById, usuariosById)
 }
 
 /**
-<<<<<<< HEAD
- * Devuelve el evento asociado a una reserva por su id de reserva.
- * Útil para módulos que aún operan con el identificador legacy de reserva (mesas).
- * @param {string} reservaId
- * @returns {Promise<Object>} evento
+ * Devuelve el evento asociado a una reserva.
  */
 export async function getEventoPorReservaId(reservaId) {
-  if (USE_MOCK) {
-    await delay()
-    const evento = eventosState.find((e) => e.reserva?.id === reservaId)
-    if (!evento) throw createNotFoundError()
-    return clone(evento)
+  const { data } = await api.get(`${reservaId}`
+  )
+  return data
+}
+
+export async function getSalonDiagram(eventId)
+{
+    const {data} = await axios.get(`${services.eventos}/${eventId}/salonDiagram`);
+    return data;
+}
+
+/**
+ * Crea un nuevo evento.
+ */
+export async function createEvento(evento) {
+  const { data } = await api.post('', evento)
+  return data;
+}
+export async function getSalonAvailable(salonId, eventTypeId, date) {
+  const { data } = await api.get('salon/available', {
+    params: {
+      salonId,
+      eventType: eventTypeId,
+      Date: date,
+    },
+  })
+  return data; 
+}
+/**
+ * Actualiza un evento existente.
+ */
+export async function updateEvento(id, evento) {
+  if (evento.nombre != null) {
+    await api.patch(`${id}/name`, {
+      eventId: id,
+      eventName: evento.nombre,
+    })
   }
 
-  const { data } = await api.get(`/api/v1/events/by-reservation/${reservaId}`)
-=======
- * Devuelve todos los eventos cuya fecha coincida con la indicada.
- * @param {string} fecha - Fecha en formato 'YYYY-MM-DD'
- */
-export async function getEventosPorDia(fecha) {
-  if (USE_MOCK) {
-    await delay()
-    const data = eventosState.filter((e) => e.fecha === fecha)
-    return JSON.parse(JSON.stringify(data))
+  if (evento.descripcion != null) {
+    await api.patch(`${id}/description`, {
+      eventId: id,
+      description: evento.descripcion,
+    })
   }
-  const { data } = await api.get('/api/v1/events', { params: { fecha } })
->>>>>>> origin/develop
+
+  if (evento.cantidadInvitados != null) {
+    await api.patch('guests', {
+      eventId: id,
+      estimedGuests: evento.cantidadInvitados,
+    })
+  }
+
+  return getEvento(id)
+}
+
+/**
+ * Cambia el estado del evento.
+ */
+export async function updateEstadoEvento(
+  id,
+  estado,
+  version
+) {
+  if (estado === 'cancelado') {
+    await api.patch(`${id}/cancel`)
+    return getEvento(id)
+  }
+
+  const { data } = await api.patch(
+    `${id}/status`,
+    {
+      estado,
+      version,
+    }
+  )
+
   return data
 }
 
 /**
-<<<<<<< HEAD
- * Crea un nuevo evento con reserva embebida.
- * @param {Object} data
- * @returns {Promise<Object>} evento creado
+ * Cambia el estado de la reserva.
  */
-export async function createEvento(data) {
-  if (USE_MOCK) {
-    await delay(300)
-
-    const nuevo = {
-      ...data,
-      id: nextId('evt'),
-      version: 1,
-      estado: data.estado || 'pendiente',
-      reserva: {
-        ...data.reserva,
-        id: nextId('res'),
-        creadoEn: new Date().toISOString(),
-      },
+export async function updateEstadoReserva(
+  id,
+  estado,
+  version
+) {
+  const { data } = await api.patch(
+    `${id}/reservation/status`,
+    {
+      estado,
+      version,
     }
+  )
 
-    eventosState.push(nuevo)
-    return clone(nuevo)
-  }
-
-=======
- * Crea un nuevo evento.
- * @param {object} data
- */
-export async function crearEvento(data) {
-  if (USE_MOCK) {
-    await delay(300)
-    const nuevo = {
-      ...data,
-      id: nextId(),
-      reserva: {
-        ...data.reserva,
-        id: `res-mock-${_nextId}`,
-        creadoEn: new Date().toISOString(),
-      },
-    }
-    eventosState.push(nuevo)
-    return JSON.parse(JSON.stringify(nuevo))
-  }
->>>>>>> origin/develop
-  const { data: created } = await api.post('/api/v1/events', data)
-  return created
+  return data
 }
 
 /**
-<<<<<<< HEAD
- * Actualiza un evento existente con optimistic locking.
- * @param {string} id
- * @param {Object} data
- * @param {number} version
- * @returns {Promise<Object>} evento actualizado
- */
-export async function updateEvento(id, data, version) {
-  if (USE_MOCK) {
-    await delay(300)
-
-    const idx = eventosState.findIndex((e) => e.id === id)
-    if (idx === -1) throw createNotFoundError()
-    if (eventosState[idx].version !== version) {
-      throw createConflictError('Este evento fue modificado, recargá la página')
-    }
-
-    eventosState[idx] = { ...eventosState[idx], ...data, version: version + 1 }
-    return clone(eventosState[idx])
-  }
-
-  const { data: updated } = await api.put(`/api/v1/events/${id}`, { ...data, version })
-=======
- * Actualiza un evento existente.
- * @param {string} id
- * @param {object} data
- */
-export async function actualizarEvento(id, data) {
-  if (USE_MOCK) {
-    await delay(300)
-    const idx = eventosState.findIndex((e) => e.id === id)
-    if (idx === -1) {
-      const error = new Error('Evento no encontrado')
-      error.response = { status: 404 }
-      throw error
-    }
-    eventosState[idx] = { ...eventosState[idx], ...data }
-    return JSON.parse(JSON.stringify(eventosState[idx]))
-  }
-  const { data: updated } = await api.put(`/api/v1/events/${id}`, data)
->>>>>>> origin/develop
-  return updated
-}
-
-/**
-<<<<<<< HEAD
- * Cambia el estado del evento.
- * @param {string} id
- * @param {string} estado
- * @param {number} version
- * @returns {Promise<Object>} evento actualizado
- */
-export async function updateEstadoEvento(id, estado, version) {
-  if (USE_MOCK) {
-    await delay(300)
-
-    const idx = eventosState.findIndex((e) => e.id === id)
-    if (idx === -1) throw createNotFoundError()
-    if (eventosState[idx].version !== version) {
-      throw createConflictError('Este evento fue modificado, recargá la página')
-    }
-
-    eventosState[idx] = { ...eventosState[idx], estado, version: version + 1 }
-    return clone(eventosState[idx])
-  }
-
-  const { data: updated } = await api.patch(`/api/v1/events/${id}/status`, { estado, version })
-  return updated
-}
-
-/**
- * Cambia el estado de la reserva embebida.
- * @param {string} id
- * @param {string} estado
- * @param {number} version
- * @returns {Promise<Object>} evento actualizado
- */
-export async function updateEstadoReserva(id, estado, version) {
-  if (USE_MOCK) {
-    await delay(300)
-
-    const idx = eventosState.findIndex((e) => e.id === id)
-    if (idx === -1) throw createNotFoundError()
-    if (eventosState[idx].version !== version) {
-      throw createConflictError('Este evento fue modificado, recargá la página')
-    }
-
-    eventosState[idx] = {
-      ...eventosState[idx],
-      version: version + 1,
-      reserva: { ...eventosState[idx].reserva, estado },
-    }
-    return clone(eventosState[idx])
-  }
-
-  const { data: updated } = await api.patch(`/api/v1/events/${id}/reservation/status`, {
-    estado,
-    version,
-  })
-  return updated
-}
-
-/**
- * Bloquea temporalmente un horario para la creación de un evento.
- * @param {Object} datos - { fecha, horaInicio, horaFin, tipoEventoId }
- * @returns {Promise<Object>} reserva temporal
+ * Bloquea temporalmente un horario.
  */
 export async function bloquearHorario(datos) {
-  if (USE_MOCK) {
-    await delay(500)
-    const expiracion = new Date(Date.now() + 10 * 60 * 1000)
+  const { data } = await api.post(
+    'lock',
+    datos
+  )
 
-    return {
-      id: nextId('reserva-temp'),
-      ...datos,
-      estado: 'pendiente',
-      expirationAt: expiracion.toISOString(),
-    }
-  }
-
-  const { data } = await api.post('/events/lock', datos)
   return data
 }
 
 /**
  * Libera un horario bloqueado.
- * @param {string} reservaId
- * @returns {Promise<Object>}
  */
 export async function liberarHorario(reservaId) {
-  if (USE_MOCK) {
-    await delay(200)
-    return { success: true }
-  }
+  const { data } = await api.delete(
+    `lock/${reservaId}`
+  )
 
-  const { data } = await api.delete(`/events/lock/${reservaId}`)
   return data
 }
 
 /**
- * Devuelve los eventos de una fecha específica.
- * @param {string} fecha - 'YYYY-MM-DD'
- * @returns {Promise<{ eventos: Array }>}
+ * Devuelve la disponibilidad de una fecha.
  */
 export async function getDisponibilidad(fecha) {
-  if (USE_MOCK) {
-    await delay()
-    const eventos = eventosState.filter((e) => e.fecha === fecha && e.estado !== 'cancelado')
-    return { eventos: clone(eventos) }
-  }
-
-  const { data } = await api.get('/api/v1/events/availability', { params: { fecha } })
-=======
- * Devuelve los horarios de inicio disponibles para un tipo de evento en una fecha dada.
- * Ventana operativa: 08:00 – 23:00, pasos de 30 minutos.
- * Un slot es válido si el intervalo [inicio, inicio + duracion + limpieza) no se superpone
- * con ningún intervalo ocupado [evento.horaInicio, evento.horaFin + tipo.limpiezaMinutos).
- *
- * @param {string} fecha - 'YYYY-MM-DD'
- * @param {number} tipoEventoId
- * @returns {Promise<string[]>} Array de horarios disponibles en formato 'HH:mm'
- */
-export async function getDisponibilidad(fecha, tipoEventoId) {
-  if (USE_MOCK) {
-    await delay()
-
-    const tipo = tiposEventoMock.find((t) => t.id === Number(tipoEventoId))
-    if (!tipo) return []
-
-    // Intervalos ocupados del día: [inicio, fin + limpieza) en minutos
-    const eventosDia = eventosState.filter((e) => e.fecha === fecha && e.estado !== 'cancelado')
-    const ocupados = eventosDia.map((e) => {
-      const tipoE = tiposEventoMock.find((t) => t.id === e.tipoEventoId) || { limpiezaMinutos: 0 }
-      const inicioMin = toMinutos(e.horaInicio)
-      const finBruto = toMinutos(e.horaFin)
-      // horaFin puede cruzar medianoche: si finBruto < inicioMin, sumamos 24h
-      const finMin = finBruto < inicioMin ? finBruto + 24 * 60 : finBruto
-      return { inicio: inicioMin, fin: finMin + tipoE.limpiezaMinutos }
-    })
-
-    const disponibles = []
-    const VENTANA_INICIO = 8 * 60   // 08:00
-    const VENTANA_FIN = 23 * 60     // 23:00
-    const PASO = 30
-
-    for (let min = VENTANA_INICIO; min <= VENTANA_FIN; min += PASO) {
-      const finSlot = min + tipo.duracionMinutos + tipo.limpiezaMinutos
-      const superpone = ocupados.some((o) => min < o.fin && finSlot > o.inicio)
-      if (!superpone) {
-        const pad = (n) => String(n).padStart(2, '0')
-        disponibles.push(`${pad(Math.floor(min / 60))}:${pad(min % 60)}`)
-      }
+  const { data } = await api.get(
+    'availability',
+    {
+      params: { fecha },
     }
+  )
 
-    return disponibles
-  }
-
-  const { data } = await api.get('/api/v1/events/availability', {
-    params: { date: fecha, eventTypeId: tipoEventoId },
-  })
->>>>>>> origin/develop
   return data
 }

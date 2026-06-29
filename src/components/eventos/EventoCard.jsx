@@ -2,16 +2,58 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import EstadoEventoBadge from './EstadoEventoBadge'
 import EstadoReservaBadge from './EstadoReservaBadge'
-import { formatearMonto } from '../../utils/eventos'
-import { tiposEventoMock } from '../../mocks/tiposEventoMock'
+import {
+  formatearMonto,
+  getEventoClienteNombre,
+  getEventoEstado,
+  getEventoFecha,
+  getEventoHoraFin,
+  getEventoHoraInicio,
+  getEventoInvitados,
+  getEventoReserva,
+  getEventoTipoId,
+  getReservaEstado,
+  getReservaMonto,
+} from '../../utils/eventos'
 
-function getTipoNombre(tipoEventoId) {
-  const tipo = tiposEventoMock.find((t) => t.id === tipoEventoId)
-  return tipo?.nombre ?? `Tipo ${tipoEventoId}`
+function getTipoNombre(tipoEventoId, tiposById) {
+  const tipo = tiposById?.[tipoEventoId]
+  return tipo?.nombre ?? tipo?.name ?? `Tipo ${tipoEventoId ?? '-'}`
 }
 
-export default function EventoCard({ evento, onSeleccionar }) {
-  const hayInconsistencia = evento.estado === 'en_curso' && evento.reserva?.estado === 'expirada'
+function formatFecha(fecha) {
+  if (!fecha) return '-'
+  try {
+    return format(parseISO(fecha), 'dd/MM/yyyy', { locale: es })
+  } catch {
+    return fecha
+  }
+}
+
+function formatHora(hora) {
+  if (!hora) return '-'
+  return String(hora).slice(0, 5)
+}
+
+function formatCliente(evento) {
+  const nombre = getEventoClienteNombre(evento)
+  if (nombre) return nombre
+
+  return 'Sin datos de cliente'
+}
+
+export default function EventoCard({ evento, onSeleccionar, tiposById = {} }) {
+  const reserva = getEventoReserva(evento)
+  const estado = getEventoEstado(evento)
+  const fecha = getEventoFecha(evento)
+  const horaInicio = formatHora(getEventoHoraInicio(evento))
+  const horaFin = formatHora(getEventoHoraFin(evento))
+  const clienteNombre = formatCliente(evento)
+  const tipoEventoId = getEventoTipoId(evento)
+  const cantidadInvitados = getEventoInvitados(evento) ?? '-'
+  const estadoReserva = getReservaEstado(reserva)
+  const montoTotal = getReservaMonto(reserva)
+  const hayInconsistencia = estado === 'en_curso' && estadoReserva === 'expirada'
 
   return (
     <tr
@@ -20,27 +62,27 @@ export default function EventoCard({ evento, onSeleccionar }) {
       data-testid="evento-card"
     >
       <td className="px-4 py-3 text-sm text-slate-700">
-        {format(parseISO(evento.fecha), 'dd/MM/yyyy', { locale: es })}
+        {formatFecha(fecha)}
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
-        {evento.horaInicio}–{evento.horaFin}
+        {horaInicio}-{horaFin}
       </td>
       <td className="px-4 py-3 text-sm text-slate-700">
-        {evento.cliente?.nombre ?? '—'}
+        {clienteNombre}
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
-        {getTipoNombre(evento.tipoEventoId)}
+        {getTipoNombre(tipoEventoId, tiposById)}
       </td>
       <td className="px-4 py-3 text-sm text-slate-600">
-        {evento.cantidadInvitados}
+        {cantidadInvitados}
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <EstadoEventoBadge estado={evento.estado} />
+          <EstadoEventoBadge estado={estado} />
           {hayInconsistencia && (
             <span
               className="text-yellow-600"
-              title="Inconsistencia: el evento está en curso pero la reserva expiró"
+              title="Inconsistencia: el evento esta en curso pero la reserva expiro"
               data-testid="inconsistencia-warning"
             >
               <svg
@@ -61,10 +103,10 @@ export default function EventoCard({ evento, onSeleccionar }) {
         </div>
       </td>
       <td className="px-4 py-3">
-        <EstadoReservaBadge estado={evento.reserva?.estado} />
+        <EstadoReservaBadge estado={estadoReserva} />
       </td>
       <td className="px-4 py-3 text-sm text-slate-700 font-medium">
-        {formatearMonto(evento.reserva?.montoTotal)}
+        {formatearMonto(montoTotal)}
       </td>
     </tr>
   )

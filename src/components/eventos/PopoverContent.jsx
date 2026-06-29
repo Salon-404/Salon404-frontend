@@ -1,58 +1,91 @@
 import { FRANJAS } from '../../constants/eventos'
 import EstadoEventoBadge from './EstadoEventoBadge'
-<<<<<<< HEAD
 import EstadoReservaBadge from './EstadoReservaBadge'
-=======
->>>>>>> origin/develop
+import {
+  getEventoCliente,
+  getEventoEstado,
+  getEventoHoraFin,
+  getEventoHoraInicio,
+  getEventoId,
+  getEventoInvitados,
+  getEventoNombre,
+  getEventoTipoId,
+  getTipoColor,
+  getTipoNombre,
+} from '../../utils/eventos'
 
 const FRANJA_ORDER = ['manana', 'tarde', 'noche']
 const RESERVED_LABEL = 'Horario reservado'
 
+function inferirFranja(evento) {
+  if (evento?.franja) return evento.franja
+  const horaInicio = getEventoHoraInicio(evento) ?? ''
+  const hora = Number.parseInt(horaInicio.split(':')[0], 10)
+  if (hora >= 6 && hora < 14) return 'manana'
+  if (hora >= 14 && hora < 20) return 'tarde'
+  return 'noche'
+}
+
 function agruparPorFranja(eventos) {
   const grupos = {}
-  for (const e of eventos) {
-    if (!grupos[e.franja]) grupos[e.franja] = []
-    grupos[e.franja].push(e)
+
+  for (const evento of eventos) {
+    const franja = inferirFranja(evento)
+    if (!grupos[franja]) grupos[franja] = []
+    grupos[franja].push(evento)
   }
+
   for (const key of Object.keys(grupos)) {
-    grupos[key].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+    grupos[key].sort((a, b) =>
+      (getEventoHoraInicio(a) ?? '').localeCompare(getEventoHoraInicio(b) ?? '')
+    )
   }
+
   return grupos
 }
 
+function HoraLabel({ evento }) {
+  const horaInicio = getEventoHoraInicio(evento)
+  const horaFin = getEventoHoraFin(evento)
+
+  return (
+    <span className="text-xs font-medium text-slate-600">
+      {horaInicio ?? ''}
+      {horaFin ? `-${horaFin}` : ''}
+    </span>
+  )
+}
+
 function EventoCardAdmin({ evento, tipo }) {
-  const cancelado = evento.estado === 'cancelado'
+  const estado = getEventoEstado(evento)
+  const cancelado = estado === 'cancelado'
+  const cliente = getEventoCliente(evento)
+  const invitados = getEventoInvitados(evento)
+  const reserva = evento.reserva ?? evento.reservation
+  const estadoReserva = reserva?.estado ?? reserva?.status ?? reserva?.statusName
 
   return (
     <div className="flex items-stretch gap-2 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors cursor-pointer">
       <div
         className="w-0.5 rounded-full shrink-0"
-        style={{ background: tipo?.color ?? '#94a3b8' }}
+        style={{ background: getTipoColor(tipo) }}
         aria-hidden="true"
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-slate-600">
-            {evento.horaInicio}–{evento.horaFin}
-          </span>
-<<<<<<< HEAD
+          <HoraLabel evento={evento} />
           <div className="flex items-center gap-1.5">
-            <EstadoEventoBadge estado={evento.estado} />
-            {evento.reserva?.estado && (
-              <EstadoReservaBadge estado={evento.reserva.estado} />
-            )}
+            <EstadoEventoBadge estado={estado} />
+            {estadoReserva && <EstadoReservaBadge estado={estadoReserva} />}
           </div>
-=======
-          <EstadoEventoBadge estado={evento.estado} />
->>>>>>> origin/develop
         </div>
         <p className={`text-sm font-semibold text-slate-800 truncate ${cancelado ? 'line-through opacity-60' : ''}`}>
-          {evento.nombre}
+          {getEventoNombre(evento)}
         </p>
         <p className="text-xs text-slate-400 truncate">
-          {evento.cliente?.nombre}
-          {evento.cantidadInvitados ? ` · ${evento.cantidadInvitados} invitados` : ''}
-          {tipo ? ` · ${tipo.nombre}` : ''}
+          {cliente?.nombre ?? cliente?.name ?? ''}
+          {invitados ? ` - ${invitados} invitados` : ''}
+          {tipo ? ` - ${getTipoNombre(tipo)}` : ''}
         </p>
       </div>
     </div>
@@ -64,17 +97,14 @@ function EventoCardPublic({ evento, tipo }) {
     <div className="flex items-stretch gap-2 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors">
       <div
         className="w-0.5 rounded-full shrink-0"
-        style={{ background: tipo?.color ?? '#94a3b8' }}
+        style={{ background: getTipoColor(tipo) }}
         aria-hidden="true"
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-slate-600">
-            {evento.horaInicio}–{evento.horaFin}
-          </span>
+          <HoraLabel evento={evento} />
         </div>
-        <p className="text-sm font-medium text-slate-500 flex items-center gap-1">
-          <span aria-hidden="true">🔒</span>
+        <p className="text-sm font-medium text-slate-500">
           {RESERVED_LABEL}
         </p>
       </div>
@@ -98,12 +128,13 @@ export default function PopoverContent({ eventos, tiposById, isAdmin }) {
               </span>
             </div>
             <div className="space-y-1">
-              {grupos[franjaKey].map((evento) => {
-                const tipo = tiposById[evento.tipoEventoId]
+              {grupos[franjaKey].map((evento, index) => {
+                const tipo = tiposById[getEventoTipoId(evento)]
+                const key = getEventoId(evento, `${franjaKey}-${index}`)
                 return isAdmin ? (
-                  <EventoCardAdmin key={evento.id} evento={evento} tipo={tipo} />
+                  <EventoCardAdmin key={key} evento={evento} tipo={tipo} />
                 ) : (
-                  <EventoCardPublic key={evento.id} evento={evento} tipo={tipo} />
+                  <EventoCardPublic key={key} evento={evento} tipo={tipo} />
                 )
               })}
             </div>

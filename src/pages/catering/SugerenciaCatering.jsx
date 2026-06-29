@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
-import { obtenerSugerenciasCatering } from '../../services/proveedoresService'
+import { obtenerSugerenciasCatering, obtenerSeleccionCatering, guardarSeleccionCatering } from '../../services/proveedoresService'
 import Navbar from '../../components/global/Navbar'
 
 /**
@@ -41,21 +41,50 @@ export default function SugerenciaCatering() {
   const [error, setError] = useState(null)
   const [nivelSeleccionado, setNivelSeleccionado] = useState(null)
 
-  useEffect(() => { cargarSugerencias() }, [])
+  useEffect(() => {
+    const inicializar = async () => {
+      setCargando(true);
+      setError(null);
+      
+      // 1. Cargar sugerencias
+      let sugerenciasCargadas = [];
+      try {
+        const respuesta = await obtenerSugerenciasCatering();
+        const datos = respuesta.data || [];
+        sugerenciasCargadas = Array.isArray(datos) ? datos : [];
+        setSugerencias(sugerenciasCargadas);
+      } catch (err) {
+        console.warn("Backend suggestions endpoint not found, using frontend mockup:", err);
+        setSugerencias([]);
+      }
 
-  const cargarSugerencias = async () => {
-    setCargando(true)
-    setError(null)
-    try {
-      const respuesta = await obtenerSugerenciasCatering()
-      const datos = respuesta.data || []
-      setSugerencias(Array.isArray(datos) ? datos : [])
-    } catch {
-      setError('No se pudieron cargar las sugerencias de catering.')
-    } finally {
-      setCargando(false)
+      // 2. Cargar selección desde backend
+      try {
+        const respuesta = await obtenerSeleccionCatering(eventoId);
+        if (respuesta.data && respuesta.data.nivel) {
+          setNivelSeleccionado(respuesta.data.nivel);
+        } else {
+          // Intentar fallback a localStorage por compatibilidad
+          const savedLevel = localStorage.getItem(`catering_evento_${eventoId}`);
+          if (savedLevel) {
+            setNivelSeleccionado(savedLevel);
+          }
+        }
+      } catch (err) {
+        console.warn("Error al cargar la selección desde el backend, usando localStorage como respaldo:", err);
+        const savedLevel = localStorage.getItem(`catering_evento_${eventoId}`);
+        if (savedLevel) {
+          setNivelSeleccionado(savedLevel);
+        }
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    if (eventoId) {
+      inicializar();
     }
-  }
+  }, [eventoId])
 
   const manejarSeleccionar = async (sugerencia) => {
     // Confirmación visual
@@ -71,19 +100,40 @@ export default function SugerenciaCatering() {
     })
 
     if (resultado.isConfirmed) {
-      // TODO: conectar con API para vincular la opción de catering al evento
-      console.log(`Guardando selección de catering nivel ${sugerencia.nivel} para evento ${eventoId}`)
-      
-      setNivelSeleccionado(sugerencia.nivel)
-      
+      // Mostrar loading
       Swal.fire({
-        icon: 'success',
-        title: '¡Selección guardada!',
-        text: 'La opción de catering fue vinculada al evento.',
-        confirmButtonColor: '#C9913A',
-        timer: 2000,
-        showConfirmButton: false
-      })
+        title: 'Guardando selección...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      });
+
+      try {
+        // Enviar la selección al backend
+        await guardarSeleccionCatering(eventoId, sugerencia.proveedorId);
+        
+        // También actualizar localStorage por compatibilidad y consistencia local
+        localStorage.setItem(`catering_evento_${eventoId}`, sugerencia.nivel);
+        setNivelSeleccionado(sugerencia.nivel);
+        
+        Swal.fire({
+          icon: 'success',
+          title: '¡Selección guardada!',
+          text: 'La opción de catering fue vinculada al evento.',
+          confirmButtonColor: '#C9913A',
+          timer: 2000,
+          showConfirmButton: false
+        })
+      } catch (err) {
+        console.error("Error al guardar selección de catering en backend:", err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al guardar',
+          text: err.response?.data?.message || 'No se pudo guardar la selección de catering en el servidor. Intentá de nuevo.',
+          confirmButtonColor: '#C9913A'
+        })
+      }
     }
   }
 

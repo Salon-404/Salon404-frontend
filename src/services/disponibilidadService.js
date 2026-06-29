@@ -1,24 +1,14 @@
 import axios from 'axios'
-import { configSalonMock } from '../mocks/disponibilidadMock'
-import { tiposEventoMock } from '../mocks/tiposEventoMock'
+import { services } from './endpointsUrl'
+import { getTipos } from './tiposEventoService'
 
-const USE_MOCK = true
-const API_URL = import.meta.env.VITE_API_EVENTOS_URL || 'http://localhost:5000'
-
-function delay(ms = 300) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
+const API_URL = import.meta.env.VITE_API_EVENTOS_ROOT_URL || services.eventos.replace(/\/api\/v1\/Events\/?$/i, '')
 
 /**
- * Obtiene la configuración del salón (horarios de apertura, tiempo de limpieza)
- * @returns {Promise<Object>} Configuración del salón
+ * Obtiene la configuracion del salon (horarios de apertura, tiempo de limpieza)
+ * @returns {Promise<Object>} Configuracion del salon
  */
 export async function getConfigSalon() {
-  if (USE_MOCK) {
-    await delay()
-    return configSalonMock
-  }
-
   const response = await axios.get(`${API_URL}/api/salon/config`)
   return response.data
 }
@@ -28,11 +18,5 @@ export async function getConfigSalon() {
  * @returns {Promise<Array>} Lista de tipos de evento
  */
 export async function getTiposEvento() {
-  if (USE_MOCK) {
-    await delay()
-    return tiposEventoMock
-  }
-
-  const response = await axios.get(`${API_URL}/api/event-types`)
-  return response.data
+  return getTipos()
 }

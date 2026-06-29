@@ -51,6 +51,7 @@ vi.mock('../../services/eventosService', () => ({
   updateEstadoReserva: (...args) => updateEstadoReservaMock(...args),
 }))
 
+
 function renderConRuta(initialEntry = '/eventos/evt-002') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>

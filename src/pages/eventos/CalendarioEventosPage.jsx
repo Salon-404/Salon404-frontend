@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useTiposEvento } from '../../hooks/useTiposEvento'
 import { useEventos } from '../../hooks/useEventos'
 import { useAuth } from '../../context/AuthContext'
 import { useCalendarRole } from '../../hooks/useCalendarRole'
@@ -74,15 +73,14 @@ export default function CalendarioEventosPage() {
     Number(searchParams.get('mes')) || today.getMonth() + 1
   )
 
-  const { user } = useAuth()
+  const { user, loading: loadingAuth } = useAuth()
   const { isAdmin, vista } = useCalendarRole(user)
 
-  const { tipos, tiposById, loading: loadingTipos, error: errorTipos } = useTiposEvento()
-<<<<<<< HEAD
-  const { eventos, loading: loadingEventos, error: errorEventos } = useEventos()
-=======
-  const { eventos, loading: loadingEventos, error: errorEventos } = useEventos(year, month)
->>>>>>> origin/develop
+  const { eventos, loading: loadingEventos, error: errorEventos } = useEventos(
+    {},
+    300,
+    { user, loading: loadingAuth }
+  )
 
   const eventosFiltrados = useMemo(
     () => filtrarEventosParaVista(eventos, vista),
@@ -111,13 +109,8 @@ export default function CalendarioEventosPage() {
       <nav className="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
         <span className="font-bold text-lg tracking-wide">SALON 404</span>
         <div className="flex items-center gap-4">
-<<<<<<< HEAD
           <Link to="/eventos" className="text-slate-300 hover:text-white text-sm transition-colors">
             ← Eventos
-=======
-          <Link to="/reservas" className="text-slate-300 hover:text-white text-sm transition-colors">
-            ← Reservas
->>>>>>> origin/develop
           </Link>
           <UserMenu />
         </div>

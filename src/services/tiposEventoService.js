@@ -1,90 +1,50 @@
 import axios from 'axios'
-import { tiposEventoMock } from '../mocks/tiposEventoMock'
+import { services } from './endpointsUrl'
+import { TIPOS_EVENTO_FALLBACK } from '../constants/tiposEvento'
 
-// Poner en false cuando el backend de David esté listo
-const USE_MOCK = true
+const configuredUrl = import.meta.env.VITE_API_EVENT_TYPES_URL || services.eventTypes
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_EVENTOS_URL,
-})
-
-// Copia local para simular persistencia durante la sesión
-let tiposState = JSON.parse(JSON.stringify(tiposEventoMock))
-
-let _nextId = Math.max(...tiposEventoMock.map((t) => t.id)) + 1
-function nextId() { return _nextId++ }
-
-function delay(ms = 250) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function getCandidateUrls() {
+  const baseUrl = services.eventos.replace(/\/events\/?$/i, '')
+  return [
+    configuredUrl,
+    `${baseUrl}/EventType`,
+    `${baseUrl}/eventtypes`,
+    `${baseUrl}/event-types`,
+    `${services.eventos}/types`,
+  ].filter((url, index, urls) => url && urls.indexOf(url) === index)
 }
 
-// Devuelve todos los tipos de evento activos
-export async function getTipos() {
-  if (USE_MOCK) {
-    await delay()
-    return JSON.parse(JSON.stringify(tiposState))
-  }
-  const { data } = await api.get('/api/v1/eventtypes')
-  return data
+function unwrapList(responseData) {
+  if (Array.isArray(responseData)) return responseData
+  if (Array.isArray(responseData?.data)) return responseData.data
+  if (Array.isArray(responseData?.items)) return responseData.items
+  if (Array.isArray(responseData?.result)) return responseData.result
+  if (Array.isArray(responseData?.results)) return responseData.results
+  if (Array.isArray(responseData?.value)) return responseData.value
+  return []
 }
+
 
 // Devuelve un tipo de evento por id
 export async function getTipoById(id) {
-  if (USE_MOCK) {
-    await delay()
-    const tipo = tiposState.find((t) => t.id === Number(id))
-    if (!tipo) {
-      const error = new Error('Tipo de evento no encontrado')
-      error.response = { status: 404 }
-      throw error
-    }
-    return JSON.parse(JSON.stringify(tipo))
-  }
-  const { data } = await api.get(`/api/v1/eventtypes/${id}`)
-  return data
+  const { data } = await axios.get(`${configuredUrl}/${id}`)
+  return normalizeTipo(data)
 }
 
 // Crea un nuevo tipo de evento
 export async function crearTipo(data) {
-  if (USE_MOCK) {
-    await delay(300)
-    const nuevo = { ...data, id: nextId(), activo: true }
-    tiposState.push(nuevo)
-    return JSON.parse(JSON.stringify(nuevo))
-  }
-  const { data: created } = await api.post('/api/v1/eventtypes', data)
+  const { data: created } = await axios.post(configuredUrl, data)
   return created
 }
 
 // Actualiza un tipo de evento existente
 export async function actualizarTipo(id, data) {
-  if (USE_MOCK) {
-    await delay(300)
-    const idx = tiposState.findIndex((t) => t.id === Number(id))
-    if (idx === -1) {
-      const error = new Error('Tipo de evento no encontrado')
-      error.response = { status: 404 }
-      throw error
-    }
-    tiposState[idx] = { ...tiposState[idx], ...data }
-    return JSON.parse(JSON.stringify(tiposState[idx]))
-  }
-  const { data: updated } = await api.put(`/api/v1/eventtypes/${id}`, data)
+  const { data: updated } = await axios.put(`${configuredUrl}/${id}`, data)
   return updated
 }
 
 // Elimina un tipo de evento
 export async function eliminarTipo(id) {
-  if (USE_MOCK) {
-    await delay()
-    const idx = tiposState.findIndex((t) => t.id === Number(id))
-    if (idx === -1) {
-      const error = new Error('Tipo de evento no encontrado')
-      error.response = { status: 404 }
-      throw error
-    }
-    tiposState.splice(idx, 1)
-    return null
-  }
-  await api.delete(`/api/v1/eventtypes/${id}`)
+  await axios.delete(`${configuredUrl}/${id}`)
 }
