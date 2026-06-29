@@ -21,6 +21,7 @@ export function InvitadosList({ eventId }) {
 
   // ESTADO PARA LA BÚSQUEDA
   const [busqueda, setBusqueda] = useState("");
+  
 
   // Estado para controlar la posición y visibilidad del menú "Gestionar" vía Portal
   const [menuConfig, setMenuConfig] = useState({ id: null, top: 0, left: 0 });
