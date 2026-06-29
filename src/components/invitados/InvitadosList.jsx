@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { invitadosService } from "../../services/invitadosService";
 import Swal from "sweetalert2"; // Asegurate de tenerlo importado acá
-import { getSalonDiagram } from "../../services/eventosService";
+import { getSalonDiagram, getEvento } from "../../services/eventosService";
 import { getTablesByEventId } from "../../services/mesasService";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { useAuth } from "../../context/AuthContext";
+import { canManageEvent } from "../../utils/roles";
 
 export function InvitadosList({ eventId }) {
+  const { user, loading: authLoading } = useAuth();
+  const [evento, setEvento] = useState(null);
+  const [permisoCargando, setPermisoCargando] = useState(true);
   const [invitados, setInvitados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -50,6 +55,29 @@ export function InvitadosList({ eventId }) {
   const assignContainerRef = useRef(null);
   const imgRef = useRef(null);
   const [imgRect, setImgRect] = useState(null);
+
+  // Cargamos el evento para validar permisos (admin o responsable/propietario).
+  useEffect(() => {
+    if (!eventId) {
+      setPermisoCargando(false);
+      return;
+    }
+    let activo = true;
+    setPermisoCargando(true);
+    getEvento(eventId)
+      .then((ev) => {
+        if (activo) setEvento(ev);
+      })
+      .catch((err) => {
+        console.error("Error al cargar el evento para permisos:", err);
+      })
+      .finally(() => {
+        if (activo) setPermisoCargando(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [eventId]);
 
   const cargarInvitados = async () => {
     try {
@@ -321,6 +349,26 @@ export function InvitadosList({ eventId }) {
     });
   };
 
+
+  const puedeGestionar = canManageEvent(user, evento);
+
+  if (authLoading || permisoCargando) {
+    return (
+      <p className="text-slate-500 text-sm py-4 animate-pulse">Cargando…</p>
+    );
+  }
+
+  if (!puedeGestionar) {
+    return (
+      <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+        <p className="text-slate-700 font-semibold">Acceso restringido</p>
+        <p className="text-slate-400 text-sm mt-1">
+          Solo un administrador o el responsable del evento puede administrar la
+          lista de invitados.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
