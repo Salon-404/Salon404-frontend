@@ -13,7 +13,7 @@ import { getTablesByEventId } from "../../services/mesasService";
 import { updateTableLayout } from "../../services/mesasService";
 import { createTable } from "../../services/mesasService";
 import { errorToast, successToast } from "../../globals/toast";
-import { InvitadosList } from "../../components/invitados/invitadosList";
+import { InvitadosList } from "../../components/invitados/InvitadosList";
 import { obtenerProveedores, obtenerSeleccionCatering } from "../../services/proveedoresService";
 import { invitadosService } from "../../services/invitadosService";
 import {
