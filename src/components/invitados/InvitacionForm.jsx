@@ -133,6 +133,7 @@ export function InvitacionForm() {
         text: getApiErrorMessage(
           err,
           "Hubo un problema al procesar tu confirmación. Por favor, vuelve a intentarlo.",
+          { authContext: false },
         ),
         icon: "error",
         confirmButtonColor: "#0C447C",

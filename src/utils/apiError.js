@@ -2,7 +2,10 @@
 // Prioriza el detalle del backend (details/message) y cae en mensajes por código de estado.
 const MENSAJE_POR_DEFECTO = "Ocurrió un error. Intentá de nuevo.";
 
-export function getApiErrorMessage(error, fallback = MENSAJE_POR_DEFECTO) {
+export function getApiErrorMessage(error, fallback = MENSAJE_POR_DEFECTO, options = {}) {
+  // authContext=false en páginas públicas (invitado por token): ahí un 401/403
+  // no significa "sesión expirada" y no debe mostrar mensajes de login.
+  const { authContext = true } = options;
   const response = error?.response;
 
   // Sin respuesta del servidor: red caída, CORS, timeout.
@@ -20,9 +23,13 @@ export function getApiErrorMessage(error, fallback = MENSAJE_POR_DEFECTO) {
     case 400:
       return backendMsg || "Datos inválidos. Revisá la información ingresada.";
     case 401:
-      return "Tu sesión expiró. Iniciá sesión de nuevo.";
+      return authContext
+        ? "Tu sesión expiró. Iniciá sesión de nuevo."
+        : backendMsg || fallback;
     case 403:
-      return "No tenés permiso para realizar esta acción.";
+      return authContext
+        ? "No tenés permiso para realizar esta acción."
+        : backendMsg || fallback;
     case 404:
       return backendMsg || "No se encontró el recurso solicitado.";
     case 409:

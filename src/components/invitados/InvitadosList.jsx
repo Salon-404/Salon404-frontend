@@ -12,6 +12,7 @@ export function InvitadosList({ eventId }) {
   const { user, loading: authLoading } = useAuth();
   const [evento, setEvento] = useState(null);
   const [permisoCargando, setPermisoCargando] = useState(true);
+  const [permisoError, setPermisoError] = useState(false);
   const [invitados, setInvitados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -64,12 +65,14 @@ export function InvitadosList({ eventId }) {
     }
     let activo = true;
     setPermisoCargando(true);
+    setPermisoError(false);
     getEvento(eventId)
       .then((ev) => {
         if (activo) setEvento(ev);
       })
       .catch((err) => {
         console.error("Error al cargar el evento para permisos:", err);
+        if (activo) setPermisoError(true);
       })
       .finally(() => {
         if (activo) setPermisoCargando(false);
@@ -359,6 +362,19 @@ export function InvitadosList({ eventId }) {
   }
 
   if (!puedeGestionar) {
+    if (permisoError) {
+      return (
+        <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+          <p className="text-slate-700 font-semibold">
+            No se pudo verificar tu acceso
+          </p>
+          <p className="text-slate-400 text-sm mt-1">
+            Hubo un problema al cargar el evento. Recargá la página e intentá de
+            nuevo.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
         <p className="text-slate-700 font-semibold">Acceso restringido</p>

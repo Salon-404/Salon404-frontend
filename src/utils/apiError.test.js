@@ -51,4 +51,21 @@ describe("getApiErrorMessage", () => {
     err.response = { status: 403, data: {} };
     expect(getApiErrorMessage(err)).toMatch(/permiso/i);
   });
+
+  it("en contexto público (authContext:false) un 401 no menciona la sesión", () => {
+    const msg = getApiErrorMessage(
+      axiosError(401, {}),
+      "No se pudo cargar tu invitación",
+      { authContext: false },
+    );
+    expect(msg).toBe("No se pudo cargar tu invitación");
+    expect(msg).not.toMatch(/sesión/i);
+  });
+
+  it("en contexto público un 403 cae al fallback en vez de hablar de permisos", () => {
+    const msg = getApiErrorMessage(axiosError(403, {}), "Algo falló", {
+      authContext: false,
+    });
+    expect(msg).toBe("Algo falló");
+  });
 });

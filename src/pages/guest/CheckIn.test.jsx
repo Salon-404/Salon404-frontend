@@ -80,6 +80,8 @@ describe("CheckIn — gating y confirmación real", () => {
       expect(invitadosService.updateTicketStatus).toHaveBeenCalledWith("ev-1", "qr-1");
     });
     expect(successToast).toHaveBeenCalled();
+    // El re-fetch trae el ticket escaneado: la UI debe reflejar el ingreso.
+    expect(await screen.findByText(/Esta entrada ya fue utilizada/i)).toBeInTheDocument();
   });
 
   it("no finge éxito si el backend rechaza el ingreso", async () => {

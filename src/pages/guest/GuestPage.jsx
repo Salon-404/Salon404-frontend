@@ -33,7 +33,11 @@ export default function GuestPage() {
 
       } catch (err) {
         console.error(err);
-        setError(getApiErrorMessage(err, "No se pudieron cargar los datos"));
+        setError(
+          getApiErrorMessage(err, "No se pudieron cargar los datos", {
+            authContext: false,
+          }),
+        );
       } finally {
         setLoading(false);
       }
@@ -63,7 +67,11 @@ export default function GuestPage() {
     
     } catch (err) {
       console.error(err);
-      setError(getApiErrorMessage(err, "No se pudo confirmar la asistencia"));
+      setError(
+        getApiErrorMessage(err, "No se pudo confirmar la asistencia", {
+          authContext: false,
+        }),
+      );
     }
   };
 
