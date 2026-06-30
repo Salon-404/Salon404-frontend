@@ -6,19 +6,14 @@ import { useNavigate } from "react-router-dom";
 
 export default function CalendarView({
   fechasDisponibles = [],
-  fechasReservadas = [],
   initialDate,
+  salonId
 }) {
   const navigate = useNavigate();
 
   const disponiblesSet = useMemo(
     () => new Set(fechasDisponibles),
     [fechasDisponibles]
-  );
-
-  const reservadasSet = useMemo(
-    () => new Set(fechasReservadas),
-    [fechasReservadas]
   );
 
   const proximaFechaDisponible = useMemo(() => {
@@ -34,29 +29,38 @@ export default function CalendarView({
 
     if (!disponiblesSet.has(dateStr)) return;
 
-    navigate(`/eventos/nuevo?fecha=${dateStr}`);
+    navigate(`/eventos/nuevo?fecha=${dateStr}&salonId=${salonId}`);
   }
 
   function irAProximaFecha() {
     if (!proximaFechaDisponible) return;
 
-    navigate(`/eventos/nuevo?fecha=${proximaFechaDisponible}`);
+    navigate(`/eventos/nuevo?fecha=${proximaFechaDisponible}&salonId=${salonId}`);
   }
 
   function dayCellClassNames(arg) {
-    const dateStr =
-      arg.date.toISOString().split("T")[0];
+  const hoy = new Date();
+  const hoyStr = hoy.toISOString().split("T")[0];
 
-    if (reservadasSet.has(dateStr)) {
-      return ["fc-day-occupied"];
-    }
+  const fechaLimite = new Date(hoy);
+  fechaLimite.setMonth(fechaLimite.getMonth() + 1);
+  const fechaLimiteStr = fechaLimite.toISOString().split("T")[0];
 
-    if (disponiblesSet.has(dateStr)) {
-      return ["fc-day-available"];
-    }
+  const dateStr = arg.date.toISOString().split("T")[0];
 
-    return ["fc-day-unavailable"];
+  // Días fuera del rango permitido
+  if (dateStr < hoyStr || dateStr > fechaLimiteStr) {
+    return ["fc-day-disabled"];
   }
+
+  // Disponibles
+  if (disponiblesSet.has(dateStr)) {
+    return ["fc-day-available"];
+  }
+
+  // Dentro del rango pero sin disponibilidad
+  return ["fc-day-unavailable"];
+}
 
   return (
     <div>
@@ -108,14 +112,7 @@ export default function CalendarView({
 
         <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
           <span className="h-3 w-3 rounded-full bg-red-500" />
-          <span className="font-medium text-slate-700">
-            Reservado
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
-          <span className="h-3 w-3 rounded-full bg-slate-300" />
-          <span className="font-medium text-slate-700">
+           <span className="font-medium text-slate-700">
             Sin disponibilidad
           </span>
         </div>
