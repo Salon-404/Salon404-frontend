@@ -8,6 +8,7 @@ import { getApiErrorMessage } from "../../utils/apiError";
 import { useAuth } from "../../context/AuthContext";
 import { canManageEvent } from "../../utils/roles";
 import { sendMasiveEmails } from "../../services/emailService";
+import ExcelImportModal from './ExcelImportModal';
 
 export function InvitadosList({ eventId }) {
   const { user, loading: authLoading } = useAuth();
@@ -32,6 +33,7 @@ export function InvitadosList({ eventId }) {
   const [menuConfig, setMenuConfig] = useState({ id: null, top: 0, left: 0 });
 
   // Estado del Modal de Agregar
+  const [showExcelModal, setShowExcelModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [guardandoInvitado, setGuardandoInvitado] = useState(false);
   const [errorFormulario, setErrorFormulario] = useState(null);
@@ -475,6 +477,17 @@ export function InvitadosList({ eventId }) {
             📬 {enviandoCorreos ? "Enviando..." : "Enviar correos a todos"}
           </button>
 
+          {puedeGestionar && (
+            <button
+              onClick={() => setShowExcelModal(true)}
+              className="bg-white hover:bg-slate-50 text-[#185FA5] text-sm font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm border border-[#185FA5]/20 inline-flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Carga masiva Excel
+            </button>
+          )}
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-[#185FA5] hover:bg-[#0C447C] text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm"
@@ -912,6 +925,24 @@ export function InvitadosList({ eventId }) {
           </div>,
           document.body,
         )}
+
+      {/* MODAL DE CARGA MASIVA EXCEL */}
+      {showExcelModal && (
+        <ExcelImportModal
+          eventId={eventId}
+          onClose={() => setShowExcelModal(false)}
+          onSuccess={(result) => {
+            setShowExcelModal(false);
+            Swal.fire({
+              icon: 'success',
+              title: '¡Importación completada!',
+              text: `Se importaron ${result.totalImported} invitados con éxito.`,
+              confirmButtonColor: '#185FA5',
+            });
+            cargarInvitados();
+          }}
+        />
+      )}
     </div>
   );
 }
