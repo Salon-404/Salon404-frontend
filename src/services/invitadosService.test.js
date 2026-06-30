@@ -103,4 +103,84 @@ describe("invitadosService — autenticación con token real", () => {
       expect(bearerEnviado(axios.get)).toBeUndefined();
     });
   });
+
+  describe("downloadTemplate e importExcel", () => {
+    beforeEach(() => {
+      localStorage.setItem(TOKEN_KEY, FAKE_TOKEN);
+    });
+
+    it("downloadTemplate manda Bearer, responseType blob y params maxRows", async () => {
+      const fakeBlob = new Blob(["fake excel"]);
+      axios.get.mockResolvedValue({
+        data: fakeBlob,
+        headers: { "content-disposition": 'attachment; filename="plantilla.xlsx"' },
+      });
+
+      // Mockear URL APIs y espiar el link real
+      vi.spyOn(window.URL, "createObjectURL").mockReturnValue("blob:mock");
+      vi.spyOn(window.URL, "revokeObjectURL").mockImplementation(() => {});
+      vi.spyOn(document.body, "appendChild").mockImplementation(() => {});
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+      const removeSpy = vi.spyOn(HTMLAnchorElement.prototype, "remove").mockImplementation(() => {});
+
+      await invitadosService.downloadTemplate("ev-1");
+
+      expect(axios.get).toHaveBeenCalledWith(
+        "http://localhost:5201/api/v1/events/ev-1/Guests/excel-template",
+        expect.objectContaining({
+          params: { maxRows: 150 },
+          headers: { Authorization: `Bearer ${FAKE_TOKEN}` },
+          responseType: "blob",
+        }),
+      );
+      // Verificar que el link se creó con el nombre correcto
+      const link = document.body.appendChild.mock.calls[0][0];
+      expect(link.getAttribute("download")).toBe("plantilla.xlsx");
+      expect(clickSpy).toHaveBeenCalled();
+
+      vi.restoreAllMocks();
+    });
+
+    it("downloadTemplate (sin content-disposition) usa nombre por defecto", async () => {
+      axios.get.mockResolvedValue({
+        data: new Blob(["fake"]),
+        headers: {},
+      });
+
+      vi.spyOn(window.URL, "createObjectURL").mockReturnValue("blob:mock");
+      vi.spyOn(window.URL, "revokeObjectURL").mockImplementation(() => {});
+      vi.spyOn(document.body, "appendChild").mockImplementation(() => {});
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+      vi.spyOn(HTMLAnchorElement.prototype, "remove").mockImplementation(() => {});
+
+      await invitadosService.downloadTemplate("ev-1");
+
+      const link = document.body.appendChild.mock.calls[0][0];
+      expect(link.getAttribute("download")).toBe("plantilla_invitados_ev-1.xlsx");
+
+      vi.restoreAllMocks();
+    });
+
+    it("importExcel manda Bearer y multipart/form-data", async () => {
+      const fakeResponse = { data: { Message: "Ok", TotalImported: 3 } };
+      axios.post.mockResolvedValue(fakeResponse);
+
+      const fakeFile = new File(["a"], "datos.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const result = await invitadosService.importExcel("ev-1", fakeFile);
+
+      expect(axios.post).toHaveBeenCalledWith(
+        "http://localhost:5201/api/v1/events/ev-1/Guests/import-excel",
+        expect.any(FormData),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: `Bearer ${FAKE_TOKEN}`,
+            "Content-Type": "multipart/form-data",
+          }),
+        }),
+      );
+      expect(result).toEqual({ Message: "Ok", TotalImported: 3 });
+    });
+  });
 });
