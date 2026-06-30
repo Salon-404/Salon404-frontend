@@ -83,7 +83,7 @@ export default function App() {
           element={<ReservaEditarRedirect />}
         />
 
-        {/* Módulo Eventos — Federico Oviedo */}
+        {/* Módulo Eventos */ }
         <Route path="/eventos" element={<EventosPage />} />
         <Route path="/eventos/:id" element={<EventoDetailPage />} />
         <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />

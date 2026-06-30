@@ -181,43 +181,140 @@
 .border-3 {
   border-width: 3px;
 }
-.fc-daygrid-day.fc-day-available,
-.fc-daygrid-day.fc-day-occupied {
+/* =========================
+   FULLCALENDAR - ESTADOS
+   ========================= */
+
+/* Asegura posicionamiento correcto del frame */
+.fc-daygrid-day.fc-day-available .fc-daygrid-day-frame,
+.fc-daygrid-day.fc-day-occupied .fc-daygrid-day-frame,
+.fc-daygrid-day.fc-day-unavailable .fc-daygrid-day-frame {
   position: relative;
 }
 
-/* Puntito verde */
-.fc-daygrid-day.fc-day-available::after {
+/* =========================
+   PUNTO VERDE (DISPONIBLE)
+   ========================= */
+.fc-daygrid-day.fc-day-available .fc-daygrid-day-frame::after {
   content: "";
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 10px;
-  height: 10px;
+  bottom: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 9999px;
   background-color: #22c55e;
   z-index: 10;
 }
 
-/* Puntito rojo */
-.fc-daygrid-day.fc-day-occupied::after {
+/* Hover solo en disponibles */
+.fc-daygrid-day.fc-day-available {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fc-daygrid-day.fc-day-available:hover {
+  background-color: #f0fdf4;
+}
+
+/* =========================
+   PUNTO ROJO (OCUPADO)
+   ========================= */
+.fc-daygrid-day.fc-day-occupied .fc-daygrid-day-frame::after {
   content: "";
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 10px;
-  height: 10px;
+  bottom: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 9999px;
   background-color: #ef4444;
   z-index: 10;
 }
 
-/* Opcional: efecto hover en días disponibles */
-.fc-daygrid-day.fc-day-available {
-  cursor: pointer;
-  transition: background-color 0.2s;
+/* =========================
+   PUNTO GRIS (SIN DISPONIBILIDAD)
+   ========================= */
+.fc-daygrid-day.fc-day-unavailable .fc-daygrid-day-frame::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: #ef4444;
+  z-index: 10;
 }
 
-.fc-daygrid-day.fc-day-available:hover {
-  background-color: #f0fdf4;
+/* =========================
+   MEJORAS VISUALES
+   ========================= */
+
+/* Suaviza el hover general del calendario */
+.fc .fc-daygrid-day-frame {
+  transition: background-color 0.15s ease;
+}
+
+/* Día de hoy resaltado */
+.fc .fc-day-today {
+  background-color: #eff6ff !important;
+}
+
+/* Quitar borde feo por defecto */
+.fc {
+  border: none;
+}
+
+/* =========================
+   TUS VARIABLES EXISTENTES
+   (no las toco, solo complemento)
+   ========================= */
+
+/* Opcional: si querés mantener consistencia con tu UI */
+.fc {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Mejora títulos del calendario */
+.fc-toolbar-title {
+  font-size: 18px !important;
+  font-weight: 600;
+  color: #1a0f0a;
+}
+
+/* Botones del header */
+.fc .fc-button {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important;
+  box-shadow: none !important;
+}
+
+.fc .fc-button:hover {
+  background-color: #f9fafb !important;
+}
+
+/* Botón activo */
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: #C9913A !important;
+  border-color: #C9913A !important;
+  color: #ffffff !important;
+}
+
+/* =========================
+   DÍAS FUERA DEL RANGO
+   ========================= */
+
+.fc-daygrid-day.fc-day-disabled {
+  background-color: #f8fafc;
+}
+
+.fc-daygrid-day.fc-day-disabled .fc-daygrid-day-number {
+  color: #cbd5e1 !important;
+}
+
+.fc-daygrid-day.fc-day-disabled .fc-daygrid-day-frame {
+  pointer-events: none;
+  opacity: 0.45;
 }

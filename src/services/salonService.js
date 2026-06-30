@@ -88,3 +88,20 @@ export async function getEventsBySalon(id, date = null) {
 
   return data;
 }
+
+export async function getSalonAvailable(salonId) {
+  try
+  {
+    const {data} = await axios.get(`${services.salon}/salon-available/${salonId}`);
+    return data;
+  }
+  catch(error){
+      console.error("Error al obtener la disponibilidad del salón");
+      throw new Error(
+        error.response?.data?.details || "No se pudo conectar con el servidor",
+      );
+    }
+
+}
+
+

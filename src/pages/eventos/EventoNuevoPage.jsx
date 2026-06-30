@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useHorariosDisponibles } from "../../hooks/useHorariosDisponibles";
 import { useBloqueoHorario } from "../../hooks/useBloqueoHorario";
 import { createEvento } from "../../services/eventosService";
-import { getAllTypes } from "../../services/eventTypeService";
+import { getAllTypesBySalonId } from "../../services/eventTypeService";
 import { getSalons } from "../../services/salonService";
 import { calcularMontoTotal } from "../../utils/eventos";
 import SelectorHorarios from "../../components/reservas/SelectorHorarios";
@@ -98,7 +98,7 @@ export default function EventoNuevoPage() {
   const { user } = useAuth();
 
   const fechaSeleccionada = searchParams.get("fecha");
-
+  const salonId = searchParams.get("salonId");
   // ── Tipos de evento ───────────────────────────────────────────────────────
   const [tiposEvento, setTiposEvento] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(true);
@@ -110,7 +110,7 @@ export default function EventoNuevoPage() {
       setLoadingTipos(true);
       setErrorTipos(null);
       try {
-        const data = await getAllTypes();
+        const data = await getAllTypesBySalonId(salonId);
         if (!cancelado) setTiposEvento(Array.isArray(data) ? data : []);
       } catch (err) {
         if (!cancelado) setErrorTipos(err.message);
@@ -150,8 +150,13 @@ export default function EventoNuevoPage() {
   const [nombreEvento, setNombreEvento] = useState("");
   const [cantInvitados, setCantInvitados] = useState(''); 
   const [tipoEventoId, setTipoEventoId] = useState('');
-  const [salonId, setSalonId] = useState('');
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
+  const [open, setOpen] = useState(false);
+  
+  const selectedTipo = useMemo(
+    () => tiposEvento.find((t) => String(t.id) === String(tipoEventoId)),
+    [tiposEvento, tipoEventoId]
+  );
 
   const [datosReserva, setDatosReserva] = useState({
     descripcion: "",
@@ -174,10 +179,7 @@ export default function EventoNuevoPage() {
 
   const { segundosRestantes, bloquear, liberar } = useBloqueoHorario();
 
-  const tipoEvento = useMemo(
-    () => tiposEvento.find((t) => t.id === tipoEventoId),
-    [tiposEvento, tipoEventoId]
-  );
+  
 
   const salon = useMemo(
     () => salones.find((s) => String(s.salonId ?? s.id) === String(salonId)),
@@ -214,7 +216,7 @@ export default function EventoNuevoPage() {
     if (
       enviandoRef.current ||
       !user ||
-      !tipoEvento ||
+      !selectedTipo ||
       !salon ||
       !horarioSeleccionado ||
       !fechaSeleccionada
@@ -232,7 +234,7 @@ export default function EventoNuevoPage() {
         {
           userId:user.id,
           salonId:salonId,
-          eventTypeId:Number(tipoEventoId),
+          eventTypeId:Number(selectedTipo.id),
           dateReserved:fechaSeleccionada
         });
         
@@ -392,53 +394,60 @@ export default function EventoNuevoPage() {
                 />
               </div>
 
-              <div className="mb-8">
-                <h2 className="mb-1 text-lg font-medium text-slate-800">
-                  Tipo de evento
-                </h2>
-                <p className="mb-3 text-sm text-slate-500">
-                  Seleccioná la categoría que mejor describe tu evento.
-                </p>
-                {loadingTipos && (
-                  <p className="text-sm text-slate-500">Cargando tipos de evento…</p>
-                )}
-                {errorTipos && (
-                  <p className="text-sm text-red-600">{errorTipos}</p>
-                )}
-                {!loadingTipos && !errorTipos && (
-                  <ul className="grid gap-3 sm:grid-cols-2">
-                    {tiposEvento.map((tipo) => {
-                      const seleccionado = tipo.id === tipoEventoId;
-                      return (
-                        <li key={tipo.id}>
-                          <button
-                            onClick={() => {
-                              setTipoEventoId(tipo.id);
-                              setError(null);
-                            }}
-                            className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
-                              seleccionado
-                                ? "border-indigo-600 bg-indigo-50"
-                                : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                            }`}
-                          >
-                            <span className="block font-medium text-slate-800">
-                              {getTipoNombre(tipo)}
-                            </span>
-                            <span className="mt-1 block text-sm text-slate-500">
-                              ${getTipoPrecio(tipo).toLocaleString("es-AR")}
-                            </span>
-                            <span className="mt-0.5 block text-sm text-slate-500">
-                              Duración: {getTipoDuracion(tipo) / 60} hs
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+            {!loadingTipos && !errorTipos && (
+            <div className="space-y-3">
+              <h2 className="mb-1 text-lg font-medium text-slate-800">
+                  ¿Que tipo de evento queres realizar?
+              </h2>
+              <p className="mb-3 text-sm text-slate-500">
+                  Seleccioná el evento deseado.
+              </p>
+              {/* SELECT */}
+              <select
+                value={selectedTipo}
+                onChange={(e) => {
+                  setTipoEventoId(e.target.value);
+                  setError(null);
+                }}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              >
+                <option value="">Seleccioná un tipo de evento</option>
 
+                {tiposEvento.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {getTipoNombre(tipo)} 
+                  </option>
+                ))}
+              </select>
+
+              {/* PREVIEW (PRO UX) */}
+              {selectedTipo && (
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-slate-500">Tipo seleccionado</p>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        {getTipoNombre(selectedTipo)}
+                      </h3>
+                    </div>
+
+                    <div className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
+                      ${getTipoPrecio(selectedTipo).toLocaleString("es-AR")}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+                    <span className="rounded-md bg-white px-2 py-1 shadow-sm">
+                      ⏱ {getTipoDuracion(selectedTipo) / 60} hs
+                    </span>
+                  </div>
+
+                  {/* highlight bar */}
+                  <div className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
+                </div>
+              )}
+            </div>
+          )}
               <div className="mb-8">
                 <h2 className="mb-1 text-lg font-medium text-slate-800">
                   Salón
@@ -495,7 +504,7 @@ export default function EventoNuevoPage() {
                     Evento: <strong className="text-slate-700">{nombreEvento}</strong>
                   </p>
                   <p>
-                    Tipo: <strong className="text-slate-700">{getTipoNombre(tipoEvento)}</strong>
+                    Tipo: <strong className="text-slate-700">{getTipoNombre(selectedTipo)}</strong>
                     {" · "}
                     Salón: <strong className="text-slate-700">{salon?.salonName}</strong>
                   </p>
@@ -541,7 +550,7 @@ export default function EventoNuevoPage() {
                     <div>
                       <p className="text-sm text-slate-500">Tipo de evento</p>
                       <p className="font-medium text-slate-800">
-                        {tipoEvento?.name}
+                        {selectedTipo?.name}
                       </p>
                     </div>
                     <div>
@@ -560,7 +569,7 @@ export default function EventoNuevoPage() {
                     <div>
                       <p className="text-sm text-slate-500">Duración</p>
                       <p className="font-medium text-slate-800">
-                        {tipoEvento?.duration / 60} hs
+                        {selectedTipo?.duration / 60} hs
                       </p>
                     </div>
                     <div>
@@ -577,7 +586,7 @@ export default function EventoNuevoPage() {
                       Precio total
                     </span>
                     <span className="text-2xl font-bold text-indigo-600">
-                      ${tipoEvento?.price?.toLocaleString("es-AR")}
+                      ${selectedTipo?.price?.toLocaleString("es-AR")}
                     </span>
                   </div>
                 </div>
