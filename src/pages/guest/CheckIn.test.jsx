@@ -65,7 +65,7 @@ describe("CheckIn — gating y confirmación real", () => {
   });
 
   it("permite registrar el ingreso a un admin y muestra éxito", async () => {
-    authState = { user: { id: "x", role: "Admin" }, loading: false };
+    authState = { user: { id: "x", role: "SuperAdmin" }, loading: false };
     // Tras escanear, el re-fetch devuelve el ticket ya usado.
     invitadosService.getByTicket
       .mockResolvedValueOnce(TICKET_NO_INGRESADO)

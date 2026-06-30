@@ -46,7 +46,7 @@ describe("InvitadosList — gating de administración", () => {
   });
 
   it("permite administrar y lista los invitados a un admin", async () => {
-    authState = { user: { id: "x", role: "Admin" }, loading: false };
+    authState = { user: { id: "x", role: "SuperAdmin" }, loading: false };
     invitadosService.getAll.mockResolvedValue({
       data: [
         {

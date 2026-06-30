@@ -25,6 +25,7 @@ import SalonesPage from "./pages/salon/SalonesPage";
 import SalonDetailPage from "./pages/salon/SalonDetailPage";
 import { InvitadosList } from "./components/invitados/InvitadosList";
 import { InvitacionForm } from "./components/invitados/InvitacionForm";
+
 import ProveedoresPage from "./pages/proveedores/ProveedoresPage";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import CateringPage from "./pages/eventos/CateringPage";

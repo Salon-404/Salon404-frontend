@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { ROLES } from "../../constants/auth";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -51,10 +52,7 @@ export default function Navbar() {
             Salones
           </Link>
 
-          {user && (
-            user.role === "SuperAdmin" ||
-            user.role === "Admin"
-          ) && (
+          {user && user.role === ROLES.SUPER_ADMIN && (
             <Link
               to="/dashboard"
               className="font-medium text-slate-600 transition-colors hover:text-indigo-600"
