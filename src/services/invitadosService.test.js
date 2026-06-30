@@ -161,7 +161,7 @@ describe("invitadosService — autenticación con token real", () => {
       vi.restoreAllMocks();
     });
 
-    it("importExcel manda Bearer y multipart/form-data", async () => {
+    it("importExcel manda Bearer sin Content-Type manual (lo setea el browser)", async () => {
       const fakeResponse = { data: { Message: "Ok", TotalImported: 3 } };
       axios.post.mockResolvedValue(fakeResponse);
 
@@ -176,10 +176,12 @@ describe("invitadosService — autenticación con token real", () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: `Bearer ${FAKE_TOKEN}`,
-            "Content-Type": "multipart/form-data",
           }),
         }),
       );
+      // No debe incluir Content-Type manual (lo setea axios/browser con boundary)
+      const configHeaders = axios.post.mock.calls[0][2]?.headers;
+      expect(configHeaders).not.toHaveProperty('Content-Type');
       expect(result).toEqual({ Message: "Ok", TotalImported: 3 });
     });
   });

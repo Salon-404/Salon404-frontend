@@ -164,7 +164,11 @@ export function useExcelImport(eventId) {
     try {
       await invitadosService.downloadTemplate(eventId);
     } catch (err) {
-      setError('ERROR_DESCARGA_PLANTILLA');
+      if (err.response?.status === 401) {
+        setError('SESION_EXPIRADA');
+      } else {
+        setError('ERROR_DESCARGA_PLANTILLA');
+      }
     }
   }, [eventId]);
 

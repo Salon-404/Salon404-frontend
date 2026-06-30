@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import ExcelImportModal from './ExcelImportModal';
+
+vi.mock('sweetalert2', () => ({
+  default: { fire: vi.fn() },
+}));
 
 const mockUseExcelImport = vi.fn();
 
@@ -19,7 +24,7 @@ const defaultHookState = {
   error: null,
   result: null,
   handleFileSelect: vi.fn(),
-  handleImport: vi.fn(),
+  handleImport: vi.fn().mockResolvedValue(),
   handleDownloadTemplate: vi.fn(),
   reset: vi.fn(),
 };
@@ -194,7 +199,7 @@ describe('ExcelImportModal', () => {
   });
 
   it('"Confirmar y enviar" calls handleImport', async () => {
-    const handleImport = vi.fn();
+    const handleImport = vi.fn().mockResolvedValue();
     const preview = {
       rows: [{ rowNumber: 2, fullName: 'Ana', phone: '123', email: 'a@b.com', isValid: true }],
       validCount: 1,
@@ -228,6 +233,23 @@ describe('ExcelImportModal', () => {
     await userEvent.click(screen.getByText('Volver'));
 
     expect(reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows Swal.fire on import error (step 3 with error)', () => {
+    renderModal({ step: 3, loading: false, error: 'ERROR_RED' });
+
+    expect(Swal.fire).toHaveBeenCalledWith({
+      icon: 'error',
+      title: 'Error en la importación',
+      text: 'No se pudo conectar con el servidor. Revisá tu conexión.',
+      confirmButtonColor: '#185FA5',
+    });
+  });
+
+  it('does not show Swal.fire for SESION_EXPIRADA', () => {
+    renderModal({ step: 3, loading: false, error: 'SESION_EXPIRADA' });
+
+    expect(Swal.fire).not.toHaveBeenCalled();
   });
 
   it('success calls onSuccess and onClose after timeout', async () => {

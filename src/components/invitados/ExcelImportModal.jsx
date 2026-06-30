@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useExcelImport } from '../../hooks/useExcelImport';
 
 const ERROR_MESSAGES = {
@@ -10,6 +11,7 @@ const ERROR_MESSAGES = {
     'El archivo supera el límite de 5 MB. Reducí la cantidad de invitados.',
   HOJA_FALTANTE:
     "El archivo no contiene la hoja 'Plantilla Invitados'. Usá la plantilla oficial.",
+  ARCHIVO_VACIO: 'El archivo no contiene filas. Descargá la plantilla oficial y completá los datos.',
   COLUMNAS_FALTANTES:
     'Faltan columnas requeridas (FullName, Phone, Email). Usá la plantilla oficial.',
   MAX_FILAS_EXCEDIDO:
@@ -85,6 +87,21 @@ export default function ExcelImportModal({ eventId, onClose, onSuccess }) {
     }
   }, [error, navigate]);
 
+  // Show Swal.fire for import errors during sending step (AC-09, AC-11, AC-12)
+  useEffect(() => {
+    if (error && step === 3 && !loading) {
+      if (error === 'SESION_EXPIRADA') return;
+
+      const errorMessage = getErrorMessage(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en la importación',
+        text: errorMessage,
+        confirmButtonColor: '#185FA5',
+      });
+    }
+  }, [error, step, loading]);
+
   // Éxito: mostrar estado por 1 segundo, luego cerrar
   useEffect(() => {
     if (result) {
@@ -94,7 +111,7 @@ export default function ExcelImportModal({ eventId, onClose, onSuccess }) {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [result, onSuccess, onClose]);
+  }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDropZoneClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -238,6 +255,7 @@ export default function ExcelImportModal({ eventId, onClose, onSuccess }) {
         <button
           type="button"
           disabled={!file}
+          onClick={() => setStep(2)}
           className="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="btn-siguiente"
         >
@@ -371,7 +389,7 @@ export default function ExcelImportModal({ eventId, onClose, onSuccess }) {
         </button>
         <button
           type="button"
-          onClick={handleImport}
+          onClick={() => { handleImport().catch(() => {}); }}
           disabled={loading}
           className="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50"
           data-testid="btn-confirmar-enviar"

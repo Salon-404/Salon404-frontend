@@ -349,4 +349,19 @@ describe('useExcelImport', () => {
 
     expect(invitadosService.downloadTemplate).toHaveBeenCalledWith('evt-001');
   });
+
+  // --- Test 16: Download template error 401 ---
+  it('handleDownloadTemplate error 401 sets SESION_EXPIRADA', async () => {
+    const authError = new Error('Unauthorized');
+    authError.response = { status: 401 };
+    invitadosService.downloadTemplate.mockRejectedValue(authError);
+
+    const { result } = renderHook(() => useExcelImport('evt-001'));
+
+    await result.current.handleDownloadTemplate();
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('SESION_EXPIRADA');
+    });
+  });
 });
