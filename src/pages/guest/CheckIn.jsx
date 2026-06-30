@@ -1,13 +1,19 @@
 import { useParams } from "react-router-dom"
 import { invitadosService } from "../../services/invitadosService";
+import { getEvento } from "../../services/eventosService";
 import { useEffect, useState } from "react";
-import { successToast } from "../../globals/toast";
+import { successToast, errorToast } from "../../globals/toast";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { useAuth } from "../../context/AuthContext";
+import { canManageEvent } from "../../utils/roles";
 
 
 export default function CheckIn()
 {
 const {eventId,qrToken} = useParams();
+const { user, loading: authLoading } = useAuth();
 const [ticketData,setTicketData] = useState(null);
+const [evento, setEvento] = useState(null);
 const [error, setError] = useState(null);
 const [loading, setLoading] = useState(true);
 
@@ -17,13 +23,19 @@ useEffect(()=>
         const loadTicketData = async () =>
             {
                 try{
-                  const ticketData = await  invitadosService.getByTicket(eventId,qrToken);
-                  setTicketData(ticketData);
+                  // El check-in es una operación autenticada (admin/responsable):
+                  // cargamos el evento para validar permisos junto con el ticket.
+                  const [ticket, ev] = await Promise.all([
+                    invitadosService.getByTicket(eventId, qrToken),
+                    getEvento(eventId),
+                  ]);
+                  setTicketData(ticket);
+                  setEvento(ev);
                 }
                 catch(err)
                 {
                 console.error(err);
-                setError("No se pudieron cargar los datos");
+                setError(getApiErrorMessage(err, "No se pudieron cargar los datos"));
                 }
                 finally
                 {
@@ -41,13 +53,13 @@ useEffect(()=>
     successToast("Ingreso registrado con éxito");
     } catch (err) {
       console.error(err);
-      setError("No se pudo confirmar la entrada");
+      errorToast("No se pudo registrar el ingreso", getApiErrorMessage(err));
     }
   };
 
 
 
-    if (loading) {
+    if (loading || authLoading) {
   return (
     <div className="min-h-screen flex items-center justify-center">
       Cargando entrada...
@@ -59,6 +71,17 @@ if (error) {
   return (
     <div className="min-h-screen flex items-center justify-center text-red-600">
       {error}
+    </div>
+  );
+}
+
+if (!canManageEvent(user, evento)) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-2 text-center px-6">
+      <p className="text-xl font-semibold text-slate-700">Acceso restringido</p>
+      <p className="text-sm text-slate-500">
+        Solo un administrador o el responsable del evento puede registrar ingresos.
+      </p>
     </div>
   );
 }

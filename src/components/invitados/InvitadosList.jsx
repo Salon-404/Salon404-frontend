@@ -2,12 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { invitadosService } from "../../services/invitadosService";
 import Swal from "sweetalert2";
-import { getSalonDiagram } from "../../services/eventosService";
+import { getSalonDiagram, getEvento } from "../../services/eventosService";
 import { getTablesByEventId } from "../../services/mesasService";
-// 1. IMPORTAR EL ENDPOINT DESDE TU SERVICIO DE EMAIL
+import { getApiErrorMessage } from "../../utils/apiError";
+import { useAuth } from "../../context/AuthContext";
+import { canManageEvent } from "../../utils/roles";
 import { sendMasiveEmails } from "../../services/emailService";
 
 export function InvitadosList({ eventId }) {
+  const { user, loading: authLoading } = useAuth();
+  const [evento, setEvento] = useState(null);
+  const [permisoCargando, setPermisoCargando] = useState(true);
+  const [permisoError, setPermisoError] = useState(false);
   const [invitados, setInvitados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -21,7 +27,6 @@ export function InvitadosList({ eventId }) {
 
   // ESTADO PARA LA BÚSQUEDA
   const [busqueda, setBusqueda] = useState("");
-  
 
   // Estado para controlar la posición y visibilidad del menú "Gestionar" vía Portal
   const [menuConfig, setMenuConfig] = useState({ id: null, top: 0, left: 0 });
@@ -56,6 +61,31 @@ export function InvitadosList({ eventId }) {
   const imgRef = useRef(null);
   const [imgRect, setImgRect] = useState(null);
 
+  // Cargamos el evento para validar permisos (admin o responsable/propietario).
+  useEffect(() => {
+    if (!eventId) {
+      setPermisoCargando(false);
+      return;
+    }
+    let activo = true;
+    setPermisoCargando(true);
+    setPermisoError(false);
+    getEvento(eventId)
+      .then((ev) => {
+        if (activo) setEvento(ev);
+      })
+      .catch((err) => {
+        console.error("Error al cargar el evento para permisos:", err);
+        if (activo) setPermisoError(true);
+      })
+      .finally(() => {
+        if (activo) setPermisoCargando(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [eventId]);
+
   const cargarInvitados = async () => {
     try {
       setCargando(true);
@@ -77,7 +107,7 @@ export function InvitadosList({ eventId }) {
       }
     } catch (err) {
       console.error("Error al cargar invitados:", err);
-      setError("No se pudieron cargar los invitados.");
+      setError(getApiErrorMessage(err, "No se pudieron cargar los invitados."));
     } finally {
       setCargando(false);
     }
@@ -173,9 +203,7 @@ export function InvitadosList({ eventId }) {
       setIsModalOpen(false);
       cargarInvitados();
     } catch (err) {
-      const mensajeError =
-        err.response?.data?.message || "Error al registrar el invitado.";
-      setErrorFormulario(mensajeError);
+      setErrorFormulario(getApiErrorMessage(err, "Error al registrar el invitado."));
     } finally {
       setGuardandoInvitado(false);
     }
@@ -211,7 +239,7 @@ export function InvitadosList({ eventId }) {
 
       Swal.fire({
         title: "Error",
-        text: "No se pudo asignar la mesa.",
+        text: getApiErrorMessage(err, "No se pudo asignar la mesa."),
         icon: "error",
         confirmButtonColor: "#185FA5",
       });
@@ -280,7 +308,7 @@ export function InvitadosList({ eventId }) {
 
           Swal.fire({
             title: "Error",
-            text: "No se pudo eliminar al invitado.",
+            text: getApiErrorMessage(error, "No se pudo eliminar al invitado."),
             icon: "error",
             confirmButtonColor: "#185FA5",
           });
@@ -308,7 +336,7 @@ export function InvitadosList({ eventId }) {
 
       Swal.fire({
         title: "Error",
-        text: "No se pudo cargar el plano del salón.",
+        text: getApiErrorMessage(err, "No se pudo cargar el plano del salón."),
         icon: "error",
         confirmButtonColor: "#185FA5",
       });
@@ -373,6 +401,39 @@ export function InvitadosList({ eventId }) {
       }
     });
   };
+
+  const puedeGestionar = canManageEvent(user, evento);
+
+  if (authLoading || permisoCargando) {
+    return (
+      <p className="text-slate-500 text-sm py-4 animate-pulse">Cargando…</p>
+    );
+  }
+
+  if (!puedeGestionar) {
+    if (permisoError) {
+      return (
+        <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+          <p className="text-slate-700 font-semibold">
+            No se pudo verificar tu acceso
+          </p>
+          <p className="text-slate-400 text-sm mt-1">
+            Hubo un problema al cargar el evento. Recargá la página e intentá de
+            nuevo.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+        <p className="text-slate-700 font-semibold">Acceso restringido</p>
+        <p className="text-slate-400 text-sm mt-1">
+          Solo un administrador o el responsable del evento puede administrar la
+          lista de invitados.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
