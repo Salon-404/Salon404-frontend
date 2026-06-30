@@ -89,29 +89,6 @@ export default function App() {
         <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
         <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
         <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
-        {/* Redirects reservas → eventos */}
-        <Route path="/reservas" element={<RedirectConBanner to="/eventos" />} />
-        <Route
-          path="/reservas/calendario"
-          element={<RedirectConBanner to="/eventos/calendario" />}
-        />
-        <Route
-          path="/reservas/nueva"
-          element={<RedirectConBanner to="/eventos/nuevo" />}
-        />
-        <Route path="/reservas/:id" element={<ReservaRedirect />} />
-        <Route
-          path="/reservas/:id/editar"
-          element={<ReservaEditarRedirect />}
-        />
-
-        {/* Módulo Eventos — Federico Oviedo */}
-        <Route path="/eventos" element={<EventosPage />} />
-        <Route path="/eventos/:id" element={<EventoDetailPage />} />
-        <Route path="/eventos/:id/editar" element={<EventoEditarPage />} />
-        <Route path="/eventos/nuevo" element={<EventoNuevoPage />} />
-        <Route path="/eventos/calendario" element={<CalendarioEventosPage />} />
-
         {/* Módulo Mesas — Federico Oviedo */}
         <Route path="/mesas" element={<PlanoPage />} />
         <Route

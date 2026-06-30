@@ -12,3 +12,4 @@ CLAUDE.md
 *.docx
 *.doc
 .vs/
+.atl/.skill-registry.cache.json
