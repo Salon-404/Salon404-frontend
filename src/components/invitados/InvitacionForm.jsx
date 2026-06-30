@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { invitadosService } from "../../services/invitadosService";
 import Swal from "sweetalert2";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 export function InvitacionForm() {
   const { token } = useParams();
@@ -129,7 +130,11 @@ export function InvitacionForm() {
       console.error("Error en el flujo de confirmación:", err);
       Swal.fire({
         title: "Error",
-        text: "Hubo un problema al procesar tu confirmación. Por favor, vuelve a intentarlo.",
+        text: getApiErrorMessage(
+          err,
+          "Hubo un problema al procesar tu confirmación. Por favor, vuelve a intentarlo.",
+          { authContext: false },
+        ),
         icon: "error",
         confirmButtonColor: "#0C447C",
       });
