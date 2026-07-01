@@ -2,11 +2,18 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { updateSalon } from "../../../services/salonService";
 import { useModalPortal } from "../../../hooks/useModalPortal";
+import Swal from "sweetalert2";
+
+// Uploadcare React Uploader y estilos core
+import { FileUploaderRegular } from "@uploadcare/react-uploader";
+import "@uploadcare/react-uploader/core.css";
+
+// REEMPLAZA ESTO con tu clave pública real del panel de Uploadcare
+const UPLOADCARE_PUBLIC_KEY = "f64383c3f67edbc8a8ab";
 
 export default function ModalEditarSalon({ salon, alCerrar, alGuardar }) {
   const [submitting, setSubmitting] = useState(false);
   const modalContainer = useModalPortal();
-  const [nuevoLinkFoto, setNuevoLinkFoto] = useState("");
 
   const [formData, setFormData] = useState({
     salonName: salon.salonName || "",
@@ -35,13 +42,52 @@ export default function ModalEditarSalon({ salon, alCerrar, alGuardar }) {
     }));
   };
 
-  const handleAgregarFoto = () => {
-    if (!nuevoLinkFoto.trim()) return;
-    setFormData((prev) => ({
-      ...prev,
-      photos: [...prev.photos, nuevoLinkFoto.trim()],
-    }));
-    setNuevoLinkFoto("");
+  // Foto de perfil: reemplaza la imagen anterior por la nueva subida
+  const handleProfilePictureChange = (items) => {
+    const archivosExitosos = items.allEntries.filter(
+      (file) => file.status === "success",
+    );
+    if (archivosExitosos.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        profilePicture: archivosExitosos[0].cdnUrl,
+      }));
+    }
+  };
+
+  // Diagrama del salón: reemplaza la imagen anterior por la nueva subida
+  const handleSalonDiagramChange = (items) => {
+    const archivosExitosos = items.allEntries.filter(
+      (file) => file.status === "success",
+    );
+    if (archivosExitosos.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        salonDiagram: archivosExitosos[0].cdnUrl,
+      }));
+    }
+  };
+
+  // Galería de fotos: permite múltiples imágenes, se van agregando a la lista existente
+  const handlePhotosChange = (items) => {
+    const archivosExitosos = items.allEntries.filter(
+      (file) => file.status === "success",
+    );
+    if (archivosExitosos.length === 0) return;
+
+    setFormData((prev) => {
+      const urlsExistentes = new Set(prev.photos);
+      const urlsNuevas = archivosExitosos
+        .map((file) => file.cdnUrl)
+        .filter((url) => !urlsExistentes.has(url));
+
+      if (urlsNuevas.length === 0) return prev;
+
+      return {
+        ...prev,
+        photos: [...prev.photos, ...urlsNuevas],
+      };
+    });
   };
 
   const handleRemoverFoto = (indexARemover) => {
@@ -81,7 +127,13 @@ export default function ModalEditarSalon({ salon, alCerrar, alGuardar }) {
       alCerrar();
     } catch (error) {
       console.error("Error al modificar el salón:", error);
-      alert("Hubo un error al actualizar los datos del salón.");
+      Swal.fire({
+        title: "¡Error!",
+        text: "Hubo un error al actualizar los datos del salón.",
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#0C447C",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -219,69 +271,102 @@ export default function ModalEditarSalon({ salon, alCerrar, alGuardar }) {
             </div>
           </div>
 
+          {/* FOTO DE PERFIL: preview de la actual + uploader para reemplazarla */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-              Foto de Perfil (URL)
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">
+              Foto de Perfil
             </label>
-            <input
-              type="text"
-              name="profilePicture"
-              value={formData.profilePicture}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#0C447C]"
+
+            {formData.profilePicture && (
+              <div className="mb-2 flex items-center gap-3">
+                <img
+                  src={formData.profilePicture}
+                  alt="Foto de perfil actual"
+                  className="w-20 h-20 object-cover rounded-lg border border-slate-200"
+                />
+                <span className="text-xs text-slate-500">Imagen actual.</span>
+              </div>
+            )}
+
+            <FileUploaderRegular
+              ctxName="uploader-perfil-salon-editar"
+              pubkey={UPLOADCARE_PUBLIC_KEY}
+              multiple={false}
+              imgOnly={true}
+              sourceList="local, url, camera"
+              onChange={handleProfilePictureChange}
             />
+            {formData.profilePicture && (
+              <p className="text-xs text-green-600 mt-1 font-medium">
+                ✓ Imagen lista
+              </p>
+            )}
           </div>
 
+          {/* DIAGRAMA: preview del actual + uploader para reemplazarlo */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-              Distribución / Diagrama (URL)
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">
+              Distribución / Diagrama
             </label>
-            <input
-              type="text"
-              name="salonDiagram"
-              value={formData.salonDiagram}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#0C447C]"
+
+            {formData.salonDiagram && (
+              <div className="mb-2 flex items-center gap-3">
+                <img
+                  src={formData.salonDiagram}
+                  alt="Diagrama actual"
+                  className="w-20 h-20 object-cover rounded-lg border border-slate-200"
+                />
+                <span className="text-xs text-slate-500">Diagrama actual.</span>
+              </div>
+            )}
+
+            <FileUploaderRegular
+              ctxName="uploader-diagrama-salon-editar"
+              pubkey={UPLOADCARE_PUBLIC_KEY}
+              multiple={false}
+              imgOnly={true}
+              sourceList="local, url"
+              onChange={handleSalonDiagramChange}
             />
+            {formData.salonDiagram && (
+              <p className="text-xs text-green-600 mt-1 font-medium">
+                ✓ Diagrama listo
+              </p>
+            )}
           </div>
 
-          {/* Sección de Gestión Dinámica de Lista de Fotos */}
+          {/* GALERÍA DE FOTOS: carga múltiple con preview y opción de quitar */}
           <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/60 space-y-2">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-              Galería de Fotos (Lista de Links)
+              Galería de Fotos
             </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={nuevoLinkFoto}
-                onChange={(e) => setNuevoLinkFoto(e.target.value)}
-                className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-[#0C447C] bg-white"
-                placeholder="Pegar link de la imagen de galería..."
-              />
-              <button
-                type="button"
-                onClick={handleAgregarFoto}
-                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition shrink-0"
-              >
-                Añadir Link
-              </button>
-            </div>
+
+            <FileUploaderRegular
+              ctxName="uploader-galeria-salon-editar"
+              pubkey={UPLOADCARE_PUBLIC_KEY}
+              multiple={true}
+              imgOnly={true}
+              sourceList="local, url, camera"
+              onChange={handlePhotosChange}
+            />
 
             {formData.photos.length > 0 ? (
-              <div className="max-h-24 overflow-y-auto space-y-1.5 pt-1">
+              <div className="grid grid-cols-4 gap-2 pt-2">
                 {formData.photos.map((link, idx) => (
                   <div
-                    key={idx}
-                    className="flex items-center justify-between bg-white px-2 py-1 border border-slate-100 rounded-md gap-2"
+                    key={`${link}-${idx}`}
+                    className="relative group rounded-md overflow-hidden border border-slate-200 bg-white"
                   >
-                    <span className="text-[11px] text-slate-600 truncate flex-1 font-mono">
-                      {link}
-                    </span>
+                    <img
+                      src={link}
+                      alt={`Foto de galería ${idx + 1}`}
+                      className="w-full h-16 object-cover"
+                    />
                     <button
                       type="button"
                       onClick={() => handleRemoverFoto(idx)}
-                      className="text-rose-500 hover:text-rose-700 text-xs px-1 font-bold transition"
-                      title="Eliminar link"
+                      title="Eliminar foto"
+                      className="absolute top-0.5 right-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold leading-none shadow-sm transition opacity-90 group-hover:opacity-100"
                     >
                       &times;
                     </button>
@@ -290,7 +375,7 @@ export default function ModalEditarSalon({ salon, alCerrar, alGuardar }) {
               </div>
             ) : (
               <p className="text-[11px] text-slate-400 italic pt-1">
-                No hay links adicionales en la galería de fotos.
+                No hay fotos en la galería todavía.
               </p>
             )}
           </div>

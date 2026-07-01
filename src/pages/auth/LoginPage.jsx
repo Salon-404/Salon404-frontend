@@ -42,10 +42,12 @@ export default function LoginPage() {
     <div className="min-h-screen grid grid-cols-2">
       {/* ── Izquierda ─────────────────────────────────────────────────── */}
       <div className="bg-[#0C447C] flex flex-col justify-between px-16 py-12">
-        <div className="text-[#85B7EB] font-semibold text-lg tracking-tight">
+       <Link
+          to="/"
+          className="text-lg font-semibold tracking-tight text-[#85B7EB] transition hover:text-[#5d9fe0]"
+        >
           EventosPro
-        </div>
-
+        </Link>
         <div className="flex flex-col gap-6">
           <span className="text-xs tracking-widest text-[#85B7EB] uppercase">
             Bienvenido de vuelta
