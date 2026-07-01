@@ -1,5 +1,6 @@
 import axios from "axios";
 import { services } from "./endpointsUrl";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export async function createReservation({ userId, salonId, eventTypeId, dateReserved }) {
 
@@ -8,7 +9,7 @@ export async function createReservation({ userId, salonId, eventTypeId, dateRese
         return response.data;
     }
     catch (error) {
-        throw new Error(getServiceError(error));
+        throw new Error(getApiErrorMessage(error));
     }
 
 }
@@ -19,7 +20,7 @@ export async function getAllReservations() {
         return response.data;
     }
     catch (error) {
-        throw new Error(getServiceError(error));
+        throw new Error(getApiErrorMessage(error));
     }
 }
 
@@ -29,6 +30,6 @@ export async function getAvailability() {
         return response.data;
     }
     catch (error) {
-        throw new Error(getServiceError(error));
+        throw new Error(getApiErrorMessage(error));
     }
 }
