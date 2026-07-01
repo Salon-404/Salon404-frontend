@@ -205,4 +205,55 @@ export const invitadosService = {
       throw error;
     }
   },
+
+  // DESCARGAR PLANTILLA EXCEL
+  // GET /api/v1/events/{eventId}/Guests/excel-template?maxRows=150
+  downloadTemplate: async (eventId, maxRows = 150) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/${eventId}/Guests/excel-template`,
+        {
+          params: { maxRows },
+          headers: authHeader(),
+          responseType: 'blob',
+        },
+      );
+      // Disparar descarga del archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const disposition = response.headers['content-disposition'];
+      const filenameMatch = disposition && disposition.match(/filename="?(.+?)"?$/);
+      link.setAttribute('download', filenameMatch ? filenameMatch[1] : `plantilla_invitados_${eventId}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error al descargar plantilla:", error);
+      throw error;
+    }
+  },
+
+  // IMPORTAR EXCEL
+  // POST /api/v1/events/{eventId}/Guests/import-excel
+  importExcel: async (eventId, file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await axios.post(
+        `${API_URL}/${eventId}/Guests/import-excel`,
+        formData,
+        {
+          headers: {
+            ...authHeader(),
+          },
+        },
+      );
+      return response.data; // { Message, TotalImported }
+    } catch (error) {
+      console.error("Error al importar excel:", error);
+      throw error;
+    }
+  },
 };
