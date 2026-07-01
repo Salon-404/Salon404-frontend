@@ -187,8 +187,8 @@ export default function Proveedores() {
     try {
       const payload = {
         name: nuevoProveedor.name,
-        type: parseInt(nuevoProveedor.providerTypeId, 10),
-        status: parseInt(nuevoProveedor.providerStatusId, 10),
+        providerTypeId: Number(nuevoProveedor.providerTypeId),
+        status: Number(nuevoProveedor.providerStatusId),
         email: nuevoProveedor.email,
         phone: nuevoProveedor.phone,
         price: nuevoProveedor.price === "" ? 0 : Number(nuevoProveedor.price),
