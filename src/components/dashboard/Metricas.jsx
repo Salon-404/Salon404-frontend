@@ -10,7 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { getAllTypes } from "../../services/eventTypeService";
+import { getAllTypes,getAllTypesBySalonId } from "../../services/eventTypeService";
 import { getSalons } from "../../services/salonService";
 
 export default function Metricas() {
@@ -29,6 +29,21 @@ export default function Metricas() {
   const [salonId, setSalonId] = useState("");
   const [tipoEventoId, setTipoEventoId] = useState("");
 
+  function formatMoney(value) {
+  if (value >= 1_000_000_000)
+    return `$${(value / 1_000_000_000).toFixed(1)} B`;
+
+  if (value >= 1_000_000)
+    return `$${(value / 1_000_000).toFixed(1)} M`;
+
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+
   // 1. CARGA INICIAL DE LOS MENÚS DESPLEGABLES
   useEffect(() => {
     const cargarCatalogos = async () => {
@@ -45,6 +60,34 @@ export default function Metricas() {
 
     cargarCatalogos();
   }, []);
+
+  useEffect(() => {
+  const cargarTiposEvento = async () => {
+    try {
+      setLoading(true);
+
+      // Si no hay salón → traer todos
+      if (!salonId) {
+        const listaTipos = await getAllTypes();
+        setTiposEvento(listaTipos);
+        return;
+      }
+
+      // Si hay salón → traer filtrados
+      const listaTiposFiltrados = await getAllTypesBySalonId(salonId);
+      setTiposEvento(listaTiposFiltrados);
+
+      // Reset del filtro tipo evento (IMPORTANTE)
+      setTipoEventoId("");
+    } catch (err) {
+      console.error("Error al cargar tipos de evento:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  cargarTiposEvento();
+}, [salonId]);
 
   // 2. PETICIÓN DE MÉTRICAS (Ahora se ejecuta siempre, aunque vengan vacíos)
   useEffect(() => {
@@ -87,6 +130,8 @@ export default function Metricas() {
             Reservas: series.reservas?.[index] || 0,
             Completados: series.completados?.[index] || 0,
             Cancelados: series.cancelados?.[index] || 0,
+            Ganancias: formatMoney(series.ganancias?.[index] || 0)
+            
           }));
 
           setChartData(formattedData);
@@ -184,7 +229,7 @@ export default function Metricas() {
       ) : data ? (
         <>
           {/* TARJETAS DE INDICADORES */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
               <p className="text-sm text-slate-500 font-medium">Confirmados</p>
               <h3 className="text-3xl font-bold text-[#0C447C] mt-2">
@@ -203,6 +248,13 @@ export default function Metricas() {
               <p className="text-sm text-slate-500 font-medium">Totales</p>
               <h3 className="text-3xl font-bold text-[#0C447C] mt-2">
                 {data.indicadores?.totalPeriodo ?? 0}
+              </h3>
+            </div>
+
+              <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+              <p className="text-sm text-slate-500 font-medium">Ganancias Totales</p>
+              <h3 className="text-3xl font-bold text-[#0C447C] mt-2">
+                {formatMoney(data.indicadores?.gananciasTotales) ?? 0}
               </h3>
             </div>
           </div>
@@ -281,6 +333,11 @@ export default function Metricas() {
                   <Bar
                     dataKey="Cancelados"
                     fill="#EF4444"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="Ganancias"
+                    fill="#81a9ff"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
