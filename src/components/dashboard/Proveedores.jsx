@@ -254,10 +254,8 @@ export default function Proveedores() {
 
      if (modoEdicion) {
         await actualizarProveedor(idProveedorSeleccionado, payload);
-        toast.success("Proveedor actualizado correctamente");
-     } else {
         successToast("Proveedor actualizado","El proveedor se actualizó correctamente"); 
-      } else {
+     } else {
         await crearProveedor(payload);
         successToast("Proveedor creado","El proveedor se vinculó correctamente"); 
       }
