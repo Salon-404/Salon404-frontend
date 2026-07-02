@@ -14,7 +14,7 @@ import { updateTableLayout } from "../../services/mesasService";
 import { createTable } from "../../services/mesasService";
 import { errorToast, successToast } from "../../globals/toast";
 import { InvitadosList } from "../../components/invitados/InvitadosList";
-import { obtenerProveedores, obtenerSeleccionCatering } from "../../services/proveedoresService";
+import { obtenerProveedores, obtenerSeleccionCatering,getProvidersBySalonId } from "../../services/proveedoresService";
 import { invitadosService } from "../../services/invitadosService";
 import {
   asignarProveedorAActividad,
@@ -52,6 +52,7 @@ export default function EventoDetailPage() {
   const [updating, setUpdating] = useState(false);
 
   const [seccion, setSeccion] = useState("resumen");
+  const [confirmados, setConfirmados] = useState(0);
 
   const [schedules, setSchedules] = useState([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
@@ -126,8 +127,8 @@ export default function EventoDetailPage() {
     const fetchTodosProveedores = async () => {
       setLoadingTodosProveedores(true);
       try {
-        const { data } = await obtenerProveedores(1, 100);
-        setTodosProveedores(data?.data || data || []);
+        const { data } = await getProvidersBySalonId(evento.salonId);
+        setTodosProveedores(data || data || []);
       } catch (err) {
         console.error("Error al cargar todos los proveedores", err);
       } finally {
@@ -440,6 +441,27 @@ export default function EventoDetailPage() {
     });
   };
 
+ useEffect(() => {
+    if (!id) return;
+
+    const loadConfirmados = async () => {
+      try {
+        const data = await invitadosService.getCateringSummary(id);
+
+        const total = (data || []).reduce(
+          (sum, item) => sum + item.totalConfirmed,
+          0
+        );
+
+        setConfirmados(total);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    loadConfirmados();
+  }, [id]);
+
   const handleUpdateActivity = async () => {
     if (!editingActivity?.id) return;
 
@@ -484,8 +506,7 @@ export default function EventoDetailPage() {
 
     const [h, m] = time.split(":").map(Number);
     let minutes = h * 60 + m;
-
-    // Si es madrugada (00:00 a 05:59), lo consideramos día siguiente
+    
     if (h < 6) {
       minutes += 24 * 60;
     }
@@ -686,7 +707,7 @@ export default function EventoDetailPage() {
                 <p className="text-sm text-slate-500">Confirmados</p>
 
                 <h3 className="text-4xl font-bold text-[#0C447C] mt-3">
-                  {evento.guestsIds.length}
+                  {confirmados}
                 </h3>
               </div>
             </div>
@@ -1140,7 +1161,7 @@ export default function EventoDetailPage() {
                                     </option>
                                     {provsDisponibles.map((p) => (
                                       <option key={p.id} value={p.id}>
-                                        {p.name} ({MAPA_RUBROS[p.type] || "Proveedor"})
+                                        {p.name} ({p.providerTypeName || "Proveedor"})
                                       </option>
                                     ))}
                                   </select>
@@ -1185,14 +1206,14 @@ export default function EventoDetailPage() {
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
                       <div>
                         <h3 className="text-lg font-semibold text-[#0C447C] mb-4 flex items-center gap-2">
-                          🍽️ Propuesta de Catering
+                           Propuesta de Catering
                         </h3>
 
                         {cateringSeleccionado ? (
                           <div className="space-y-4">
                             <div>
                               <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Proveedor</span>
-                              <p className="text-lg font-bold text-slate-800">{cateringSeleccionado.nombreProveedor}</p>
+                              <p className="text-lg font-bold text-slate-800">{cateringSeleccionado.providerName}</p>
                             </div>
 
                             <div className="flex gap-4">
@@ -1211,7 +1232,7 @@ export default function EventoDetailPage() {
                               <div>
                                 <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Precio por Persona</span>
                                 <p className="text-lg font-bold text-[#C9913A] mt-0.5">
-                                  ${cateringSeleccionado.precioPorPersona?.toLocaleString('es-AR')}
+                                  ${(cateringSeleccionado.price )?.toLocaleString('es-AR')}
                                 </p>
                               </div>
                             </div>
@@ -1220,13 +1241,13 @@ export default function EventoDetailPage() {
                               <div className="flex justify-between text-sm text-slate-600">
                                 <span>Costo total (confirmados: {cateringSummary.reduce((sum, item) => sum + item.totalConfirmed, 0)}):</span>
                                 <span className="font-semibold text-slate-800">
-                                  ${(cateringSeleccionado.precioPorPersona * cateringSummary.reduce((sum, item) => sum + item.totalConfirmed, 0)).toLocaleString('es-AR')}
+                                  ${(cateringSeleccionado.price * cateringSummary.reduce((sum, item) => sum + item.totalConfirmed, 0)).toLocaleString('es-AR')}
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm text-slate-600">
                                 <span>Costo total (estimados: {evento.estimedGuests}):</span>
                                 <span className="font-semibold text-slate-800">
-                                  ${(cateringSeleccionado.precioPorPersona * evento.estimedGuests).toLocaleString('es-AR')}
+                                  ${(cateringSeleccionado.price * evento.estimedGuests).toLocaleString('es-AR')}
                                 </span>
                               </div>
                             </div>
@@ -1241,18 +1262,18 @@ export default function EventoDetailPage() {
                       <button
                         onClick={() => navigate(`/eventos/${id}/catering`)}
                         className="w-full text-white text-sm font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm mt-6"
-                        style={{ backgroundColor: '#C9913A' }}
-                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#b07b2e'}
-                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#C9913A'}
+                        style={{ backgroundColor: '#025896' }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#3c83cf'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#025896'}
                       >
-                        🍽️ {cateringSeleccionado ? "Cambiar Propuesta de Catering" : "Seleccionar Propuesta de Catering"}
+                         {cateringSeleccionado ? "Cambiar Propuesta de Catering" : "Seleccionar Propuesta de Catering"}
                       </button>
                     </div>
 
                     {/* Tarjeta de Resumen de Dietas / Menús */}
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                       <h3 className="text-lg font-semibold text-[#0C447C] mb-4 flex items-center gap-2">
-                        📊 Preferencias Alimenticias (Invitados)
+                         Preferencias Alimenticias (Invitados)
                       </h3>
 
                       {loadingCateringSummary ? (

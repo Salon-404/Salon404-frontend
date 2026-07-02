@@ -21,9 +21,20 @@ export const actualizarProveedor = (id, datos) =>
 
 export const eliminarProveedor = (id) => axios.delete(`${urlBase}/${id}`);
 
-export const obtenerSugerenciasCatering = (nivel = null) => {
-  const parametros = nivel ? { nivel } : {};
-  return axios.get(`${urlBase}/catering/sugerencias`, { params: parametros });
+
+export async function getProvidersBySalonId(salonId) {
+  try
+  {
+    const result = axios.get(`${urlBase}/salon/${salonId}`);
+    return result;
+  }  
+  catch (error) {
+        throw new Error(getApiErrorMessage(error));
+  }  
+}
+
+export const obtenerSugerenciasCatering = (eventId) => {
+  return axios.get(`${urlBase}/catering-suggestions/${eventId}`);
 };
 
 export const obtenerSeleccionCatering = (eventId) => {
@@ -31,5 +42,5 @@ export const obtenerSeleccionCatering = (eventId) => {
 };
 
 export const guardarSeleccionCatering = (eventId, providerId) => {
-  return axios.post(`${urlBase}/catering/seleccion`, { eventId, providerId });
+  return axios.post(`${urlBase}/catering/seleccion`, { eventId,providerId  });
 };

@@ -16,8 +16,9 @@ export default function CateringPage() {
 
   const [opciones, setOpciones] = useState([]);
   const [nivel, setNivel] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [todasLasOpciones, setTodasLasOpciones] = useState([]);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [savingId, setSavingId] = useState(null);
 
@@ -33,25 +34,44 @@ export default function CateringPage() {
     }
   };
 
-  const loadSugerencias = async (nivelSeleccionado) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const loadSugerencias = async () => {
 
-      const { data } = await obtenerSugerenciasCatering(nivelSeleccionado);
-      setOpciones(Array.isArray(data) ? data : data?.items ?? []);
-    } catch (err) {
-      console.error(err);
-      setError('Error al cargar sugerencias de catering');
-    } finally {
-      setLoading(false);
-    }
-  };
+      console.log("id:", id);
+  if (!id) return;
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    const { data } = await obtenerSugerenciasCatering(id);
+
+    const sugerencias = Array.isArray(data) ? data : data?.items ?? [];
+
+    setTodasLasOpciones(sugerencias);
+  } catch (err) {
+    console.error(err);
+    setError("Error al cargar sugerencias de catering");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
-    loadSeleccion();
-    loadSugerencias(nivel);
-  }, [id, nivel]);
+  setOpciones(
+    nivel
+      ? todasLasOpciones.filter(s => s.nivel === nivel)
+      : todasLasOpciones
+  );
+}, [nivel, todasLasOpciones]);
+
+useEffect(() => {
+  if (!id) return;
+
+  loadSugerencias();
+  loadSeleccion();
+}, [id]);
+
+
 
   const handleSeleccionar = async (proveedorId) => {
     if (!id) return;
@@ -125,10 +145,11 @@ export default function CateringPage() {
           </div>
         )}
 
-        {!loading && opciones.length === 0 && !error && (
+        {!loading && todasLasOpciones.length === 0 && !error && (
           <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-100 text-slate-400">
             No se encontraron propuestas de catering para este nivel.
           </div>
+
         )}
 
         <div className="grid md:grid-cols-3 gap-6">
@@ -138,7 +159,7 @@ export default function CateringPage() {
 
             return (
               <div
-                key={o.proveedorId}
+                key={o.providerId}
                 className={`bg-white p-6 rounded-2xl shadow-sm border transition-all duration-200 hover:shadow-md flex flex-col justify-between ${
                   esSeleccionado ? 'border-indigo-600 ring-2 ring-indigo-600 ring-opacity-50' : 'border-slate-100'
                 }`}
@@ -155,12 +176,12 @@ export default function CateringPage() {
                       Nivel {o.nivel}
                     </span>
                     <span className="text-xl font-bold text-indigo-600">
-                      ${o.precioPorPersona?.toLocaleString('es-AR')}
+                      ${o.price?.toLocaleString('es-AR')}
                     </span>
                   </div>
 
                   <h3 className="text-lg font-bold text-slate-800 mb-2">
-                    {o.nombreProveedor}
+                    {o.providerName}
                   </h3>
 
                   <p className="text-slate-600 text-sm leading-relaxed mb-6">
@@ -169,7 +190,7 @@ export default function CateringPage() {
                 </div>
 
                 <button
-                  onClick={() => handleSeleccionar(o.proveedorId)}
+                  onClick={() => handleSeleccionar(o.providerId)}
                   disabled={esSeleccionado || savingId !== null}
                   className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 ${
                     esSeleccionado
@@ -198,4 +219,4 @@ export default function CateringPage() {
       </div>
     </div>
   );
-}
+}

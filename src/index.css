@@ -318,3 +318,6 @@
   pointer-events: none;
   opacity: 0.45;
 }
+.swal-top-z {
+  z-index: 10000 !important;
+}

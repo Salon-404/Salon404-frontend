@@ -92,12 +92,6 @@ export default function EventosPage() {
             onCambiarFiltros={setFiltros}
             tiposEvento={tiposEvento}
           />
-          <button
-            onClick={() => navigate("/eventos/calendario")}
-            className="text-[#185FA5] hover:text-[#0C447C] text-sm font-medium border border-[#B5D4F4] hover:border-[#378ADD] bg-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Ver Calendario ↗
-          </button>
         </div>
 
         {/* ── ERROR ────────────────────────────────────────────────────── */}
@@ -146,6 +140,9 @@ export default function EventosPage() {
                   </th>
                   <th className="px-4 py-3 text-xs font-semibold text-[#185FA5] uppercase tracking-wide">
                     Monto
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-[#185FA5] uppercase tracking-wide">
+                    Salón
                   </th>
                 </tr>
               </thead>

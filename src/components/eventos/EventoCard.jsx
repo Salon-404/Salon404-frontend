@@ -1,7 +1,8 @@
 import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { useState,useEffect } from 'react'
 import EstadoEventoBadge from './EstadoEventoBadge'
 import EstadoReservaBadge from './EstadoReservaBadge'
+import { getSalonsName } from '../../services/salonService'
 import {
   formatearMonto,
   getEventoClienteNombre,
@@ -54,6 +55,23 @@ export default function EventoCard({ evento, onSeleccionar, tiposById = {} }) {
   const estadoReserva = getReservaEstado(reserva)
   const montoTotal = getReservaMonto(reserva)
   const hayInconsistencia = estado === 'en_curso' && estadoReserva === 'expirada'
+  const [salonNombre, setSalonNombre] = useState("");
+
+  useEffect(() => {
+    async function cargarSalon() {
+      if (!evento.salonId) return;
+
+      try {
+        const salones = await getSalonsName();
+        const salon = salones.find((s) => s.salonId === evento.salonId);
+        setSalonNombre(salon.salonName); 
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    cargarSalon();
+  }, [evento.salonId]);
 
   return (
     <tr
@@ -107,6 +125,9 @@ export default function EventoCard({ evento, onSeleccionar, tiposById = {} }) {
       </td>
       <td className="px-4 py-3 text-sm text-slate-700 font-medium">
         {formatearMonto(montoTotal)}
+      </td>
+      <td className="px-4 py-3 text-sm text-slate-700 font-medium">
+        {salonNombre}
       </td>
     </tr>
   )
