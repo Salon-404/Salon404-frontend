@@ -1,5 +1,6 @@
 // src/components/proveedores/Proveedores.jsx
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { createPortal } from "react-dom"; // <-- Importamos createPortal
 import { getSalonsName } from "../../services/salonService";
 import {
@@ -242,7 +243,7 @@ export default function Proveedores() {
         name: nuevoProveedor.name,
         salonId:nuevoProveedor.salonId,
         providerTypeId: Number(nuevoProveedor.providerTypeId),
-        status: Number(nuevoProveedor.providerStatusId),
+        providerStatusId: Number(nuevoProveedor.providerStatusId),
         email: nuevoProveedor.email,
         phone: nuevoProveedor.phone,
         price: nuevoProveedor.price === "" ? 0 : Number(nuevoProveedor.price),
@@ -251,8 +252,10 @@ export default function Proveedores() {
         supportsGlutenFree: !!nuevoProveedor.supportsGlutenFree,
       };
 
-      if (modoEdicion) {
+     if (modoEdicion) {
         await actualizarProveedor(idProveedorSeleccionado, payload);
+        toast.success("Proveedor actualizado correctamente");
+     } else {
         successToast("Proveedor actualizado","El proveedor se actualizó correctamente"); 
       } else {
         await crearProveedor(payload);
