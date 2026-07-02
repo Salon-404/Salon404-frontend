@@ -49,7 +49,7 @@ export default function SugerenciaCatering() {
       // 1. Cargar sugerencias
       let sugerenciasCargadas = [];
       try {
-        const respuesta = await obtenerSugerenciasCatering();
+        const respuesta = await obtenerSugerenciasCatering(eventoId);
         const datos = respuesta.data || [];
         sugerenciasCargadas = Array.isArray(datos) ? datos : [];
         setSugerencias(sugerenciasCargadas);
@@ -142,13 +142,6 @@ export default function SugerenciaCatering() {
   const sugerenciasOrdenadas = [...sugerencias].sort(
     (a, b) => ordenNiveles.indexOf(a.nivel) - ordenNiveles.indexOf(b.nivel)
   )
-
-  // Datos de ejemplo cuando la API no devuelve datos
-  const datosMuestra = [
-    { proveedorId: 0, nombreProveedor: 'Catering Express', descripcionMenu: 'Menú clásico: entrada fría, plato principal con guarnición, postre individual y bebidas.', precioPorPersona: 4500, nivel: 'bajo' },
-    { proveedorId: 0, nombreProveedor: 'Gourmet & Co.', descripcionMenu: 'Menú selección: 2 entradas a elección, plato principal premium, mesa dulce y barra de tragos.', precioPorPersona: 8500, nivel: 'medio' },
-    { proveedorId: 0, nombreProveedor: 'Le Petit Chef', descripcionMenu: 'Menú premium: 3 pasos con maridaje, cocina en vivo, mesa de quesos importados y open bar.', precioPorPersona: 15000, nivel: 'alto' },
-  ]
 
   const datosAMostrar = sugerenciasOrdenadas.length > 0 ? sugerenciasOrdenadas : datosMuestra
 

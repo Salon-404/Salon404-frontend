@@ -126,3 +126,28 @@
     transition: none;
   }
 }
+/* Disponibilidad de fechas */
+.fc-day-available .fc-daygrid-day-frame::after {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #22c55e;
+  margin: 0 auto;
+}
+
+.fc-day-unavailable .fc-daygrid-day-frame::after {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #ef4444;
+  margin: 0 auto;
+}
+
+.fc-day-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}

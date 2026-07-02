@@ -1,13 +1,17 @@
 // src/components/proveedores/Proveedores.jsx
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { createPortal } from "react-dom"; // <-- Importamos createPortal
+import { getSalonsName } from "../../services/salonService";
 import {
   obtenerProveedores,
   crearProveedor,
   actualizarProveedor,
   eliminarProveedor,
+  getProvidersBySalonId
 } from "../../services/proveedoresService";
 import { obtenerTiposdeProveedores } from "../../services/providerCatalogService";
+import { errorToast, successToast } from "../../globals/toast";
 
 const MAPA_RUBROS = {
   1: "DJ",
@@ -40,12 +44,14 @@ export default function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
   const [tiposProveedor, setTiposProveedor] = useState([]);
   const [cargando, setCargando] = useState(true);
-
+  const [salonId, setSalonId] = useState("");
+  const [salones, setSalones] = useState([]);
   // Estados para la paginación y filtros
   const [pagina, setPagina] = useState(1);
   const [porPagina] = useState(10);
   const [tipoProveedor, setTipoProveedor] = useState("");
   const [tieneMas, setTieneMas] = useState(true);
+  
 
   // --- ESTADOS PARA MODAL DE EDICIÓN / CREACIÓN ---
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -57,6 +63,7 @@ export default function Proveedores() {
     name: "",
     providerTypeId: "",
     providerStatusId: 1,
+    salonId: "",
     email: "",
     phone: "",
     price: "",
@@ -71,6 +78,22 @@ export default function Proveedores() {
     useState(false);
   const [proveedorAEliminar, setProveedorAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+
+
+  useEffect(() => {
+    const cargarSalones = async () => {
+      try {
+        const response = await getSalonsName();
+        setSalones(response);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    cargarSalones();
+  }, []);
+
+
 
   // Cargar catálogo de tipos de proveedores
   useEffect(() => {
@@ -90,22 +113,41 @@ export default function Proveedores() {
   // Cargar los datos de los proveedores
   const cargarDatos = async () => {
     setCargando(true);
+
     try {
-      const respuesta = await obtenerProveedores(
-        pagina,
-        porPagina,
-        tipoProveedor,
-      );
-      const datos = respuesta?.data?.data || respuesta?.data || respuesta || [];
-      let proveedoresValidos = Array.isArray(datos) ? datos : [];
-      // Client-side fallback filtering by provider type in case the backend returns all
-      if (tipoProveedor) {
-        proveedoresValidos = proveedoresValidos.filter(
-          (p) => (p.type ?? p.providerTypeId ?? 0).toString() === tipoProveedor.toString()
+      let respuesta;
+
+      if (salonId) {
+        respuesta = await getProvidersBySalonId(salonId);
+      } else {
+        respuesta = await obtenerProveedores(
+          pagina,
+          porPagina,
+          tipoProveedor
         );
       }
+
+      const datos = respuesta?.data?.data || respuesta?.data || respuesta || [];
+      let proveedoresValidos = Array.isArray(datos) ? datos : [];
+
+      // Si el endpoint por salón no filtra por tipo,
+      // mantenemos el filtro en el frontend.
+      if (tipoProveedor) {
+        proveedoresValidos = proveedoresValidos.filter(
+          (p) =>
+            (p.type ?? p.providerTypeId ?? 0).toString() ===
+            tipoProveedor.toString()
+        );
+      }
+
       setProveedores(proveedoresValidos);
-      setTieneMas(proveedoresValidos.length === porPagina);
+
+      // La paginación sólo aplica al endpoint general.
+      setTieneMas(
+        salonId
+          ? false
+          : proveedoresValidos.length === porPagina
+      );
     } catch (error) {
       console.error("Error al cargar proveedores:", error);
       setProveedores([]);
@@ -115,8 +157,8 @@ export default function Proveedores() {
   };
 
   useEffect(() => {
-    cargarDatos();
-  }, [pagina, tipoProveedor, porPagina]);
+  cargarDatos();
+  }, [pagina, tipoProveedor, porPagina, salonId]);
 
   const handleFiltroChange = (e) => {
     setTipoProveedor(e.target.value);
@@ -138,6 +180,8 @@ export default function Proveedores() {
     setMostrarModal(true);
   };
 
+
+
   const abrirModalEditar = (proveedor) => {
     setModoEdicion(true);
     setIdProveedorSeleccionado(proveedor.id);
@@ -148,6 +192,10 @@ export default function Proveedores() {
           ? (proveedor.providerTypeId ?? proveedor.type).toString()
           : "",
       providerStatusId: proveedor.providerStatusId ?? proveedor.status ?? 1,
+      salonId:
+      proveedor.salonId != null
+        ? proveedor.salonId.toString()
+        : "",
       email: proveedor.email || "",
       phone: proveedor.phone || "",
       price: proveedor.price != null ? proveedor.price.toString() : "",
@@ -162,6 +210,12 @@ export default function Proveedores() {
     if (e && e.stopPropagation) e.stopPropagation();
     setProveedorAEliminar(proveedor);
     setMostrarConfirmarEliminar(true);
+  };
+
+  
+  const handleSalonChange = (e) => {
+    setSalonId(e.target.value);
+    setPagina(1);
   };
 
   const handleConfirmarEliminar = async () => {
@@ -187,8 +241,9 @@ export default function Proveedores() {
     try {
       const payload = {
         name: nuevoProveedor.name,
+        salonId:nuevoProveedor.salonId,
         providerTypeId: Number(nuevoProveedor.providerTypeId),
-        status: Number(nuevoProveedor.providerStatusId),
+        providerStatusId: Number(nuevoProveedor.providerStatusId),
         email: nuevoProveedor.email,
         phone: nuevoProveedor.phone,
         price: nuevoProveedor.price === "" ? 0 : Number(nuevoProveedor.price),
@@ -197,10 +252,12 @@ export default function Proveedores() {
         supportsGlutenFree: !!nuevoProveedor.supportsGlutenFree,
       };
 
-      if (modoEdicion) {
+     if (modoEdicion) {
         await actualizarProveedor(idProveedorSeleccionado, payload);
-      } else {
+        successToast("Proveedor actualizado","El proveedor se actualizó correctamente"); 
+     } else {
         await crearProveedor(payload);
+        successToast("Proveedor creado","El proveedor se vinculó correctamente"); 
       }
 
       setNuevoProveedor(estadoInicialForm);
@@ -209,7 +266,7 @@ export default function Proveedores() {
     } catch (error) {
       console.error("Error al guardar proveedor:", error);
       const msg = error.response?.data?.Message || error.response?.data?.message || "Hubo un error al intentar guardar los datos del proveedor.";
-      alert(msg);
+      errorToast("Error al crear un proveedor",msg);
     } finally {
       setGuardando(false);
     }
@@ -219,60 +276,62 @@ export default function Proveedores() {
   const modalRoot = document.getElementById("modal-root") || document.body;
 
   return (
-    <div className="space-y-6">
-      {/* Cabecera Base */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-[#0C447C]">
-            Proveedores Contratados
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Gestiona y visualiza todos los proveedores contratados.
-          </p>
-        </div>
+<div className="space-y-6">
+   {/* Cabecera Base */}
+   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+   <div>
+    <h2 className="text-2xl font-semibold text-[#0C447C]">
+      Proveedores Contratados
+    </h2>
+    <p className="text-sm text-slate-500 mt-1">
+      Gestiona y visualiza todos los proveedores contratados.
+    </p>
+   </div>
 
-        {/* Botón de Agregar y Filtro */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-slate-600">
-              Tipo de proveedor:
-            </label>
-            <select
-              value={tipoProveedor}
-              onChange={handleFiltroChange}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0C447C] focus:outline-none"
-            >
-              <option value="">Todos</option>
-              {tiposProveedor.map((tipo) => (
-                <option key={tipo.id} value={tipo.id}>
-                  {tipo.name}
-                </option>
-              ))}
-            </select>
-          </div>
+  <div className="flex items-center gap-3 shrink-0">
+    <label className="text-sm font-medium text-slate-600">
+      Tipo:
+    </label>
 
-          <button
-            onClick={abrirModalCrear}
-            className="bg-[#0C447C] hover:bg-[#0a3866] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-1"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Agregar Proveedor
-          </button>
-        </div>
-      </div>
+    <select
+      value={tipoProveedor}
+      onChange={handleFiltroChange}
+      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+    >
+      <option value="">Todos</option>
+      {tiposProveedor.map((tipo) => (
+        <option key={tipo.id} value={tipo.id}>
+          {tipo.name}
+        </option>
+      ))}
+    </select>
+
+    <label className="text-sm font-medium text-slate-600">
+      Salón:
+    </label>
+
+    <select
+      value={salonId}
+      onChange={handleSalonChange}
+      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+    >
+      <option value="">Todos los salones</option>
+
+      {salones?.map((salon) => (
+        <option key={salon.salonId} value={salon.salonId}>
+          {salon.salonName}
+        </option>
+      ))}
+    </select>
+
+    <button
+      onClick={abrirModalCrear}
+      className="bg-[#0C447C] hover:bg-[#0a3866] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap"
+    >
+     + Agregar Proveedor
+    </button>
+  </div>
+</div>
 
       <hr className="border-slate-200" />
 
@@ -285,6 +344,7 @@ export default function Proveedores() {
                 <th className="px-6 py-4">Proveedor</th>
                 <th className="px-6 py-4">Contacto</th>
                 <th className="px-6 py-4">Categoría</th>
+                <th className="px-6 py-4">Salón</th>
                 <th className="px-6 py-4">Dietas Especiales</th>
                 <th className="px-6 py-4">Precio</th>
               </tr>
@@ -332,6 +392,9 @@ export default function Proveedores() {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                         {prov?.providerTypeName || MAPA_RUBROS[prov?.type] || "No asignado"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {salones.find((s) => s.salonId === prov.salonId)?.salonName ?? "Sin salón"}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
@@ -429,6 +492,26 @@ export default function Proveedores() {
                     placeholder="Ej: Catering S.A."
                   />
                 </div>
+                <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Salón *
+                </label>
+
+                <select
+                  name="salonId"
+                  value={nuevoProveedor.salonId}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#0C447C] focus:outline-none"
+                >
+                  <option value="">Seleccionar salón</option>
+
+                  {salones.map((salon) => (
+                    <option key={salon.salonId} value={salon.salonId}>
+                      {salon.salonName}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
