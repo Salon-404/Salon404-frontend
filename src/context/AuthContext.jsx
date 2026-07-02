@@ -1,14 +1,23 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { login as loginService, register as registerService } from '../services/authService'
-import { TOKEN_KEY } from '../constants/auth'
-import { decodeToken } from '../globals/decodeToken'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import {
+  login as loginService,
+  register as registerService,
+} from "../services/authService";
+import { TOKEN_KEY } from "../constants/auth";
+import { decodeToken } from "../globals/decodeToken";
 
 const AuthContext = createContext(null);
 
 function normalizeUser(decoded) {
-  if (!decoded) return null
+  if (!decoded) return null;
 
-  const role = decoded.role || decoded.rol
+  const role = decoded.role || decoded.rol;
   return {
     id: decoded.id,
     name: decoded.name || decoded.nombre,
@@ -16,15 +25,15 @@ function normalizeUser(decoded) {
     email: decoded.email,
     role,
     rol: role,
-  }
+  };
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = localStorage.getItem(TOKEN_KEY);
 
     if (!token) {
       setLoading(false);
@@ -88,7 +97,7 @@ export function AuthProvider({ children }) {
 
       return response;
     },
-    []
+    [],
   );
 
   const logout = useCallback(() => {
@@ -104,11 +113,7 @@ export function AuthProvider({ children }) {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
