@@ -25,7 +25,7 @@ import SalonesPage from "./pages/salon/SalonesPage";
 import SalonDetailPage from "./pages/salon/SalonDetailPage";
 import { InvitadosList } from "./components/invitados/InvitadosList";
 import { InvitacionForm } from "./components/invitados/InvitacionForm";
-
+import { Toaster } from "react-hot-toast";
 import ProveedoresPage from "./pages/proveedores/ProveedoresPage";
 import CronogramaEvento from "./pages/cronograma/CronogramaEvento";
 import CateringPage from "./pages/eventos/CateringPage";
@@ -139,6 +139,12 @@ export default function App() {
         {/* Si meten cualquier URL*/}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+        }}
+      />   
     </BrowserRouter>
   );
 }

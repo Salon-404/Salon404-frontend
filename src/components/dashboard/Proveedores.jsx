@@ -1,5 +1,6 @@
 // src/components/proveedores/Proveedores.jsx
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { createPortal } from "react-dom"; // <-- Importamos createPortal
 import {
   obtenerProveedores,
@@ -188,7 +189,7 @@ export default function Proveedores() {
       const payload = {
         name: nuevoProveedor.name,
         providerTypeId: Number(nuevoProveedor.providerTypeId),
-        status: Number(nuevoProveedor.providerStatusId),
+        providerStatusId: Number(nuevoProveedor.providerStatusId),
         email: nuevoProveedor.email,
         phone: nuevoProveedor.phone,
         price: nuevoProveedor.price === "" ? 0 : Number(nuevoProveedor.price),
@@ -197,11 +198,13 @@ export default function Proveedores() {
         supportsGlutenFree: !!nuevoProveedor.supportsGlutenFree,
       };
 
-      if (modoEdicion) {
+     if (modoEdicion) {
         await actualizarProveedor(idProveedorSeleccionado, payload);
-      } else {
+        toast.success("Proveedor actualizado correctamente");
+     } else {
         await crearProveedor(payload);
-      }
+        toast.success("Proveedor creado correctamente");
+    }
 
       setNuevoProveedor(estadoInicialForm);
       setMostrarModal(false);
@@ -209,7 +212,7 @@ export default function Proveedores() {
     } catch (error) {
       console.error("Error al guardar proveedor:", error);
       const msg = error.response?.data?.Message || error.response?.data?.message || "Hubo un error al intentar guardar los datos del proveedor.";
-      alert(msg);
+      toast.error(msg);;
     } finally {
       setGuardando(false);
     }

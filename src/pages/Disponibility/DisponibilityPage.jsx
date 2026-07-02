@@ -4,7 +4,7 @@ import { getSalonsName, getSalonAvailable } from "../../services/salonService";
 import Navbar from "../../components/global/Navbar";
 
 export default function DisponibilityPage() {
-  const [availableDays, setAvailableDays] = useState([]);
+  const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedSalonId, setSelectedSalonId] = useState(null);
@@ -28,7 +28,7 @@ export default function DisponibilityPage() {
  
   useEffect(() => {
     if (!selectedSalonId) {
-      setAvailableDays([]);
+      setEventos([]);
       return;
     }
 
@@ -38,11 +38,11 @@ export default function DisponibilityPage() {
 
       try {
         const result = await getSalonAvailable(selectedSalonId);
-        setAvailableDays(Array.isArray(result) ? result : []);
+        setEventos(Array.isArray(result) ? result : []);
       } catch (err) {
         console.error(err);
         setError("No se pudo cargar la disponibilidad");
-        setAvailableDays([]);
+        setEventos([]);
       }
 
       setLoading(false);
@@ -131,7 +131,11 @@ export default function DisponibilityPage() {
                 </div>
               )}
 
-              <CalendarView fechasDisponibles={availableDays} salonId={selectedSalonId} />
+              <CalendarView 
+                fechasOcupadas={eventos.map(e => e.eventDate)} 
+                eventos={eventos} 
+                salonId={selectedSalonId} 
+              />
             </>
           )}
 
